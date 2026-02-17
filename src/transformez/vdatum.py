@@ -44,16 +44,16 @@ class Vdatum:
         self.epoch = None
         self.vdatum_set_horz()
 
-        
+
     def vdatum_set_horz(self):
         if 'ITRF' in self.overt:
             self.ohorz = self.overt
             self.epoch = '1997.0:1997.0'
 
-            
+
     def vdatum_locate_jar(self):
         """Find the VDatum executable on the local system."""
-        
+
         results = []
         for root, dirs, files in os.walk('/'):
             if 'vdatum.jar' in files:
@@ -65,10 +65,10 @@ class Vdatum:
             self.jar = results[0]
             return results
 
-        
+
     def vdatum_get_version(self):
         """Run vdatum and attempt to get its version."""
-        
+
         if self.jar is None:
             self.vdatum_locate_jar()
         if self.jar is not None:
@@ -78,17 +78,17 @@ class Vdatum:
                     return i.strip().split('v')[-1]
         return None
 
-    
+
     def vdatum_xyz(self, xyz):
         """Run vdatum on an xyz list [x, y, z]."""
-        
+
         if self.jar is None:
             self.vdatum_locate_jar()
         if self.jar is not None:
             epoch_str = f'epoch:{self.epoch} ' if self.epoch is not None else ''
             vdc = (f'ihorz:{self.ihorz} ivert:{self.ivert} ohorz:{self.ohorz} overt:{self.overt} '
                    f'-nodata -pt:{xyz[0]},{xyz[1]},{xyz[2]} {epoch_str}region:{self.region}')
-            
+
             out, _ = utils.run_cmd(
                 f'java -Djava.awt.headless=false -jar {self.jar} {vdc}',
                 verbose=False
@@ -102,23 +102,23 @@ class Vdatum:
                     except ValueError:
                         pass
             return [xyz[0], xyz[1], z]
-        else: 
+        else:
             return xyz
 
-        
+
     def vdatum_clean_result(self):
         """Clean the vdatum 'result' folder."""
-        
+
         utils.remove_glob(f'{self.result_dir}/*')
         try:
             os.removedirs(self.result_dir)
-        except OSError: 
+        except OSError:
             pass
 
-        
+
     def run_vdatum(self, src_fn):
         """Run vdatum on src_fn which is an XYZ file."""
-        
+
         if self.jar is None:
             self.vdatum_locate_jar()
         if self.jar is not None:
@@ -127,5 +127,5 @@ class Vdatum:
                    f'-nodata -file:txt:{self.delim},{self.xyzl},skip{self.skip}:{src_fn}:{self.result_dir} '
                    f'{epoch_str}region:{self.region}')
             return utils.run_cmd(f'java -jar {self.jar} {vdc}', verbose=self.verbose)
-        else: 
+        else:
             return [], -1

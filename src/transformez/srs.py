@@ -36,7 +36,7 @@ class SRSParser:
         self.region = region
         self.manual_vert_grid = vert_grid
         self.cache_dir = cache_dir
-        
+
         self.tc = {
             'src_crs': None, 'dst_crs': None,
             'src_vert_epsg': None, 'dst_vert_epsg': None,
@@ -44,24 +44,24 @@ class SRSParser:
             'want_vertical': False,
             'trans_fn': None
         }
-        
+
         self._parse_srs()
 
-        
+
     def _extract_geoid(self, srs_str):
         parts = str(srs_str).split('+geoid:')
         return parts[0], (parts[1] if len(parts) > 1 else None)
 
-    
+
     def _get_epsg_int(self, crs):
         """Extract EPSG integer from a CRS."""
-        
+
         try:
             return int(crs.to_epsg())
         except:
             return None
 
-        
+
     def _parse_srs(self):
         # Parse Input Strings
         clean_src, self.tc['src_geoid'] = self._extract_geoid(self.src_srs_input)
@@ -73,7 +73,7 @@ class SRSParser:
         except Exception as e:
             logger.error(f"Invalid SRS: {e}")
             return
-        
+
         # Extract vertical components before flattening
         if self.tc['src_crs'].is_compound:
             self.tc['src_vert_epsg'] = self._get_epsg_int(self.tc['src_crs'].sub_crs_list[1])
@@ -92,20 +92,20 @@ class SRSParser:
         # If we have a vertical EPSG but no manual geoid, look it up in definitions.py
         if self.tc['src_vert_epsg'] and not self.tc['src_geoid']:
             self.tc['src_geoid'] = Datums.get_default_geoid(self.tc['src_vert_epsg'])
-            
+
         if self.tc['dst_vert_epsg'] and not self.tc['dst_geoid']:
             self.tc['dst_geoid'] = Datums.get_default_geoid(self.tc['dst_vert_epsg'])
 
         # We want vertical if we have explicit vertical EPSGs OR manual geoids
         has_src_vert = (self.tc['src_vert_epsg'] is not None) or (self.tc['src_geoid'] is not None)
         has_dst_vert = (self.tc['dst_vert_epsg'] is not None) or (self.tc['dst_geoid'] is not None)
-        
+
         self.tc['want_vertical'] = has_src_vert or has_dst_vert
 
 
     def set_vertical_transform(self):
         """Generates the vertical shift grid using VerticalTransform."""
-        
+
         if not self.region or not self.tc['want_vertical']:
             return
 
@@ -115,12 +115,12 @@ class SRSParser:
         except AttributeError:
             proc_region = Region.from_list(self.region)
             proc_region.buffer(pct=5)
-            
+
         s_ident = self.tc['src_vert_epsg']
         d_ident = self.tc['dst_vert_epsg']
-            
-        if not s_ident and self.tc['src_geoid']: s_ident = 6319 
-        if not d_ident and self.tc['dst_geoid']: d_ident = 6319        
+
+        if not s_ident and self.tc['src_geoid']: s_ident = 6319
+        if not d_ident and self.tc['dst_geoid']: d_ident = 6319
         if not s_ident or not d_ident: return
 
         s_name = str(s_ident).replace(':', '_').replace(' ', '_').replace('/', '_')
@@ -145,7 +145,7 @@ class SRSParser:
 
         self.manual_vert_grid = self.tc['trans_fn']
 
-        
+
     def get_components(self):
         """Returns the components:
 
@@ -153,7 +153,7 @@ class SRSParser:
         - Transformer: Hub -> Dest (2D)
         - Grid Path (str) or None
         """
-        
+
         if self.tc['want_vertical'] and not self.manual_vert_grid:
             self.set_vertical_transform()
 
@@ -164,5 +164,5 @@ class SRSParser:
         # as pyproj seems finicky when it comes to this.
         t_to_hub = Transformer.from_crs(self.tc['src_crs'], hub_crs, always_xy=True)
         t_from_hub = Transformer.from_crs(hub_crs, self.tc['dst_crs'], always_xy=True)
-        
+
         return t_to_hub, t_from_hub, self.manual_vert_grid

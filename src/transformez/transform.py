@@ -28,7 +28,7 @@ HUB_EPSG = 6319
 
 def region_geo_transform(region, nx: int, ny: int):
     """Generate a GDAL-style GeoTransform from region and dimensions."""
-    
+
     min_x, min_y, max_x, max_y = region
     x_res = (max_x - min_x) / float(nx)
     y_res = (max_y - min_y) / float(ny)
@@ -37,40 +37,40 @@ def region_geo_transform(region, nx: int, ny: int):
 
 class VerticalTransform:
     """Generate a vertical transformation grid using Transformez definitions and fetchez."""
-    
+
     def __init__(self, region, nx, ny, epsg_in, epsg_out,
                  geoid_in=None, geoid_out=None, epoch_in=1997.0, epoch_out=1997.0,
                  cache_dir=None, verbose=True):
-        
+
         self.region = region
         self.nx = nx
         self.ny = ny
         self.gt = region_geo_transform(self.region, self.nx, self.ny)
         self.cache_dir = cache_dir or os.path.join(os.getcwd(), 'transformez_cache')
         self.verbose = verbose
-        
+
         # Resolve EPSGs
         self.epsg_in = Datums.get_vdatum_by_name(str(epsg_in))
         self.epsg_out = Datums.get_vdatum_by_name(str(epsg_out))
-        
+
         # Resolve Geoids
         self.geoid_in = geoid_in or Datums.get_default_geoid(self.epsg_in)
         self.geoid_out = geoid_out or Datums.get_default_geoid(self.epsg_out)
 
         self.epoch_in = float(epoch_in) if epoch_in else 1997.0
         self.epoch_out = float(epoch_out) if epoch_out else 1997.0
-        
+
         # Frame Types
         self.ref_in = Datums.get_frame_type(self.epsg_in)
         self.ref_out = Datums.get_frame_type(self.epsg_out)
 
-        
+
     # =========================================================================
     # Data Fetching
-    # =========================================================================    
+    # =========================================================================
     def fetch_grid(self, module_name, **kwargs):
         """Generic fetcher wrapper."""
-        
+
         Mod = fetchez.registry.FetchezRegistry.load_module(module_name)
         if not Mod:
             logger.error(f"Module '{module_name}' not found.")
@@ -78,10 +78,10 @@ class VerticalTransform:
 
         fetcher = Mod(src_region=self.region, **kwargs)#outdir=self.cache_dir, **kwargs)
         fetcher.run()
-        
+
         if fetcher.results:
             fetchez.core.run_fetchez([fetcher], threads=2)
-            
+
         valid = []
         for r in fetcher.results:
             fn = r['dst_fn']
@@ -92,11 +92,11 @@ class VerticalTransform:
                 valid.append(fn)
         return valid
 
-    
+
     def _get_grid(self, provider, name):
         """Helper to fetch and interpolate a grid."""
-        
-        if not name: return np.zeros((self.ny, self.nx))        
+
+        if not name: return np.zeros((self.ny, self.nx))
         if not provider: provider = 'proj'
 
         if 'geoid=' in name: name = name[6:]
@@ -106,19 +106,19 @@ class VerticalTransform:
             # we should try to check other providers here just in case...
             logger.warning(f"No grids found for {name} via {provider}")
             return np.zeros((self.ny, self.nx))
-            
+
         return GridEngine.load_and_interpolate(files, self.region, self.nx, self.ny)
 
-    
+
     # =========================================================================
-    # The VDatum Chain 
+    # The VDatum Chain
     # =========================================================================
     def _get_vdatum_chain(self, datum_name, geoid_name):
         """Builds the shift from Tidal Datum -> NAD83 Ellipsoid (Hub).
 
         Equation: Hub_Z = Tidal_Z + Tidal_Sep + TSS + Geoid_N
         """
-        
+
         total_shift = np.zeros((self.ny, self.nx))
         desc = []
 
@@ -139,23 +139,23 @@ class VerticalTransform:
         # Ortho -> Ellipsoid (Add Geoid N)
         # N is negative. Ortho + N = Ellipsoid.
         actual_geoid = geoid_name if geoid_name else 'g2018'
-        
+
         geoid_def = Datums.GEOIDS.get(actual_geoid, {})
         provider = geoid_def.get('provider', 'proj')
-        
+
         geoid = self._get_grid(provider, actual_geoid)
         total_shift += geoid
         desc.append(f"Geoid({actual_geoid})")
-        
+
         return total_shift, " + ".join(desc)
 
-    
+
     def _get_htdp_shift(self, epsg_from, epsg_to, epoch_from, epoch_to):
         """Calculate Ellipsoid Frame/Epoch shift."""
-        
+
         if epsg_from == epsg_to and epoch_from == epoch_to:
             return np.zeros((self.ny, self.nx))
-            
+
         from . import htdp
         try:
             tool = htdp.HTDP(verbose=False)
@@ -163,13 +163,13 @@ class VerticalTransform:
         except Exception:
             return np.zeros((self.ny, self.nx))
 
-        
+
     # =========================================================================
     # The Transformation
     # =========================================================================
     def _step_to_hub(self, epsg, ref_type, geoid=None, epoch=None):
         """Calculate shift FROM Input TO Hub (NAD83_2011)."""
-        
+
         shift = np.zeros((self.ny, self.nx))
         desc = ""
 
@@ -181,7 +181,7 @@ class VerticalTransform:
             # Hub = Input + Chain
             datum_name = Datums.SURFACES[epsg]['name']
             chain_shift, chain_desc = self._get_vdatum_chain(datum_name, geoid)
-            
+
             shift = chain_shift
             desc = f"Tidal({datum_name}) -> Hub [Add Chain: {chain_desc}]"
 
@@ -202,12 +202,12 @@ class VerticalTransform:
 
         return shift, desc
 
-    
+
     def _step_from_hub(self, epsg, ref_type, geoid=None, epoch=None):
         """Calculate shift FROM Hub (NAD83_2011) TO Output.
         Output_Z = Hub_Z + Shift
         """
-        
+
         shift = np.zeros((self.ny, self.nx))
         desc = ""
 
@@ -219,9 +219,9 @@ class VerticalTransform:
             # Inverse of Chain: Tidal = Hub - Chain
             datum_name = Datums.SURFACES[epsg]['name']
             chain_geoid = geoid if geoid else 'g2018'
-            
+
             chain_shift, chain_desc = self._get_vdatum_chain(datum_name, chain_geoid)
-            
+
             shift = chain_shift * -1
             desc = f"Hub -> Tidal({datum_name}) [Subtract Chain: {chain_desc}]"
 
@@ -231,7 +231,7 @@ class VerticalTransform:
             geoid_def = Datums.GEOIDS.get(target_geoid, {})
             provider = geoid_def.get('provider', 'proj')
             grid = self._get_grid(provider, target_geoid)
-            
+
             shift = grid * -1
             desc = f"Hub -> Ortho(via {target_geoid}) [Geoid Subtract]"
 
@@ -240,17 +240,17 @@ class VerticalTransform:
             shift = self._get_htdp_shift(HUB_EPSG, epsg, 1997.0, epoch)
             desc = f"Hub -> Ellipsoid({epsg}@{epoch}) [HTDP]"
 
-        return shift, desc    
+        return shift, desc
 
-    
+
     def _vertical_transform(self, epsg_in, epsg_out):
         """Execute the transformation pipeline via the Hub."""
-        
+
         logger.info("-" * 60)
         logger.info(f"Transformation Plan: EPSG:{self.epsg_in} -> EPSG:{self.epsg_out}")
-        
+
         total_shift = np.zeros((self.ny, self.nx))
-        total_unc = np.zeros((self.ny, self.nx)) 
+        total_unc = np.zeros((self.ny, self.nx))
 
         if self.epsg_in == self.epsg_out and self.epoch_in == self.epoch_out and self.geoid_in == self.geoid_out:
             logger.info("  1. Identity Transform (Zero Shift)")
@@ -273,5 +273,5 @@ class VerticalTransform:
             logger.info(f"  2. {desc_2} (No Shift/Zero)")
 
         logger.info("-" * 60)
-        
+
         return total_shift, total_unc
