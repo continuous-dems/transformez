@@ -4,7 +4,7 @@ build-backend = 'setuptools.build_meta'
 
 [project]
 name = 'transformez'
-version = '0.1.1'
+version = '0.1.2'
 description = 'A standalone utility for vertical elevation datum transformations.'
 readme = "README.md"
 authors = [{ name = 'Matthew Love' }]
@@ -19,7 +19,7 @@ dependencies = [
     'numpy<2.0.0',
     'pyproj',
     'rasterio',
-    'fetchez>0.3.3', 
+    'fetchez>0.3.3',
 ]
 
 keywords = ["Geospatial"]
@@ -38,4 +38,4 @@ Issues = "https://github.com/ciresdem/transformez/issues"
 where = ["src"]  # Look for packages inside the 'src' folder
 include = ["transformez*"]  # Include the package named 'transformez'
 exclude = ["tests*", "docs*", "scripts*", "examples*"]
-namespaces = false 
+namespaces = false

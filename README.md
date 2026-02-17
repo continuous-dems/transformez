@@ -2,7 +2,7 @@
 
 **Vertical datum transformations, simplified.**
 
-> ⚠️ **BETA STATUS:** This project is in active development (v0.1.1).
+> ⚠️ **BETA STATUS:** This project is in active development (v0.1.2).
 
 Transformez is a standalone Python library and CLI for converting geospatial data between vertical datums (e.g., MLLW to NAVD88).
 
@@ -12,7 +12,7 @@ Vertical datum transformation is often the hardest part of coastal DEM generatio
 
 **Transformez solves this by being:**
 * **Lightweight:** A pure Python package that does one thing well. It doesn't require a GUI or a 5GB installer.
-* **Grid-Based:** It uses the official VDatum GTIF/GTX grids directly, ensuring your transformations match authoritative standards. 
+* **Grid-Based:** It uses the official VDatum GTIF/GTX grids directly, ensuring your transformations match authoritative standards.
 * **Developer Friendly:** It offers a clean Python API for integrating vertical shifts directly into your numpy/rasterio pipelines, plus a CLI for quick batch processing.
 
 It works in two ways:
@@ -105,15 +105,15 @@ from transformez.grid_engine import GridWriter
 # 1. Define the Region (West, East, South, North)
 #    and the Grid Dimensions (nx, ny)
 region = Region(-95.5, -94.5, 28.5, 29.5)
-nx, ny = 1200, 1200 
+nx, ny = 1200, 1200
 
 # 2. Initialize the Transformer
 #    - MLLW (5866) -> NAVD88 (5703) via GEOID18
 vt = VerticalTransform(
     region=region,
     nx=nx, ny=ny,
-    epsg_in="5866",       
-    epsg_out="5703:geoid=g2018" 
+    epsg_in="5866",
+    epsg_out="5703:geoid=g2018"
 )
 
 # 3. Generate the Shift Array (numpy)
@@ -148,7 +148,7 @@ You can use the helper classes to resolve complex datum strings or EPSG codes.
 from transformez.definitions import Datums
 
 # Get VDatum CLI string for an EPSG
-v_str = Datums.get_vdatum_id(5866) 
+v_str = Datums.get_vdatum_id(5866)
 # Returns: 'mllw:m:height'
 
 # Get Default Geoid for a Datum
@@ -173,4 +173,3 @@ Transformez supports EPSG codes and common vertical datum names.
 This project is licensed under the MIT License - see the [LICENSE](https://github.com/ciresdem/transformez/blob/main/LICENSE) file for details.
 
 Copyright (c) 2010-2026 Regents of the University of Colorado
-

@@ -9,7 +9,7 @@ transformez
 :license: MIT, see LICENSE for more details.
 """
 
-__version__ = "0.1.1"
+__version__ = "0.1.2"
 __author__ = "Matthew Love"
 __credits__ = "CIRES"
 
@@ -18,13 +18,13 @@ import glob
 
 def _find_proj_lib():
     """Locate the best available PROJ_LIB path."""
-    
+
     try:
         import rasterio
         r_path = os.path.join(os.path.dirname(rasterio.__file__), 'proj_data')
         if os.path.exists(os.path.join(r_path, 'proj.db')):
             return r_path
-            
+
         parent = os.path.dirname(os.path.dirname(rasterio.__file__))
         libs = glob.glob(os.path.join(parent, 'rasterio.libs*'))
         if libs:
@@ -41,7 +41,7 @@ def _find_proj_lib():
             return p_path
     except ImportError:
         pass
-        
+
     return None
 
 target_proj_lib = _find_proj_lib()
@@ -62,14 +62,14 @@ def setup_fetchez(registry_cls):
     """
 
     HookRegistry.register_hook(TransformezHook)
-    
-    from fetchez.presets import register_global_preset    
-    
+
+    from fetchez.presets import register_global_preset
+
     register_global_preset(
         name="make-shift-grid",
         help_text="Download datum grids and composite them into a single shift grid.",
         hooks=[
-            {"name": "transformez", "args": {}} 
+            {"name": "transformez", "args": {}}
         ]
     )
 
@@ -78,15 +78,15 @@ def setup_fetchez(registry_cls):
     #     "help_text": "Generate shift grid based on region, then apply it to files.",
     #     "hooks": [
     #         {
-    #             "name": "transformez", 
+    #             "name": "transformez",
     #             "args": {"stage": "pre", "datum_in": "5703", "output_grid": "/tmp/shift.gtx"}
     #         },
     #         {
-    #             "name": "transformez", 
+    #             "name": "transformez",
     #             "args": {"stage": "file", "apply": "True", "output_grid": "/tmp/shift.gtx"}
     #         },
     #         {
-    #              "name": "audit" 
+    #              "name": "audit"
     #         }
     #     ]
     # }
