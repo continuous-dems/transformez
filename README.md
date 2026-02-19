@@ -31,22 +31,6 @@ transformez -R -166/-164/63/64 -E 3s \
     --output shift_ak.tif
 ```
 
-What happens?
-
-- Transformez sees "mllw".
-
-- It checks NOAA VDatum. Coverage Missing.
-
-- It activates Global Fallback.
-
-- It downloads FES2014 from SEANOE.
-
-- It calculates htdp coefficients.
-
-- It calculates: (LAT -> MSL) + (MSL -> WGS84).
-
-- It produces shift_ak.tif.
-
 ***Transform a raster directly.*** Transformez reads the bounds/resolution from the file.
 
 ```bash
