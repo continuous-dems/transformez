@@ -8,51 +8,7 @@
 
 **Transformez** is a standalone Python engine for converting geospatial data between vertical datums (e.g., `MLLW` ↔ `NAVD88` ↔ `Ellipsoid`).
 
-## The Problem
-Vertical transformation is a mess.
-* **NOAA VDatum** is the gold standard but only covers US coastal waters.
-* **Global Models** (like FES2014 or DTU) are locked behind FTPs, logins, or complex scientific formats.
-* **Frame Shifts** (NAD83 vs WGS84) are often ignored, leading to 1-2 meter errors in places like Alaska or the Pacific.
-
-## The Solution
-**Transformez** acts as a universal broker. It attempts to use the best local authority (NOAA) and automatically falls back to the best global scientific model (FES/HTDP) when local coverage ends.
-
-It is:
-* **Open:** Uses 100% open data (NOAA, SEANOE, PROJ). No logins required.
-* **Smart:** Automatically handles the "Frame Bridge" between tectonic plates (e.g., transforming WGS84 global tides to NAD83 local geoids).
-* **Robust:** Handles dateline crossings (0-360 vs -180/180) and bot-checks automatically.
-
 ---
-
-## 🔍 Methodology: The Flow
-
-Transformez uses a **Hub-and-Spoke** architecture centered on **WGS84 (EPSG:4979)**.
-
-```mermaid
-graph TD
-    A[User Requests: MLLW -> NAVD88] --> B{Is Location in US?}
-    B -- Yes --> C[Try NOAA VDatum Grid]
-    C --> D{Coverage Found?}
-    D -- Yes --> E[Use VDatum Shift]
-    D -- No --> F[Global Fallback Mode]
-    B -- No --> F
-
-    F --> G[Fetch FES2014 - SEANOE]
-    G --> H[Calculate LAT/MSL to Ellipsoid]
-    H --> I[Calculate Plate Shift - HTDP]
-    I --> J[Composite Global Shift]
-
-    E --> K[Apply to Data]
-    J --> K
-```
-
-* Local Check: It first queries NOAA's VDatum grid (via fetchez).
-
-* Global Fallback: If VDatum returns 0 (no coverage), it switches to FES2014 (Finite Element Solution), a global hydrodynamic tide model.
-
-* Frame Harmonization: It detects if your input/output datums are on different tectonic plates (e.g., NAD83 vs ITRF2014). It runs NGS HTDP to calculate the crustal velocity shift (often ~1.5m) and applies it.
-
-* Result: You get a seamless vertical shift grid that is precise near shore (NOAA) and statistically valid in the open ocean (FES).
 
 ## Installation
 
