@@ -20,7 +20,7 @@ pip install transformez
 
 ## Usage
 
-***Generate a vertical shift grid for anywhere on Earth.***
+**Generate a vertical shift grid for anywhere on Earth.**
 
 ```bash
 # Transform MLLW to WGS84 Ellipsoid in Norton Sound, AK
@@ -31,7 +31,7 @@ transformez -R -166/-164/63/64 -E 3s \
     --output shift_ak.tif
 ```
 
-***Transform a raster directly.*** Transformez reads the bounds/resolution from the file.
+**Transform a raster directly.** Transformez reads the bounds/resolution from the file.
 
 ```bash
 transformez --dem input_bathymetry.tif \
@@ -40,7 +40,7 @@ transformez --dem input_bathymetry.tif \
     --output output_navd88.tif
 ```
 
-***Integrate directly into your download pipeline.***
+**Integrate directly into your download pipeline.**
 
 ```bash
 # Download GEBCO and shift EGM96 to WGS84 on the fly
