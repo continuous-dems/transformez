@@ -37,7 +37,7 @@ graph TD
     D -- No --> F[Global Fallback Mode]
     B -- No --> F
 
-    F --> G[Fetch FES2014 (SEANOE)]
+    F --> G[Fetch FES2014 - SEANOE]
     G --> H[Calculate LAT/MSL to Ellipsoid]
     H --> I[Calculate Plate Shift (HTDP)]
     I --> J[Composite Global Shift]
