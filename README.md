@@ -39,7 +39,7 @@ graph TD
 
     F --> G[Fetch FES2014 - SEANOE]
     G --> H[Calculate LAT/MSL to Ellipsoid]
-    H --> I[Calculate Plate Shift (HTDP)]
+    H --> I[Calculate Plate Shift - HTDP]
     I --> J[Composite Global Shift]
 
     E --> K[Apply to Data]
