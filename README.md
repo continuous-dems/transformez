@@ -71,7 +71,7 @@ shift, unc = vt._vertical_transform(vt.epsg_in, vt.epsg_out)
 
 ## Supported Datums
 
-* **Tidal**: mllw, mhhw, msl, lat, hat
+* **Tidal**: mllw, mhhw, msl, lat
 
 * **Ellipsoidal**: 4979 (WGS84), 6319 (NAD83 2011)
 
