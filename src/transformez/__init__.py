@@ -17,7 +17,9 @@ import os
 import glob
 from .hooks import TransformezHook
 from fetchez.hooks.registry import HookRegistry
-# from fetchez.registry import FetchezRegistry
+from fetchez.registry import FetchezRegistry
+
+from .modules import TransformezMod
 
 def _find_proj_lib():
     """Locate the best available PROJ_LIB path."""
@@ -61,8 +63,17 @@ def setup_fetchez(registry_cls):
     Registers modules, hooks, and presets.
     """
 
-    HookRegistry.register_hook(TransformezHook)
+    registry_cls.register_module(
+        'transformez',
+        TransformezMod,
+        metadata={
+            'desc': 'Generate vertical datum shift grids on-demand.',
+            "tags": ["vdatum", "transformation", "shift-grid"],
+            "category": "Tools"
+        }
+    )
 
+    HookRegistry.register_hook(TransformezHook)
     from fetchez.presets import register_global_preset
     register_global_preset(
         name="make-shift-grid",
@@ -71,5 +82,4 @@ def setup_fetchez(registry_cls):
             {"name": "transformez", "args": {}}
         ]
     )
-
 # setup_fetchez(FetchezRegistry)
