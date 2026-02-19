@@ -82,7 +82,6 @@ class TransRegion(Region):
 
         return int(this_end[0] - this_origin[0]), int(this_end[1] - this_origin[1]), dst_gt
 
-
     def geo_transform_from_count(self, x_count: int = 0, y_count: int = 0):
         x_inc = (self.xmax - self.xmin) / x_count
         y_inc = (self.ymin - self.ymax) / y_count
