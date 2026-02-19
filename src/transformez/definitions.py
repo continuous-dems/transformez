@@ -16,6 +16,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 class Datums:
     """Class to manage vertical datum definitions and lookups."""
 
@@ -24,28 +25,44 @@ class Datums:
     # =========================================================================
     SURFACES = {
         # --- Tidal Datums ---
-        1089: {'name': 'mllw', 'description': 'Mean Lower Low Water', 'uncertainty': 0, 'epsg': 5866},
-        5866: {'name': 'mllw', 'description': 'Mean Lower Low Water', 'uncertainty': 0, 'epsg': 5866},
-        1091: {'name': 'mlw',  'description': 'Mean Low Water', 'uncertainty': 0, 'epsg': 1091},
-        5869: {'name': 'mhhw', 'description': 'Mean Higher High Water', 'uncertainty': 0, 'epsg': 5869},
-        5868: {'name': 'mhw', 'description': 'Mean High Water', 'uncertainty': 0, 'epsg': 5868},
-        5714: {'name': 'msl', 'description': 'Mean Sea Level', 'uncertainty': 0, 'epsg': 5714},
-        5713: {'name': 'mtl', 'description': 'Mean Tide Level', 'uncertainty': 0, 'epsg': 5713},
+        1089: {'name': 'mllw', 'description': 'Mean Lower Low Water', 'region': 'usa'},
+        5866: {'name': 'mllw', 'description': 'Mean Lower Low Water', 'region': 'usa'},
+        1091: {'name': 'mlw',  'description': 'Mean Low Water', 'region': 'usa'},
+        5869: {'name': 'mhhw', 'description': 'Mean Higher High Water', 'region': 'usa'},
+        5868: {'name': 'mhw', 'description': 'Mean High Water', 'region': 'usa'},
+        5714: {'name': 'msl', 'description': 'Mean Sea Level', 'region': 'usa'},
+        5713: {'name': 'mtl', 'description': 'Mean Tide Level', 'region': 'usa'},
 
         # --- Hydraulic / River Datums ---
         # Columbia River Datum (No standard EPSG, using 0 placeholder or custom)
-        0:    {'name': 'crd', 'description': 'Columbia River Datum', 'uncertainty': 0, 'epsg': 0},
+        0:    {'name': 'crd', 'description': 'Columbia River Datum', 'uncertainty': 0, 'epsg': 0, 'region': 'usa'},
 
         # IGLD 1985 (Dynamic Height)
-        5609: {'name': 'IGLD85', 'description': 'International Great Lakes Datum 1985', 'uncertainty': 0, 'epsg': 5609},
+        5609: {'name': 'IGLD85', 'description': 'International Great Lakes Datum 1985', 'uncertainty': 0, 'epsg': 5609, 'region': 'usa'},
 
         # IGLD Low Water Datum (Chart Datum for Lakes)
         # VDatum uses 'LWD_IGLD85' string
-        9000: {'name': 'LWD_IGLD85', 'description': 'IGLD85 Low Water Datum', 'uncertainty': 0, 'epsg': 5609},
+        9000: {'name': 'LWD_IGLD85', 'description': 'IGLD85 Low Water Datum', 'uncertainty': 0, 'epsg': 5609, 'region': 'usa'},
 
         # --- Legacy Vertical ---
         # NGVD29 is often best handled via VDatum (VERTCON) if PROJ isn't configured
         5702: {'name': 'NGVD29', 'description': 'National Geodetic Vertical Datum 1929', 'uncertainty': 0.05, 'epsg': 5702},
+
+        # --- Global Tidal Datums (DTU/FES) ---
+        # Using pseudo-EPSG codes or negative placeholders for custom logic
+        9001: {'name': 'lat', 'description': 'Lowest Astronomical Tide', 'region': 'global'},
+        9002: {'name': 'hat', 'description': 'Highest Astronomical Tide', 'region': 'global'},
+        9003: {'name': 'mss', 'description': 'Mean Sea Surface', 'region': 'global'},
+    }
+
+    GLOBAL_ALIASES = {
+        'mllw': 'lat',   # Mean Lower Low Water -> Lowest Astronomical Tide
+        'mlw':  'lat',   # Mean Low Water       -> LAT (Conservative)
+        'mhhw': 'hat',   # Mean Higher High Water -> Highest Astronomical Tide
+        'mhw':  'hat',   # Mean High Water        -> HAT (Conservative)
+        'msl':  'mss',   # Mean Sea Level         -> Mean Sea Surface
+        'mtl':  'mss',   # Mean Tide Level        -> MSS
+        'dtl':  'mss',   # Diurnal Tide Level     -> MSS
     }
 
     HTDP = {
@@ -128,6 +145,87 @@ class Datums:
         'CGG2013': {'name': 'CGG2013', 'uncertainty': 0.01, 'provider': 'proj'},
     }
 
+    MODELS = {
+        'fes2014': {
+            'provider': 'seanoe',
+            'grids': {
+                'lat': 'LAT',
+                'mss': 'MSL'
+            }
+        },
+        'dtu10': {
+            'provider': 'dtu',
+            'grids': {
+                'mss': 'mss',
+                'mdt': 'mdt'
+            }
+        },
+        'egm2008': {
+            'provider': 'proj',
+            'grid': 'egm2008'
+        }
+    }
+
+    @classmethod
+    def get_vdatum_by_name(cls, datum_name, region_check=None):
+        """
+        Return the datum ID.
+
+        Args:
+            datum_name (str): The requested datum (e.g. 'mllw').
+            region_check (bool): If True, and the datum is regional (USA),
+                                 it might return the Global Proxy if requested.
+                                 (Currently simplistic, logic lives in Transform class).
+        """
+        if not datum_name: return None
+        try:
+            return int(datum_name)
+        except:
+            pass
+
+        s_name = str(datum_name).lower()
+
+        # Direct Match (e.g. 'mllw' -> 5866)
+        for epsg, info in cls.SURFACES.items():
+            if s_name == info['name']:
+                return epsg
+
+        # We should check for aliases here
+        return None
+
+    @classmethod
+    def get_global_proxy(cls, datum_name):
+        """Returns the Global Model equivalent name (e.g. 'mllw' -> 'lat')."""
+
+        s_name = str(datum_name).lower()
+
+        if s_name in ['lat', 'hat', 'mss']:
+            return s_name
+
+        for epsg, info in cls.SURFACES.items():
+            if str(epsg) == s_name:
+                s_name = info['name']
+                break
+
+        return cls.GLOBAL_ALIASES.get(s_name)
+
+    @classmethod
+    def get_frame_type(cls, epsg):
+        """Identify frame set (Surface, HTDP, CDN)."""
+
+        if epsg in cls.SURFACES:
+            # Distinguish between NOAA VDatum and Global
+            if cls.SURFACES[epsg].get('region') == 'global':
+                return 'global_tidal'
+            return 'surface'
+        if epsg in cls.HTDP:
+            return 'htdp'
+
+        if epsg in cls.CDN:
+            return 'cdn'
+
+        return None
+
     @classmethod
     def get_default_geoid(cls, epsg):
         """Return default geoid for a generic CDN EPSG, or None."""
@@ -141,47 +239,17 @@ class Datums:
             return cls.CDN[e_int].get('default_geoid')
         return None
 
-
-    @classmethod
-    def get_vdatum_by_name(cls, datum_name):
-        """Return the vertical datum EPSG based on the vertical datum name."""
-
-        if datum_name is None:
-            return None
-
-        try:
-            datum_int = int(datum_name)
-        except (ValueError, TypeError):
-            datum_int = None
-
-        for frame_set in [cls.SURFACES, cls.HTDP, cls.CDN]:
-            if datum_int in frame_set:
-                return datum_int
-
-            for epsg, info in frame_set.items():
-                if str(datum_name).lower() in info['name'].lower():
-                    return epsg
-
-        return None
-
-
     @classmethod
     def get_vdatum_id(cls, epsg):
         """Retrieve the NOAA VDatum CLI string for an EPSG."""
-        if epsg in cls.SURFACES: return cls.SURFACES[epsg].get('vdatum_id')
-        if epsg in cls.CDN: return cls.CDN[epsg].get('vdatum_id')
-        if epsg == 6319: return 'nad83_2011:m:height'
-        return None
-
-
-    @classmethod
-    def get_frame_type(cls, epsg):
-        """Identify which frame set an EPSG belongs to."""
 
         if epsg in cls.SURFACES:
-            return 'surface'
-        if epsg in cls.HTDP:
-            return 'htdp'
+            return cls.SURFACES[epsg].get('vdatum_id')
+
         if epsg in cls.CDN:
-            return 'cdn'
+            return cls.CDN[epsg].get('vdatum_id')
+
+        if epsg == 6319:
+            return 'nad83_2011:m:height'
+
         return None

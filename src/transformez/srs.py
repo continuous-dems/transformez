@@ -23,6 +23,7 @@ from .grid_engine import GridWriter
 
 logger = logging.getLogger(__name__)
 
+
 class SRSParser:
     """Parses SRS and prepares a Decoupled Transformation:
 
@@ -38,32 +39,31 @@ class SRSParser:
         self.cache_dir = cache_dir
 
         self.tc = {
-            'src_crs': None, 'dst_crs': None,
-            'src_vert_epsg': None, 'dst_vert_epsg': None,
-            'src_geoid': None, 'dst_geoid': None,
+            'src_crs': None,
+            'dst_crs': None,
+            'src_vert_epsg': None,
+            'dst_vert_epsg': None,
+            'src_geoid': None,
+            'dst_geoid': None,
             'want_vertical': False,
-            'trans_fn': None
+            'trans_fn': None,
         }
 
         self._parse_srs()
 
-
     def _extract_geoid(self, srs_str):
         parts = str(srs_str).split('+geoid:')
         return parts[0], (parts[1] if len(parts) > 1 else None)
-
 
     def _get_epsg_int(self, crs):
         """Extract EPSG integer from a CRS."""
 
         try:
             return int(crs.to_epsg())
-        except:
+        except Exception:
             return None
 
-
     def _parse_srs(self):
-        # Parse Input Strings
         clean_src, self.tc['src_geoid'] = self._extract_geoid(self.src_srs_input)
         clean_dst, self.tc['dst_geoid'] = self._extract_geoid(self.dst_srs_input)
 
@@ -119,9 +119,14 @@ class SRSParser:
         s_ident = self.tc['src_vert_epsg']
         d_ident = self.tc['dst_vert_epsg']
 
-        if not s_ident and self.tc['src_geoid']: s_ident = 6319
-        if not d_ident and self.tc['dst_geoid']: d_ident = 6319
-        if not s_ident or not d_ident: return
+        if not s_ident and self.tc['src_geoid']:
+            s_ident = 6319
+
+        if not d_ident and self.tc['dst_geoid']:
+            d_ident = 6319
+
+        if not s_ident or not d_ident:
+            return
 
         s_name = str(s_ident).replace(':', '_').replace(' ', '_').replace('/', '_')
         d_name = str(d_ident).replace(':', '_').replace(' ', '_').replace('/', '_')
@@ -130,7 +135,6 @@ class SRSParser:
 
         if not os.path.exists(self.tc['trans_fn']):
             logger.info(f"Generating vertical grid: {s_ident} -> {d_ident} : {self.tc['trans_fn']} :")
-            bbox = proc_region.to_bbox()
             vt = VerticalTransform(
                 proc_region,
                 nx=max(10, int(proc_region.width / 0.0008333)),

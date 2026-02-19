@@ -9,12 +9,15 @@ transformez
 :license: MIT, see LICENSE for more details.
 """
 
-__version__ = "0.1.2"
+__version__ = "0.2.0"
 __author__ = "Matthew Love"
 __credits__ = "CIRES"
 
 import os
 import glob
+from .hooks import TransformezHook
+from fetchez.hooks.registry import HookRegistry
+# from fetchez.registry import FetchezRegistry
 
 def _find_proj_lib():
     """Locate the best available PROJ_LIB path."""
@@ -51,10 +54,6 @@ if 'PROJ_LIB' in os.environ:
 
 if target_proj_lib:
     os.environ['PROJ_LIB'] = target_proj_lib
-    # print(f"DEBUG: PROJ_LIB set to {target_proj_lib}")
-
-from .hooks import TransformezHook
-from fetchez.hooks.registry import HookRegistry
 
 def setup_fetchez(registry_cls):
     """Called by fetchez when loading plugins.
@@ -64,7 +63,6 @@ def setup_fetchez(registry_cls):
     HookRegistry.register_hook(TransformezHook)
 
     from fetchez.presets import register_global_preset
-
     register_global_preset(
         name="make-shift-grid",
         help_text="Download datum grids and composite them into a single shift grid.",
@@ -73,20 +71,4 @@ def setup_fetchez(registry_cls):
         ]
     )
 
-
-    # "transform-pipeline": {
-    #     "help_text": "Generate shift grid based on region, then apply it to files.",
-    #     "hooks": [
-    #         {
-    #             "name": "transformez",
-    #             "args": {"stage": "pre", "datum_in": "5703", "output_grid": "/tmp/shift.gtx"}
-    #         },
-    #         {
-    #             "name": "transformez",
-    #             "args": {"stage": "file", "apply": "True", "output_grid": "/tmp/shift.gtx"}
-    #         },
-    #         {
-    #              "name": "audit"
-    #         }
-    #     ]
-    # }
+# setup_fetchez(FetchezRegistry)

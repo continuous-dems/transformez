@@ -24,6 +24,7 @@ import pyproj
 
 logger = logging.getLogger(__name__)
 
+
 class TransRegion(Region):
 
     # gtl is (geo-transform, xcount, ycount)
@@ -40,38 +41,28 @@ class TransRegion(Region):
 
         return cls(xmin, xmax, ymin, ymax)
 
-
     def srcwin(self, geo_transform, x_count, y_count, node='grid'):
         """Output the appropriate GDAL srcwin (xoff, yoff, xsize, ysize)."""
 
-        # Get raw pixel coordinates for the Region corners
-        # We calculate UL (xmin, ymax) and LR (xmax, ymin) without clamping yet
         ul = _geo2pixel(self.xmin, self.ymax, geo_transform, node=node)
         lr = _geo2pixel(self.xmax, self.ymin, geo_transform, node=node)
 
-        # Sort to find min/max (Handles South-Up images or axis flips)
-        # x_indices[0] is the Left-most pixel, x_indices[1] is Right-most
         x_indices = sorted([ul[0], lr[0]])
         y_indices = sorted([ul[1], lr[1]])
 
-        # Calculate Intersection with Raster Dimensions [0, count]
-        # We clamp the START to 0, and the END to x_count
         x_start = max(0, x_indices[0])
-        x_stop = min(x_count, x_indices[1] + 1) # +1 to include the last pixel (Fencepost fix)
+        x_stop = min(x_count, x_indices[1] + 1)
 
         y_start = max(0, y_indices[0])
-        y_stop = min(y_count, y_indices[1] + 1) # +1 to include the last pixel
+        y_stop = min(y_count, y_indices[1] + 1)
 
-        # Calculate Size
         x_size = x_stop - x_start
         y_size = y_stop - y_start
 
-        # Handle Valid but Empty Intersection (e.g. region is outside raster)
         if x_size <= 0 or y_size <= 0:
              return 0, 0, 0, 0
 
         return int(x_start), int(y_start), int(x_size), int(y_size)
-
 
     def geo_transform(self, x_inc: float = 0, y_inc: float = None, node: str = 'grid'):
         """Return dimensions and a geotransform based on the region and a cellsize.
@@ -98,7 +89,6 @@ class TransRegion(Region):
         dst_gt = (self.xmin, x_inc, 0, self.ymax, 0, y_inc)
         return dst_gt
 
-
     def to_geo_transform(region, nx: int, ny: int):
         """Generate a GDAL-style GeoTransform from extent and dimensions.
 
@@ -114,7 +104,6 @@ class TransRegion(Region):
         x_res = (self.xmax - self.xmin) / float(nx)
         y_res = (self.ymax - self.ymin) / float(ny)
         return (self.xmin, x_res, 0, self.ymax, 0, -y_res)
-
 
     def densify_edges(self, density=20):
         """Generate a list of points along the perimeter of the region.
@@ -148,7 +137,6 @@ class TransRegion(Region):
         #return list(zip(xs, ys))
         return xs, ys
 
-
     def transform_densify(self, transformer=None, transform_direction="FORWARD"):
         if transformer is None or not self.valid_p():
             logger.error(f'Could not perform region transformation; {self}')
@@ -167,7 +155,6 @@ class TransRegion(Region):
 
         return self
 
-
     def transform(self, transformer=None, transform_direction="FORWARD"):
         if transformer is None or not self.valid_p():
             logger.error(f'Could not perform region transformation; {self}')
@@ -177,7 +164,6 @@ class TransRegion(Region):
         self.xmax, self.ymax = transformer.transform(self.xmax, self.ymax, direction=transform_direction)
 
         return self
-
 
     def warp(self, dst_srs='epsg:4326'):
         """Transform region horizontally to a new CRS."""
@@ -248,9 +234,12 @@ def _invert_gt(geo_transform):
 
 
 def x360(x):
-    if x == 0: return -180
-    elif x == 360: return 180
-    else: return ((x + 180) % 360) - 180
+    if x == 0:
+        return -180
+    elif x == 360:
+        return 180
+    else:
+        return ((x + 180) % 360) - 180
 
 
 def transform_increment(dst_inc_x, dst_inc_y, transformer, region_center):
@@ -288,20 +277,23 @@ def parse_region(input_r: Union[str, List]) -> List[Region]:
 
     regions = []
 
-    # 1. Single String
+    # Single String
     if isinstance(input_r, str):
         s_lower = input_r.lower()
         if s_lower.endswith(('.json', '.geojson')):
             rs = TransRegion.from_list(region_from_geojson(input_r))
-            if rs: regions.extend(rs)
+            if rs:
+                regions.extend(rs)
         elif s_lower.startswith(('loc:', 'place:')):
             r = TransRegion.from_list(region_from_place(input_r))
-            if r: regions.append(r)
+            if r:
+                regions.append(r)
         else:
             r = TransRegion.from_string(input_r)
-            if r: regions.append(r)
+            if r:
+                regions.append(r)
 
-    # 2. List/Tuple (Coordinate list OR List of strings)
+    # List/Tuple (Coordinate list OR List of strings)
     elif isinstance(input_r, (list, tuple)):
         # Check if it is a single Coordinate List [w, e, s, n]
         if len(input_r) == 4 and all(isinstance(n, (int, float)) for n in input_r):
@@ -312,7 +304,6 @@ def parse_region(input_r: Union[str, List]) -> List[Region]:
                 regions.extend(parse_region(item))
 
     if not regions:
-        # Don't warn on None input, only on failed parse of actual input
         if input_r is not None:
             logger.warning(f'Failed to parse region {input_r}')
 
