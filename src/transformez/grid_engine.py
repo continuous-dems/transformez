@@ -165,6 +165,10 @@ class GridWriter:
     def write(filename, data, region):
         """Write a vertical shift grid using Rasterio."""
 
+        dirname = os.path.dirname(filename)
+        if dirname and not os.path.exists(dirname):
+            os.makedirs(dirname)
+
         if not filename.endswith('.tif'):
             filename = os.path.splitext(filename)[0] + '.tif'
 

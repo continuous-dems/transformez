@@ -47,11 +47,16 @@ class TransformezMod(core.FetchModule):
     """
 
     def __init__(self, src_datum='5703', dst_datum='4979', increment='3s', output_name=None, **kwargs):
-        super().__init__(**kwargs)
+        super().__init__(name="transformez", **kwargs)
         self.src_datum = src_datum
         self.dst_datum = dst_datum
         self.increment = increment
         self.output_name = output_name
+
+        s_name = str(self.src_datum).replace(':', '_')
+        d_name = str(self.dst_datum).replace(':', '_')
+        w, e, s, n = self.region
+        self.dst_fn = os.path.join(self._outdir, f"shift_{s_name}_to_{d_name}_{w}_{s}.tif")
 
     def run(self):
         from fetchez import utils
@@ -75,20 +80,11 @@ class TransformezMod(core.FetchModule):
         epsg_in, geoid_in = parse_d(self.src_datum)
         epsg_out, geoid_out = parse_d(self.dst_datum)
 
-        if self.output_name:
-            dst_fn = self.output_name
-        else:
-            # Auto-name: shift_mllw_to_5703_g2012b.tif
-            s_name = str(self.src_datum).replace(':', '_')
-            d_name = str(self.dst_datum).replace(':', '_')
-            dst_fn = f"shift_{s_name}_to_{d_name}.tif"
-
         vt = VerticalTransform(
             region=self.region,
             nx=nx, ny=ny,
             epsg_in=epsg_in, epsg_out=epsg_out,
             geoid_in=geoid_in, geoid_out=geoid_out,
-            verbose=False # Keep it quiet inside fetchez
         )
 
         logger.info(f"Generating shift grid: {self.src_datum} -> {self.dst_datum}...")
@@ -98,12 +94,11 @@ class TransformezMod(core.FetchModule):
             logger.error("Transformation failed (No coverage or invalid datums).")
             return
 
-        full_path = os.path.join(os.getcwd(), dst_fn)
-        GridWriter.write(full_path, shift_array, self.region)
+        GridWriter.write(self.dst_fn, shift_array, self.region)
 
         self.add_entry_to_results(
-            url=f"file://{dst_fn}",
-            dst_fn=dst_fn,
+            url=f"file://{self.dst_fn}",
+            dst_fn=self.dst_fn,
             data_type="gtiff",
             meta={
                 "src_datum": self.src_datum,
