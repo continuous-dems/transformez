@@ -27,9 +27,9 @@ from fetchez import spatial
 from fetchez import utils
 from fetchez.spatial import parse_region
 
-logging.basicConfig(level=logging.INFO, format='[ %(levelname)s ] %(message)s', stream=sys.stderr)
-logger = logging.getLogger('transformez')
-logging.getLogger('fetchez').setLevel(logging.WARNING)
+logging.basicConfig(level=logging.INFO, format="[ %(levelname)s ] %(message)s", stream=sys.stderr)
+logger = logging.getLogger("transformez")
+logging.getLogger("fetchez").setLevel(logging.WARNING)
 
 
 def parse_compound_datum(datum_arg):
@@ -55,7 +55,7 @@ def list_supported_datums():
 
     print("--- Tidal Surfaces (Local & Global) ---")
     for k, v in Datums.SURFACES.items():
-        region = v.get('region', 'global').upper()
+        region = v.get("region", "global").upper()
         print(f"  {v['name']:<10} : {v['description']} [{region}]")
 
     print("\n--- Ellipsoidal / Frame (HTDP) ---")
