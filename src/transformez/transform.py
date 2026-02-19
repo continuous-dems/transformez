@@ -38,7 +38,7 @@ class VerticalTransform:
         self.region = region
         self.nx = nx
         self.ny = ny
-        self.cache_dir = cache_dir or os.path.join(os.getcwd(), 'transformez_cache')
+        self.cache_dir = cache_dir or os.path.join(os.getcwd(), "transformez_cache")
         self.verbose = verbose
 
         self.epsg_in = Datums.get_vdatum_by_name(str(epsg_in))
@@ -159,19 +159,17 @@ class VerticalTransform:
             return np.zeros((self.ny, self.nx))
 
     # =========================================================================
-    # Updated Chains (Removing Hardcoded Bridges)
+    # Chains
     # =========================================================================
     def _get_vdatum_chain(self, datum_name, geoid_name):
-        """
-        Builds shift: Tidal -> [NAD83 Native].
-        """
+        """Builds shift: Tidal -> [NAD83 Native]."""
 
         total_shift = np.zeros((self.ny, self.nx))
         desc = []
 
         # Tidal -> LMSL
-        if datum_name not in ['msl', '5714', 'lmsl']:
-            grid = self._get_grid('vdatum', datum_name)
+        if datum_name not in ["msl", "5714", "lmsl"]:
+            grid = self._get_grid("vdatum", datum_name)
             if not np.any(grid):
                 return None, f"Missing Tidal Grid: {datum_name}"
 
@@ -179,19 +177,19 @@ class VerticalTransform:
             desc.append(f"({datum_name}->LMSL)")
 
         # LMSL -> Ortho (TSS)
-        tss = self._get_grid('vdatum', 'tss')
+        tss = self._get_grid("vdatum", "tss")
         total_shift += tss
         desc.append("TSS(LMSL->NAVD88)")
 
         # Ortho -> NAD83 (Geoid)
-        actual_geoid = geoid_name if geoid_name else 'g2018'
-        geoid = self._get_grid('proj', actual_geoid)
+        actual_geoid = geoid_name if geoid_name else "g2018"
+        geoid = self._get_grid("proj", actual_geoid)
         total_shift += geoid
         desc.append(f"Geoid({actual_geoid}->NAD83)")
 
         return total_shift, " + ".join(desc)
 
-    def _get_global_chain(self, datum_name, model='fes2014'):
+    def _get_global_chain(self, datum_name, model="fes2014"):
         """Builds shift: Global Tidal -> WGS84 Native."""
 
         total_shift = np.zeros((self.ny, self.nx))
@@ -201,24 +199,24 @@ class VerticalTransform:
         if not model_def:
             return total_shift, "Error"
 
-        provider = model_def['provider']
+        provider = model_def["provider"]
 
         # Tidal -> MSS
-        if datum_name in ['lat', 'hat']:
-            grid_name = model_def['grids'].get(datum_name)
+        if datum_name in ["lat", "hat"]:
+            grid_name = model_def["grids"].get(datum_name)
             if grid_name:
                 grid = self._get_grid(provider, grid_name)
                 # Sign Correction
-                if datum_name == 'lat' and np.nanmean(grid) > 0:
+                if datum_name == "lat" and np.nanmean(grid) > 0:
                     grid *= -1.0
-                elif datum_name == 'hat' and np.nanmean(grid) < 0:
+                elif datum_name == "hat" and np.nanmean(grid) < 0:
                     grid *= -1.0
 
                 total_shift += grid
                 desc.append(f"{datum_name.upper()}->MSS")
 
         # MSS -> WGS84
-        mss_name = model_def['grids'].get('mss')
+        mss_name = model_def["grids"].get("mss")
         if mss_name:
             mss_grid = self._get_grid(provider, mss_name)
             total_shift += mss_grid
@@ -244,11 +242,11 @@ class VerticalTransform:
         chain_shift = None
         chain_desc = ""
 
-        if ref_type == 'surface':
-            datum_name = Datums.SURFACES[epsg]['name']
-            region_tag = Datums.SURFACES[epsg].get('region')
+        if ref_type == "surface":
+            datum_name = Datums.SURFACES[epsg]["name"]
+            region_tag = Datums.SURFACES[epsg].get("region")
 
-            if region_tag == 'usa':
+            if region_tag == "usa":
                 s, d = self._get_vdatum_chain(datum_name, geoid)
                 # Fallback
                 if s is None:
@@ -256,23 +254,23 @@ class VerticalTransform:
                     native_epsg = WGS84_EPSG
                     proxy_name = Datums.get_global_proxy(datum_name)
                     if proxy_name:
-                        s, d = self._get_global_chain(proxy_name, model='fes2014')
+                        s, d = self._get_global_chain(proxy_name, model="fes2014")
                         d = f"Global({proxy_name}) [Proxy] -> WGS84"
 
                 chain_shift, chain_desc = s, d
 
-            elif region_tag == 'global':
+            elif region_tag == "global":
                  chain_shift, chain_desc = self._get_global_chain(datum_name)
 
-        elif ref_type == 'cdn':
+        elif ref_type == "cdn":
             # Ortho -> Native
-            target_geoid = geoid if geoid else 'g2018'
+            target_geoid = geoid if geoid else "g2018"
             geoid_def = Datums.GEOIDS.get(target_geoid, {})
-            provider = geoid_def.get('provider', 'proj')
+            provider = geoid_def.get("provider", "proj")
             chain_shift = self._get_grid(provider, target_geoid)
             chain_desc = f"Ortho(via {target_geoid}) -> Frame({native_epsg})"
 
-        elif ref_type == 'htdp':
+        elif ref_type == "htdp":
             # Frame is already Native
             chain_shift = np.zeros((self.ny, self.nx))
             chain_desc = f"Frame({epsg})"
@@ -304,9 +302,9 @@ class VerticalTransform:
              desc_parts.append(f"Hub({self.hub_epsg}->{native_epsg})")
 
         # --- Native -> Output ---
-        if ref_type == 'surface':
-            datum_name = Datums.SURFACES[epsg]['name']
-            chain_geoid = geoid if geoid else 'g2018'
+        if ref_type == "surface":
+            datum_name = Datums.SURFACES[epsg]["name"]
+            chain_geoid = geoid if geoid else "g2018"
             s, d = self._get_vdatum_chain(datum_name, chain_geoid)
             if s is None:
                 return np.zeros((self.ny, self.nx)), "FAILED Output Chain"
@@ -315,10 +313,10 @@ class VerticalTransform:
             total_out -= s
             desc_parts.append(f"Native -> VDatum({datum_name})")
 
-        elif ref_type == 'cdn':
-            target_geoid = geoid if geoid else 'g2018'
+        elif ref_type == "cdn":
+            target_geoid = geoid if geoid else "g2018"
             geoid_def = Datums.GEOIDS.get(target_geoid, {})
-            provider = geoid_def.get('provider', 'proj')
+            provider = geoid_def.get("provider", "proj")
             geoid_grid = self._get_grid(provider, target_geoid)
 
             total_out -= geoid_grid
