@@ -15,8 +15,8 @@ __credits__ = "CIRES"
 
 import os
 import glob
-from .hooks import TransformezHook
-from fetchez.hooks.registry import HookRegistry
+# from .hooks import TransformezHook
+# from fetchez.hooks.registry import HookRegistry
 from fetchez.registry import FetchezRegistry
 
 from .modules import TransformezMod
@@ -73,13 +73,13 @@ def setup_fetchez(registry_cls):
         }
     )
 
-    HookRegistry.register_hook(TransformezHook)
-    from fetchez.presets import register_global_preset
-    register_global_preset(
-        name="make-shift-grid",
-        help_text="Download datum grids and composite them into a single shift grid.",
-        hooks=[
-            {"name": "transformez", "args": {}}
-        ]
-    )
+    # HookRegistry.register_hook(TransformezHook)
+    # from fetchez.presets import register_global_preset
+    # register_global_preset(
+    #     name="make-shift-grid",
+    #     help_text="Download datum grids and composite them into a single shift grid.",
+    #     hooks=[
+    #         {"name": "transformez", "args": {}}
+    #     ]
+    # )
 setup_fetchez(FetchezRegistry)

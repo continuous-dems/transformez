@@ -57,13 +57,13 @@ class TransformezMod(core.FetchModule):
         from fetchez import utils
         try:
             inc_val = utils.str2inc(self.increment)
-            nx = int(self.src_region.width / inc_val)
-            ny = int(self.src_region.height / inc_val)
+            nx = int(self.region.width / inc_val)
+            ny = int(self.region.height / inc_val)
         except Exception:
             logger.warning(f"Invalid increment '{self.increment}', defaulting to 3s (~0.000833).")
             # Default roughly 3 arc-seconds (approx 90m)
-            nx = int(self.src_region.width / 0.00083333333)
-            ny = int(self.src_region.height / 0.00083333333)
+            nx = int(self.region.width / 0.00083333333)
+            ny = int(self.region.height / 0.00083333333)
 
         def parse_d(d_str):
             if ':' in str(d_str):
@@ -84,7 +84,7 @@ class TransformezMod(core.FetchModule):
             dst_fn = f"shift_{s_name}_to_{d_name}.tif"
 
         vt = VerticalTransform(
-            region=self.src_region,
+            region=self.region,
             nx=nx, ny=ny,
             epsg_in=epsg_in, epsg_out=epsg_out,
             geoid_in=geoid_in, geoid_out=geoid_out,
@@ -99,7 +99,7 @@ class TransformezMod(core.FetchModule):
             return
 
         full_path = os.path.join(os.getcwd(), dst_fn)
-        GridWriter.write(full_path, shift_array, self.src_region)
+        GridWriter.write(full_path, shift_array, self.region)
 
         self.add_entry_to_results(
             url=f"file://{dst_fn}",
