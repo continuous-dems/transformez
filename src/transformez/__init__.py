@@ -82,4 +82,4 @@ def setup_fetchez(registry_cls):
             {"name": "transformez", "args": {}}
         ]
     )
-# setup_fetchez(FetchezRegistry)
+setup_fetchez(FetchezRegistry)
