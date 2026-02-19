@@ -24,15 +24,15 @@ def _find_proj_lib():
 
     try:
         import rasterio
-        r_path = os.path.join(os.path.dirname(rasterio.__file__), 'proj_data')
-        if os.path.exists(os.path.join(r_path, 'proj.db')):
+        r_path = os.path.join(os.path.dirname(rasterio.__file__), "proj_data")
+        if os.path.exists(os.path.join(r_path, "proj.db")):
             return r_path
 
         parent = os.path.dirname(os.path.dirname(rasterio.__file__))
-        libs = glob.glob(os.path.join(parent, 'rasterio.libs*'))
+        libs = glob.glob(os.path.join(parent, "rasterio.libs*"))
         if libs:
             for root, _, files in os.walk(libs[0]):
-                if 'proj.db' in files:
+                if "proj.db" in files:
                     return root
     except ImportError:
         pass
@@ -40,7 +40,7 @@ def _find_proj_lib():
     try:
         import pyproj
         p_path = pyproj.datadir.get_data_dir()
-        if os.path.exists(os.path.join(p_path, 'proj.db')):
+        if os.path.exists(os.path.join(p_path, "proj.db")):
             return p_path
     except ImportError:
         pass
@@ -49,14 +49,15 @@ def _find_proj_lib():
 
 target_proj_lib = _find_proj_lib()
 
-if 'PROJ_LIB' in os.environ:
-    del os.environ['PROJ_LIB']
+if "PROJ_LIB" in os.environ:
+    del os.environ["PROJ_LIB"]
 
 if target_proj_lib:
-    os.environ['PROJ_LIB'] = target_proj_lib
+    os.environ["PROJ_LIB"] = target_proj_lib
 
 def setup_fetchez(registry_cls):
     """Called by fetchez when loading plugins.
+
     Registers modules, hooks, and presets.
     """
 
