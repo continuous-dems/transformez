@@ -244,8 +244,13 @@ class VerticalTransform:
         mss_name = model_def["grids"].get("mss")
         if mss_name:
             mss_grid = self._get_grid(provider, mss_name)
+            if provider == 'seanoe' or 'fes' in model.lower():
+                mss_grid -= 0.70
+                desc.append("MSS->WGS84(TP_Corr)")
+            else:
+                desc.append("MSS->Ellipsoid")
+
             total_shift += mss_grid
-            desc.append("MSS->Ellipsoid")
 
         if not desc:
             return total_shift, "Global Chain (Empty)"
