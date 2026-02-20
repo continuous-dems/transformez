@@ -70,6 +70,7 @@ class VerticalTransform:
 
     def _get_native_ellipsoid(self, epsg, ref_type):
         """Helper to identify the native frame of a datum."""
+
         if ref_type == 'surface':
             # NOAA VDatum = NAD83, Global = WGS84
             region = Datums.SURFACES[epsg].get('region')
@@ -80,7 +81,7 @@ class VerticalTransform:
         elif ref_type == 'htdp':
             # If it's a Frame, it is its own native ellipsoid
             return epsg
-        return WGS84_EPSG # Default fallback
+        return WGS84_EPSG # Default
 
     def fetch_grid(self, module_name, **kwargs):
         """Generic fetcher wrapper."""
@@ -158,34 +159,58 @@ class VerticalTransform:
             logger.error(f"    [HTDP] Failed: {e}")
             return np.zeros((self.ny, self.nx))
 
+    def _fetch_geoid_with_fallback(self, target_geoid):
+        """Fetches a geoid grid. If the primary geoid lacks coverage (e.g., GEOID18 in AK),
+        it automatically falls back to older, compatible models.
+        """
+
+        # Ordered list of preferred US geoids (Newest to Oldest)
+        us_geoids = ['g2018', 'g2012b', 'geoid09']
+
+        if target_geoid in us_geoids:
+            start_idx = us_geoids.index(target_geoid)
+            geoids_to_try = us_geoids[start_idx:]
+        else:
+            geoids_to_try = [target_geoid]
+
+        for g in geoids_to_try:
+            geoid_def = Datums.GEOIDS.get(g, {})
+            provider = geoid_def.get('provider', 'proj')
+            grid = self._get_grid(provider, g)
+
+            if np.any(grid):
+                if g != target_geoid and self.verbose:
+                    logger.info(f"    [Geoid Fallback] '{target_geoid}' lacks coverage here. Falling back to '{g}'.")
+                return grid, g
+
+        return np.zeros((self.ny, self.nx)), target_geoid
+
     # =========================================================================
     # Chains
     # =========================================================================
     def _get_vdatum_chain(self, datum_name, geoid_name):
         """Builds shift: Tidal -> [NAD83 Native]."""
-
         total_shift = np.zeros((self.ny, self.nx))
         desc = []
 
         # Tidal -> LMSL
-        if datum_name not in ["msl", "5714", "lmsl"]:
-            grid = self._get_grid("vdatum", datum_name)
-            if not np.any(grid):
-                return None, f"Missing Tidal Grid: {datum_name}"
-
+        if datum_name not in ['msl', '5714', 'lmsl']:
+            grid = self._get_grid('vdatum', datum_name)
+            if not np.any(grid): return None, f"Missing Tidal Grid: {datum_name}"
             total_shift += grid
             desc.append(f"({datum_name}->LMSL)")
 
         # LMSL -> Ortho (TSS)
-        tss = self._get_grid("vdatum", "tss")
+        tss = self._get_grid('vdatum', 'tss')
         total_shift += tss
         desc.append("TSS(LMSL->NAVD88)")
 
-        # Ortho -> NAD83 (Geoid)
-        actual_geoid = geoid_name if geoid_name else "g2018"
-        geoid = self._get_grid("proj", actual_geoid)
-        total_shift += geoid
-        desc.append(f"Geoid({actual_geoid}->NAD83)")
+        # Ortho -> NAD83 (Smart Geoid Fallback)
+        actual_geoid = geoid_name if geoid_name else 'g2018'
+        geoid_grid, used_geoid = self._fetch_geoid_with_fallback(actual_geoid)
+
+        total_shift += geoid_grid
+        desc.append(f"Geoid({used_geoid}->NAD83)")
 
         return total_shift, " + ".join(desc)
 
@@ -232,50 +257,38 @@ class VerticalTransform:
     # =========================================================================
     def _step_to_hub(self, epsg, ref_type, geoid=None, epoch=None):
         shift = np.zeros((self.ny, self.nx))
-        if epsg == self.hub_epsg:
-            return shift, "Already at Hub"
+        if epsg == self.hub_epsg: return shift, "Already at Hub"
 
-        # Determine the Native Ellipsoid of this specific Input
         native_epsg = self._get_native_ellipsoid(epsg, ref_type)
-
-        # Calculate Input -> Native
         chain_shift = None
         chain_desc = ""
 
-        if ref_type == "surface":
-            datum_name = Datums.SURFACES[epsg]["name"]
-            region_tag = Datums.SURFACES[epsg].get("region")
+        if ref_type == 'surface':
+            datum_name = Datums.SURFACES[epsg]['name']
+            region_tag = Datums.SURFACES[epsg].get('region')
 
-            if region_tag == "usa":
+            if region_tag == 'usa':
                 s, d = self._get_vdatum_chain(datum_name, geoid)
-                # Fallback
                 if s is None:
-                    # Switch to Global Chain (Native=WGS84)
                     native_epsg = WGS84_EPSG
                     proxy_name = Datums.get_global_proxy(datum_name)
                     if proxy_name:
-                        s, d = self._get_global_chain(proxy_name, model="fes2014")
+                        s, d = self._get_global_chain(proxy_name, model='fes2014')
                         d = f"Global({proxy_name}) [Proxy] -> WGS84"
-
                 chain_shift, chain_desc = s, d
 
-            elif region_tag == "global":
+            elif region_tag == 'global':
                  chain_shift, chain_desc = self._get_global_chain(datum_name)
 
-        elif ref_type == "cdn":
-            # Ortho -> Native
-            target_geoid = geoid if geoid else "g2018"
-            geoid_def = Datums.GEOIDS.get(target_geoid, {})
-            provider = geoid_def.get("provider", "proj")
-            chain_shift = self._get_grid(provider, target_geoid)
-            chain_desc = f"Ortho(via {target_geoid}) -> Frame({native_epsg})"
+        elif ref_type == 'cdn':
+            target_geoid = geoid if geoid else 'g2018'
+            chain_shift, used_geoid = self._fetch_geoid_with_fallback(target_geoid)
+            chain_desc = f"Ortho(via {used_geoid}) -> Frame({native_epsg})"
 
-        elif ref_type == "htdp":
-            # Frame is already Native
+        elif ref_type == 'htdp':
             chain_shift = np.zeros((self.ny, self.nx))
             chain_desc = f"Frame({epsg})"
 
-        # --- Native -> Hub ---
         if chain_shift is not None:
             if native_epsg != self.hub_epsg:
                 htdp_shift = self._get_htdp_shift(native_epsg, self.hub_epsg, epoch, self.epoch_out)
@@ -287,12 +300,9 @@ class VerticalTransform:
 
     def _step_from_hub(self, epsg, ref_type, geoid=None, epoch=None):
         shift = np.zeros((self.ny, self.nx))
-        if epsg == self.hub_epsg:
-            return shift, "Remain at Hub"
+        if epsg == self.hub_epsg: return shift, "Remain at Hub"
 
         native_epsg = self._get_native_ellipsoid(epsg, ref_type)
-
-        # --- Hub -> Native ---
         total_out = np.zeros((self.ny, self.nx))
         desc_parts = []
 
@@ -301,26 +311,25 @@ class VerticalTransform:
              total_out += htdp_shift
              desc_parts.append(f"Hub({self.hub_epsg}->{native_epsg})")
 
-        # --- Native -> Output ---
-        if ref_type == "surface":
-            datum_name = Datums.SURFACES[epsg]["name"]
-            chain_geoid = geoid if geoid else "g2018"
+        if ref_type == 'surface':
+            datum_name = Datums.SURFACES[epsg]['name']
+            chain_geoid = geoid if geoid else 'g2018'
             s, d = self._get_vdatum_chain(datum_name, chain_geoid)
             if s is None:
                 return np.zeros((self.ny, self.nx)), "FAILED Output Chain"
 
-            # Subtract because Chain is Input->Native
             total_out -= s
             desc_parts.append(f"Native -> VDatum({datum_name})")
 
-        elif ref_type == "cdn":
-            target_geoid = geoid if geoid else "g2018"
-            geoid_def = Datums.GEOIDS.get(target_geoid, {})
-            provider = geoid_def.get("provider", "proj")
-            geoid_grid = self._get_grid(provider, target_geoid)
+        elif ref_type == 'cdn':
+            target_geoid = geoid if geoid else 'g2018'
+            geoid_grid, used_geoid = self._fetch_geoid_with_fallback(target_geoid)
+
+            if not np.any(geoid_grid):
+                logger.warning(f"Geoid {target_geoid} (and fallbacks) not found/covered.")
 
             total_out -= geoid_grid
-            desc_parts.append(f"Native -> Ortho(via {target_geoid})")
+            desc_parts.append(f"Native -> Ortho(via {used_geoid})")
 
         return total_out, " + ".join(desc_parts)
 
