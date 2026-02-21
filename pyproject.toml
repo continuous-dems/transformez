@@ -32,6 +32,12 @@ dependencies = [
 
 keywords = ["Geospatial"]
 
+[dependency-groups]
+test = [
+    "pytest",
+    "pytest-cov",
+]
+
 [project.entry-points."fetchez.plugins"]
 transformez = "transformez"
 
