@@ -4,7 +4,7 @@
 
 *Transformez Les Données*
 
-> 🚀 **v0.2.0:** Now supporting global tidal transformations via FES2014 & SEANOE.
+> 🚀 **v0.2.2:** Now supporting global tidal transformations via FES2014 & SEANOE.
 
 **Transformez** is a standalone Python engine for converting geospatial data between vertical datums (e.g., `MLLW` ↔ `NAVD88` ↔ `Ellipsoid`).
 
