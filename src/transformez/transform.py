@@ -279,7 +279,7 @@ class VerticalTransform:
                     proxy_name = Datums.get_global_proxy(datum_name)
                     if proxy_name:
                         s, d = self._get_global_chain(proxy_name, model='fes2014')
-                        d = f"Global({proxy_name}) [Proxy] -> WGS84"
+                        # d = f"Global({proxy_name}) [Proxy] -> WGS84"
                 chain_shift, chain_desc = s, d
 
             elif region_tag == 'global':
