@@ -28,6 +28,7 @@ dependencies = [
     'pyproj',
     'rasterio',
     'fetchez>0.3.3',
+    'scipy',
 ]
 
 keywords = ["Geospatial"]
