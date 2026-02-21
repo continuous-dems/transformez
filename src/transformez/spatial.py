@@ -13,7 +13,7 @@ srs aware Region from fetchez
 
 import logging
 import warnings
-from typing import Union, List
+from typing import Union, List, Optional
 
 import numpy as np
 from fetchez.utils import str_or
@@ -64,7 +64,7 @@ class TransRegion(Region):
 
         return int(x_start), int(y_start), int(x_size), int(y_size)
 
-    def geo_transform(self, x_inc: float = 0, y_inc: float = None, node: str = 'grid'):
+    def geo_transform(self, x_inc: float = 0, y_inc: Optional[float] = None, node: str = 'grid'):
         """Return dimensions and a geotransform based on the region and a cellsize.
 
         Returns:
@@ -88,7 +88,7 @@ class TransRegion(Region):
         dst_gt = (self.xmin, x_inc, 0, self.ymax, 0, y_inc)
         return dst_gt
 
-    def to_geo_transform(region, nx: int, ny: int):
+    def to_geo_transform(self, nx: int, ny: int):
         """Generate a GDAL-style GeoTransform from extent and dimensions.
 
         Args:
@@ -271,39 +271,39 @@ def transform_increment(dst_inc_x, dst_inc_y, transformer, region_center):
     return src_inc_x, src_inc_y
 
 
-def parse_region(input_r: Union[str, List]) -> List[Region]:
-    """Main function to parse region input into a list of Region objects."""
+# def parse_region(input_r: Union[str, List]) -> List[Region]:
+#     """Main function to parse region input into a list of Region objects."""
 
-    regions = []
+#     regions = []
 
-    # Single String
-    if isinstance(input_r, str):
-        s_lower = input_r.lower()
-        if s_lower.endswith(('.json', '.geojson')):
-            rs = TransRegion.from_list(region_from_geojson(input_r))
-            if rs:
-                regions.extend(rs)
-        elif s_lower.startswith(('loc:', 'place:')):
-            r = TransRegion.from_list(region_from_place(input_r))
-            if r:
-                regions.append(r)
-        else:
-            r = TransRegion.from_string(input_r)
-            if r:
-                regions.append(r)
+#     # Single String
+#     if isinstance(input_r, str):
+#         s_lower = input_r.lower()
+#         if s_lower.endswith(('.json', '.geojson')):
+#             rs = TransRegion.from_list(region_from_geojson(input_r))
+#             if rs:
+#                 regions.extend(rs)
+#         elif s_lower.startswith(('loc:', 'place:')):
+#             r = TransRegion.from_list(region_from_place(input_r))
+#             if r:
+#                 regions.append(r)
+#         else:
+#             r = TransRegion.from_string(input_r)
+#             if r:
+#                 regions.append(r)
 
-    # List/Tuple (Coordinate list OR List of strings)
-    elif isinstance(input_r, (list, tuple)):
-        # Check if it is a single Coordinate List [w, e, s, n]
-        if len(input_r) == 4 and all(isinstance(n, (int, float)) for n in input_r):
-            regions.append(TransRegion.from_list(input_r))
-        else:
-            # Recursive parse for list of identifiers
-            for item in input_r:
-                regions.extend(parse_region(item))
+#     # List/Tuple (Coordinate list OR List of strings)
+#     elif isinstance(input_r, (list, tuple)):
+#         # Check if it is a single Coordinate List [w, e, s, n]
+#         if len(input_r) == 4 and all(isinstance(n, (int, float)) for n in input_r):
+#             regions.append(TransRegion.from_list(input_r))
+#         else:
+#             # Recursive parse for list of identifiers
+#             for item in input_r:
+#                 regions.extend(parse_region(item))
 
-    if not regions:
-        if input_r is not None:
-            logger.warning(f'Failed to parse region {input_r}')
+#     if not regions:
+#         if input_r is not None:
+#             logger.warning(f'Failed to parse region {input_r}')
 
-    return regions
+#     return regions
