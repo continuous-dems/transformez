@@ -1,17 +1,25 @@
 [build-system]
-requires = ['setuptools>=61.0']
-build-backend = 'setuptools.build_meta'
+requires = ["hatchling>=1.5.0", "hatch-vcs"]
+build-backend = "hatchling.build"
 
 [project]
 name = 'transformez'
-version = '0.2.1'
 description = 'A standalone utility for vertical elevation datum transformations.'
 readme = "README.md"
-authors = [{ name = 'Matthew Love' }]
-license = { file = 'LICENSE' }
+requires-python = ">=3.8"
+license = { file = "LICENSE" }
+dynamic = ["version"]
+authors = [
+    {name = "Matthew Love", email = "matthew.love@colorado.edu"},
+    {name = "Christopher Amante", email = "christopher.amante@colorado.edu"},
+    {name = "Elliot Lim", email = "elliot.lim@colorado.edu"},
+    {name = "Michael MacFerrin", email = "michael.macferrin@colorado.edu"},
+]
+maintainers = [
+    {name = "Matthew Love", email = "matthew.love@colorado.edu"},
+]
 classifiers = [
     'Programming Language :: Python :: 3',
-    'License :: OSI Approved :: MIT License',
     'Operating System :: OS Independent',
     'Topic :: Scientific/Engineering :: GIS',
 ]
@@ -31,11 +39,30 @@ transformez = "transformez"
 transformez = 'transformez.cli:transformez_cli'
 
 [project.urls]
-Homepage = "https://github.com/ciresdem/transformez"
-Issues = "https://github.com/ciresdem/transformez/issues"
+Homepage = "https://github.com/continuous-dems/transformez"
+Issues = "https://github.com/continuous-dems/transformez/issues"
 
-[tool.setuptools.packages.find]
-where = ["src"]  # Look for packages inside the 'src' folder
-include = ["transformez*"]  # Include the package named 'transformez'
-exclude = ["tests*", "docs*", "scripts*", "examples*"]
-namespaces = false
+# --- Build configuration ---
+
+[tool.hatch.version]
+source = "vcs"
+
+[tool.hatch.build.hooks.version]
+path = "src/fetchez/_version.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/fetchez"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+  "src/transformez",
+  "tests",
+  "CHANGELOG.md",
+  "CITATION.cff",
+  "CONTRIBUTING.md",
+  "AUTHORS.md",
+]
+exclude = [
+  ".github",
+]
+

@@ -9,9 +9,25 @@ transformez
 :license: MIT, see LICENSE for more details.
 """
 
-__version__ = "0.2.1"
 __author__ = "Matthew Love"
 __credits__ = "CIRES"
+
+try:
+    from transformez._version import __version__
+except ImportError:
+    # Fallback when using the package from source without installing
+    # in editable mode with pip (nobody should do this):
+    # <https://pip.pypa.io/en/stable/topics/local-project-installs/#editable-installs>
+    import warnings
+
+    warnings.warn(
+        "Importing 'transformez' outside a proper installation."
+        " It's highly recommended to install the package from a stable release or"
+        " in editable mode.",
+        stacklevel=2,
+    )
+    __version__ = "dev"
+
 
 import os
 import glob
