@@ -33,7 +33,16 @@ dependencies = [
 
 keywords = ["Geospatial"]
 
+[project.optional-dependencies]
+preview = ["matplotlib"]
+
+full = ["transformez[preview]"]
+
+
 [dependency-groups]
+dev = [
+    "mypy",
+]
 test = [
     "pytest",
     "pytest-cov",
@@ -73,3 +82,23 @@ exclude = [
   ".github",
 ]
 
+
+# --- Devtools configuration ---
+
+[tool.mypy]
+mypy_path = "src"
+packages = ["transformez"]
+python_version = "3.12"
+disable_error_code = ["import-untyped"]
+# strict = true
+
+[[tool.mypy.overrides]]
+module = [
+    "matplotlib.*",
+    "rasterio.*",
+    "scipy.*",
+    "pyproj.*",
+    "fetchez.*",
+]
+ignore_missing_imports = true
+follow_untyped_imports = true
