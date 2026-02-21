@@ -13,7 +13,7 @@ __author__ = "Matthew Love"
 __credits__ = "CIRES"
 
 try:
-    from fetchez._version import __version__
+    from transformez._version import __version__
 except ImportError:
     # Fallback when using the package from source without installing
     # in editable mode with pip (nobody should do this):
@@ -21,7 +21,7 @@ except ImportError:
     import warnings
 
     warnings.warn(
-        "Importing 'fetchez' outside a proper installation."
+        "Importing 'transformez' outside a proper installation."
         " It's highly recommended to install the package from a stable release or"
         " in editable mode.",
         stacklevel=2,

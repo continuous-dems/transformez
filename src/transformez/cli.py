@@ -73,7 +73,7 @@ def list_supported_datums():
 
 def transformez_cli():
     parser = argparse.ArgumentParser(
-        description="Global Vertical Datum Transformer",
+        description=f"{utils.CYAN}%(prog)s{utils.RESET} ({__version__}) :: Global Vertical Datum Transformer",
         epilog="Examples:\n"
                "  transformez -R -166/-164/63/64 -I mllw -O 4979\n"
                "  transformez input_dem.tif -I mllw -O 5703:geoid=g2012b",
@@ -100,6 +100,9 @@ def transformez_cli():
     grp_sys.add_argument('--list-datums', action='store_true', help='List supported datums.')
     grp_sys.add_argument('--cache-dir', help='Override cache directory.')
     grp_sys.add_argument('--verbose', action='store_true', help='Enable debug logging.')
+    grp_sys.add_argument(
+        "-v", "--version", action="version", version=f"%(prog)s {__version__}"
+    )
 
     args = parser.parse_args()
 
