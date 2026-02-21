@@ -28,9 +28,16 @@ dependencies = [
     'pyproj',
     'rasterio',
     'fetchez>0.3.3',
+    'scipy',
 ]
 
 keywords = ["Geospatial"]
+
+[dependency-groups]
+test = [
+    "pytest",
+    "pytest-cov",
+]
 
 [project.entry-points."fetchez.plugins"]
 transformez = "transformez"
