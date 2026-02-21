@@ -48,10 +48,10 @@ Issues = "https://github.com/continuous-dems/transformez/issues"
 source = "vcs"
 
 [tool.hatch.build.hooks.version]
-path = "src/fetchez/_version.py"
+path = "src/transformez/_version.py"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/fetchez"]
+packages = ["src/transformez"]
 
 [tool.hatch.build.targets.sdist]
 include = [
