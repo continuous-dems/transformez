@@ -6,7 +6,7 @@ build-backend = "hatchling.build"
 name = 'transformez'
 description = 'A standalone utility for vertical elevation datum transformations.'
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.10"
 license = { file = "LICENSE" }
 dynamic = ["version"]
 authors = [
@@ -24,9 +24,9 @@ classifiers = [
     'Topic :: Scientific/Engineering :: GIS',
 ]
 dependencies = [
-    'numpy<2.0.0',
-    'pyproj',
-    'rasterio',
+    'numpy>1.24',
+    'pyproj>3.6.1',
+    'rasterio>1.4.0',
     'fetchez>0.3.3',
     'scipy',
 ]
