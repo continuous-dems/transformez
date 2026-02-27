@@ -73,24 +73,36 @@ fetchez gebco ... --hook transformez:datum_in=5773,datum_out=4979
 
 ## Python API
 
-```python
-from transformez.transform import VerticalTransform
-from fetchez.spatial import Region
+Transformez provides a high-level API for embedding transformations directly into your Python scripts, Jupyter Notebooks, or automated pipelines.
 
-# Define a region in India (Bay of Bengal)
-region = Region(80, 85, 10, 15)
+```ython
+import transformez
 
-# Initialize Transformer
-# Requesting "MLLW" in India triggers the Global Fallback automatically
-vt = VerticalTransform(
-    region=region,
-    nx=1000, ny=1000,
-    epsg_in="mllw",       # Will resolve to FES2014 LAT
-    epsg_out="epsg:4979"  # WGS84 Ellipsoid
+# ---------------------------------------------------------
+# Generate a Shift Grid
+# ---------------------------------------------------------
+# Returns a 2D numpy array. Optionally saves to a file.
+# Requesting "mllw" in India triggers the Global Fallback (FES2014) automatically.
+
+shift_array = transformez.generate_grid(
+    region=[80, 85, 10, 15],  # [West, East, South, North]
+    increment="3s",           # Grid resolution
+    datum_in="mllw",
+    datum_out="4979",         # WGS84 Ellipsoid
+    out_fn="india_shift.tif"  # Optional: Save to disk
 )
 
-# Generate Shift
-shift, unc = vt._vertical_transform(vt.epsg_in, vt.epsg_out)
+# ---------------------------------------------------------
+# Transform an Existing Raster
+# ---------------------------------------------------------
+# Applies the datum shift directly to a DEM and saves the result.
+
+out_file = transformez.transform_raster(
+    input_raster="my_dem_mllw.tif",
+    datum_in="mllw",
+    datum_out="5703:g2012b",  # NAVD88 using specific GEOID12B
+    output_raster="my_dem_navd88.tif"
+)
 ```
 
 ## Supported Datums
