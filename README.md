@@ -23,7 +23,7 @@ Transformez relies on the NGS Horizontal Time-Dependent Positioning (HTDP) softw
 You will need a Fortran compiler (like `gfortran`) to compile the source code.
 ```bash
 # 1. Download the Fortran source code
-wget [https://geodesy.noaa.gov/TOOLS/Htdp/HTDP-download.zip](https://geodesy.noaa.gov/TOOLS/Htdp/HTDP-download.zip)
+wget https://geodesy.noaa.gov/TOOLS/Htdp/HTDP-download.zip
 unzip HTDP-download.zip
 
 # 2. Compile it
