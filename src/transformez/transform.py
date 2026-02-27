@@ -198,7 +198,8 @@ class VerticalTransform:
         # Tidal -> LMSL
         if datum_name not in ['msl', '5714', 'lmsl']:
             grid = self._get_grid('vdatum', datum_name)
-            if not np.any(grid): return None, f"Missing Tidal Grid: {datum_name}"
+            if not np.any(grid):
+                return None, f"Missing Tidal Grid: {datum_name}"
             total_shift += grid
             desc.append(f"({datum_name}->LMSL)")
 
@@ -264,7 +265,8 @@ class VerticalTransform:
     # =========================================================================
     def _step_to_hub(self, epsg, ref_type, geoid=None, epoch=None):
         shift = np.zeros((self.ny, self.nx))
-        if epsg == self.hub_epsg: return shift, "Already at Hub"
+        if epsg == self.hub_epsg:
+            return shift, "Already at Hub"
 
         native_epsg = self._get_native_ellipsoid(epsg, ref_type)
         chain_shift = None
@@ -307,7 +309,8 @@ class VerticalTransform:
 
     def _step_from_hub(self, epsg, ref_type, geoid=None, epoch=None):
         shift = np.zeros((self.ny, self.nx))
-        if epsg == self.hub_epsg: return shift, "Remain at Hub"
+        if epsg == self.hub_epsg:
+            return shift, "Remain at Hub"
 
         native_epsg = self._get_native_ellipsoid(epsg, ref_type)
         total_out = np.zeros((self.ny, self.nx))

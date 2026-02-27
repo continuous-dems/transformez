@@ -34,7 +34,8 @@ logging.getLogger("fetchez").setLevel(logging.WARNING)
 
 def parse_compound_datum(datum_arg):
     """Parse string 'EPSG:GEOID' or 'NAME'."""
-    if not datum_arg: return None, None
+    if not datum_arg:
+        return None, None
     s = str(datum_arg)
     if ':' in s:
         parts = s.split(':')
@@ -128,7 +129,8 @@ def transformez_cli():
         logger.warning("=" * 60)
 
     cache_dir = args.cache_dir or os.path.join(os.path.expanduser('~'), '.transformez')
-    if not os.path.exists(cache_dir): os.makedirs(cache_dir)
+    if not os.path.exists(cache_dir):
+        os.makedirs(cache_dir)
 
     # Parse Datums
     epsg_in, geoid_in = parse_compound_datum(args.input_datum)
@@ -176,9 +178,9 @@ def transformez_cli():
             inc_val = utils.str2inc(args.increment)
             nx = int(region_obj.width / inc_val)
             ny = int(region_obj.height / inc_val)
-        except:
+        except Exception as e:
             parser.print_help()
-            logger.error(f"Invalid increment: {args.increment}")
+            logger.error(f"Invalid increment: {args.increment}: {e}")
             sys.exit(1)
 
         if not args.output:
@@ -211,10 +213,10 @@ def transformez_cli():
         plot_grid(shift_array, region_obj, title=f"{args.input_datum} -> {args.output_datum}")
 
     if target_dem:
-        logger.info(f"Applying shift to raster...")
+        logger.info(f"Applying shift to {target_dem}...")
         GridEngine.apply_vertical_shift(target_dem, shift_array, dst_fn)
     else:
-        logger.info(f"Writing shift grid...")
+        logger.info(f"Writing shift {dst_fn}...")
         GridWriter.write(dst_fn, shift_array, region_obj)
 
     logger.info(f"Success: {dst_fn}")

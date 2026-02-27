@@ -29,6 +29,8 @@ except ImportError:
     __version__ = "dev"
 
 
+from .api import generate_grid, transform_raster
+
 import os
 import glob
 # from .hooks import TransformezHook
@@ -99,3 +101,5 @@ def setup_fetchez(registry_cls):
     #     ]
     # )
 setup_fetchez(FetchezRegistry)
+
+__all__ = ["generate_grid", "transform_raster"]

@@ -177,10 +177,11 @@ class Datums:
                                  it might return the Global Proxy if requested.
                                  (Currently simplistic, logic lives in Transform class).
         """
-        if not datum_name: return None
+        if not datum_name:
+            return None
         try:
             return int(datum_name)
-        except:
+        except Exception:
             pass
 
         s_name = str(datum_name).lower()
@@ -232,7 +233,7 @@ class Datums:
 
         try:
             e_int = int(epsg)
-        except:
+        except Exception:
             return None
 
         if e_int in cls.CDN:

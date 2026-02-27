@@ -20,16 +20,16 @@ import logging
 import urllib.request
 import zipfile
 import numpy as np
-from typing import Optional, Tuple, List
+from typing import Tuple
 
 from . import utils
 from .definitions import Datums  # Required for ID lookups
 
 logger = logging.getLogger(__name__)
 
-ae = '.exe' if sys.platform == 'win32' else ''
+ae = ".exe" if sys.platform == "win32" else ""
 # Validating HTDP existence
-htdp_cmd = 'echo 0 | htdp 2>&1' if sys.platform == 'win32' else "echo 0 | htdp 2>&1 | grep SOFTWARE | awk '{print $3}'"
+htdp_cmd = "echo 0 | htdp 2>&1" if sys.platform == "win32" else "echo 0 | htdp 2>&1 | grep SOFTWARE | awk '{print $3}'"
 HAS_HTDP = utils.cmd_check(f'htdp{ae}', htdp_cmd)
 
 class HTDP:
@@ -39,13 +39,13 @@ class HTDP:
         self.htdp_bin = htdp_bin
         self.verbose = verbose
         if not HAS_HTDP:
-            logger.error('HTDP is not installed or not in PATH.')
+            logger.error("HTDP is not installed or not in PATH.")
 
     def run_grid(self, region, nx, ny, epsg_in, epsg_out, epoch_in, epoch_out):
-        """
-        Main entry point called by transform.py.
+        """Main entry point called by transform.py.
         Generates a shift grid between two frames.
         """
+
         if not HAS_HTDP:
             logger.warning("HTDP missing. Returning zero shift.")
             return np.zeros((ny, nx))
@@ -56,9 +56,14 @@ class HTDP:
             if epsg in Datums.HTDP:
                 return Datums.HTDP[epsg]['htdp_id']
             # Fallback for common codes if not in dictionary
-            if epsg == 6319: return 1  # NAD83(2011)
-            if epsg == 4979: return 10 # WGS84(G1762)
-            raise ValueError(f"EPSG {epsg} not defined in HTDP dictionary.")
+            if epsg == 6319:
+                return 1  # NAD83(2011)
+
+            if epsg == 4979:
+                return 10 # WGS84(G1762)
+            raise ValueError(
+                f"EPSG {epsg} not defined in HTDP dictionary."
+            )
 
         try:
             id_in = get_id(epsg_in)
@@ -69,9 +74,9 @@ class HTDP:
 
         # Create Temporary Workspace
         with tempfile.TemporaryDirectory() as tmpdir:
-            in_fn = os.path.join(tmpdir, 'htdp_in.txt')
-            out_fn = os.path.join(tmpdir, 'htdp_out.txt')
-            ctl_fn = os.path.join(tmpdir, 'htdp.inp')
+            in_fn = os.path.join(tmpdir, "htdp_in.txt")
+            out_fn = os.path.join(tmpdir, "htdp_out.txt")
+            ctl_fn = os.path.join(tmpdir, "htdp.inp")
 
             # The output Z will be the shift.
             lons = np.linspace(region.xmin, region.xmax, nx)
@@ -110,19 +115,20 @@ class HTDP:
         grid = np.zeros(shape)
         with open(filename, 'r') as f:
             for line in f:
-                if 'PNT_' not in line: continue
+                if "PNT_" not in line:
+                    continue
 
                 try:
                     parts = line.replace('"', ' ').split()
 
                     # HTDP Output Format: Lat, Lon, Height, Text
-                    idx_off = 1 if parts[0] == '*' else 0
+                    idx_off = 1 if parts[0] == "*" else 0
 
                     height = float(parts[2 + idx_off])
 
                     # Parse Tag PNT_x_y
-                    tag_part = next(p for p in parts if 'PNT_' in p)
-                    _, x_str, y_str = tag_part.split('_')
+                    tag_part = next(p for p in parts if "PNT_" in p)
+                    _, x_str, y_str = tag_part.split("_")
                     x, y = int(x_str), int(y_str)
 
                     if 0 <= y < shape[0] and 0 <= x < shape[1]:
@@ -197,11 +203,15 @@ def download_htdp(target_dir=None):
         # Windows: Download pre-compiled EXE
         url = "https://geodesy.noaa.gov/TOOLS/Htdp/htdp.exe"
         out_path = os.path.join(target_dir, "htdp.exe")
-        logger.info(f"Downloading HTDP executable for Windows from NOAA...")
+        logger.info(
+            "Downloading HTDP executable for Windows from NOAA..."
+        )
         try:
             urllib.request.urlretrieve(url, out_path)
             logger.info(f"Success! Downloaded to: {out_path}")
-            logger.info("Please ensure this directory is in your system PATH, or move the file to a PATH directory (e.g., C:\\Windows\\System32).")
+            logger.info(
+                "Please ensure this directory is in your system PATH, or move the file to a PATH directory (e.g., C:\\Windows\\System32)."
+            )
         except Exception as e:
             logger.error(f"Failed to download HTDP: {e}")
 
@@ -211,7 +221,9 @@ def download_htdp(target_dir=None):
         zip_path = os.path.join(target_dir, "HTDP-download.zip")
         src_dir = os.path.join(target_dir, "htdp_source")
 
-        logger.info(f"Downloading HTDP source code for Unix from NOAA...")
+        logger.info(
+            "Downloading HTDP source code for Unix from NOAA..."
+        )
         try:
             urllib.request.urlretrieve(url, zip_path)
 
@@ -221,7 +233,9 @@ def download_htdp(target_dir=None):
             os.remove(zip_path)
 
             logger.info(f"Success! Source code extracted to: {src_dir}")
-            logger.info("HTDP requires compilation on Linux/macOS. Run the following commands:")
+            logger.info(
+                "HTDP requires compilation on Linux/macOS. Run the following commands:"
+            )
             print("\n" + "="*50)
             print(f"cd {src_dir}")
             print("gfortran -o htdp htdp.f")
