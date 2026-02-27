@@ -16,7 +16,7 @@ import logging
 from fetchez import core, cli
 from transformez.transform import VerticalTransform
 from transformez.grid_engine import GridWriter
-from transformez.definitions import Datums
+# from transformez.definitions import Datums
 
 logger = logging.getLogger(__name__)
 

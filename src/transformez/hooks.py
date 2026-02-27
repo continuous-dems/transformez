@@ -19,6 +19,7 @@ from fetchez import utils
 from fetchez import spatial
 
 from .transform import VerticalTransform
+from .grid_engine import GridWriter
 
 logger = logging.getLogger(__name__)
 
@@ -50,7 +51,8 @@ class TransformezHook(FetchHook):
         self.apply = utils.str2bool(apply)
 
     def run(self, entries):
-        if not entries: return entries
+        if not entries:
+            return entries
 
         module = entries[0][0]
         region = getattr(module, "region", None)
@@ -77,7 +79,8 @@ class TransformezHook(FetchHook):
             return entries
 
         for mod, entry in entries:
-            if entry.get("status") != 0: continue
+            if entry.get("status") != 0:
+                continue
 
             filepath = entry["dst_fn"]
 
@@ -98,7 +101,7 @@ class TransformezHook(FetchHook):
             elif ext in [".laz", ".las", "xyz"]:
                 transformed_path = self._apply_pointcloud(filepath, self.output_grid)
 
-            if new_path:
+            if transformed_path:
                 entry["dst_fn"] = transformed_path
                 entry["transformed"] = True
 
@@ -119,8 +122,12 @@ class TransformezHook(FetchHook):
 
         shift_array, _ = vt._vertical_transform(vt.epsg_in, vt.epsg_out)
 
-        if shift_array is not None:
-            gtx.GtxFile.write(self.output_grid, shift_array, region)
+        if shift_array is None:
+            logger.error("Transformation failed to generate a grid.")
+        else:
+            GridWriter.write(
+                self.output_grid, shift_array, region.to_list()
+            )
             logger.info(f"Saved shift grid to {self.output_grid}")
 
     def _apply_raster(self, src, grid):

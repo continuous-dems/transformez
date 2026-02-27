@@ -13,7 +13,7 @@ srs aware Region from fetchez
 
 import logging
 import warnings
-from typing import Union, List, Optional
+from typing import Optional
 
 import numpy as np
 from fetchez.utils import str_or
