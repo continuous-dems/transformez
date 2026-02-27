@@ -31,14 +31,14 @@ gfortran -o htdp htdp.f
 
 # 3. Move it to your PATH
 sudo mv htdp /usr/local/bin/
-Install Transformez
+```
+
+### Install Transformez
 Once HTDP is accessible in your terminal, install the python package:
 
 ```bash
 pip install transformez
 ```
-
-*Requires [htdp](https://geodesy.noaa.gov/TOOLS/Htdp/Htdp.shtml) to be in your system PATH for frame transformations.*
 
 ## Usage
 
