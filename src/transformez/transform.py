@@ -39,6 +39,8 @@ class VerticalTransform:
         self.nx = nx
         self.ny = ny
         self.cache_dir = cache_dir or os.path.join(os.getcwd(), "transformez_cache")
+        if not os.path.exists(self.cache_dir):
+            os.makedirs(self.cache_dir)
         self.verbose = verbose
 
         self.epsg_in = Datums.get_vdatum_by_name(str(epsg_in))
@@ -62,11 +64,11 @@ class VerticalTransform:
         if native_in == NAD83_EPSG and native_out == NAD83_EPSG:
             self.hub_epsg = NAD83_EPSG
             if self.verbose:
-                logger.info(f"    [Optimization] Using Native Hub: NAD83 (EPSG:{self.hub_epsg})")
+                logger.info(f"Using Native Hub: NAD83 (EPSG:{self.hub_epsg})")
         else:
             self.hub_epsg = WGS84_EPSG
             if self.verbose:
-                logger.info(f"    [Optimization] Using Global Hub: WGS84 (EPSG:{self.hub_epsg})")
+                logger.info(f"Using Global Hub: WGS84 (EPSG:{self.hub_epsg})")
 
     def _get_native_ellipsoid(self, epsg, ref_type):
         """Helper to identify the native frame of a datum."""

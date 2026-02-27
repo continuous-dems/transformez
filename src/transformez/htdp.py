@@ -17,6 +17,8 @@ import os
 import subprocess
 import tempfile
 import logging
+import urllib.request
+import zipfile
 import numpy as np
 from typing import Optional, Tuple, List
 
@@ -177,3 +179,54 @@ class HTDP:
                 )
         except Exception as e:
             logger.error(f"HTDP Runtime Error: {e}")
+
+
+def download_htdp(target_dir=None):
+    """Downloads HTDP from NOAA NGS.
+
+    On Windows, downloads the pre-compiled executable.
+    On Linux/Mac, downloads the source and provides compilation instructions.
+    """
+
+    if target_dir is None:
+        target_dir = os.getcwd()
+
+    os.makedirs(target_dir, exist_ok=True)
+
+    if sys.platform == 'win32':
+        # Windows: Download pre-compiled EXE
+        url = "https://geodesy.noaa.gov/TOOLS/Htdp/htdp.exe"
+        out_path = os.path.join(target_dir, "htdp.exe")
+        logger.info(f"Downloading HTDP executable for Windows from NOAA...")
+        try:
+            urllib.request.urlretrieve(url, out_path)
+            logger.info(f"Success! Downloaded to: {out_path}")
+            logger.info("Please ensure this directory is in your system PATH, or move the file to a PATH directory (e.g., C:\\Windows\\System32).")
+        except Exception as e:
+            logger.error(f"Failed to download HTDP: {e}")
+
+    else:
+        # Linux/Mac: Download Fortran Source
+        url = "https://geodesy.noaa.gov/TOOLS/Htdp/HTDP-download.zip"
+        zip_path = os.path.join(target_dir, "HTDP-download.zip")
+        src_dir = os.path.join(target_dir, "htdp_source")
+
+        logger.info(f"Downloading HTDP source code for Unix from NOAA...")
+        try:
+            urllib.request.urlretrieve(url, zip_path)
+
+            with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+                zip_ref.extractall(src_dir)
+
+            os.remove(zip_path)
+
+            logger.info(f"Success! Source code extracted to: {src_dir}")
+            logger.info("HTDP requires compilation on Linux/macOS. Run the following commands:")
+            print("\n" + "="*50)
+            print(f"cd {src_dir}")
+            print("gfortran -o htdp htdp.f")
+            print("sudo mv htdp /usr/local/bin/")
+            print("="*50 + "\n")
+
+        except Exception as e:
+            logger.error(f"Failed to download or extract HTDP source: {e}")
