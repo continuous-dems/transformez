@@ -21,7 +21,7 @@ from . import __version__
 from .transform import VerticalTransform
 from .definitions import Datums
 from .grid_engine import plot_grid, GridWriter, GridEngine
-from .htdp import HAS_HTDP
+from .htdp import HAS_HTDP, download_htdp
 
 from fetchez import spatial
 from fetchez import utils
@@ -98,6 +98,7 @@ def transformez_cli():
 
     grp_sys = parser.add_argument_group('System')
     grp_sys.add_argument('--list-datums', action='store_true', help='List supported datums.')
+    grp_sys.add_argument('--download-htdp', action='store_true', help='Download the NGS HTDP software to the current directory.')
     grp_sys.add_argument('--cache-dir', help='Override cache directory.')
     grp_sys.add_argument('--verbose', action='store_true', help='Enable debug logging.')
     grp_sys.add_argument(
@@ -105,6 +106,10 @@ def transformez_cli():
     )
 
     args = parser.parse_args()
+
+    if args.download_htdp:
+        download_htdp()
+        sys.exit(0)
 
     if args.list_datums:
         list_supported_datums()
@@ -116,7 +121,11 @@ def transformez_cli():
         logging.getLogger('fetchez').setLevel(logging.INFO)
 
     if not HAS_HTDP:
-        logger.warning("HTDP tool not found in PATH. Frame transformations (NAD83<>WGS84) will be inaccurate.")
+        logger.warning("=" * 60)
+        logger.warning("HTDP tool not found in PATH.")
+        logger.warning("Frame transformations (e.g., NAD83 <-> WGS84) will return zero shift.")
+        logger.warning("Run 'transformez --download-htdp' to get the software.")
+        logger.warning("=" * 60)
 
     cache_dir = args.cache_dir or os.path.join(os.path.expanduser('~'), '.transformez')
     if not os.path.exists(cache_dir): os.makedirs(cache_dir)
