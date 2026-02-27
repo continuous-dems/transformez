@@ -20,7 +20,9 @@ Transformez relies on the NGS Horizontal Time-Dependent Positioning (HTDP) softw
 2. Place `htdp.exe` in a directory that is in your system's `PATH` (e.g., `C:\Windows\System32` or a custom scripts folder).
 
 **For Linux / macOS:**
+
 You will need a Fortran compiler (like `gfortran`) to compile the source code.
+
 ```bash
 # 1. Download the Fortran source code
 wget https://geodesy.noaa.gov/TOOLS/Htdp/HTDP-download.zip
