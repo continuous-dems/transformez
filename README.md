@@ -75,7 +75,7 @@ fetchez gebco ... --hook transformez:datum_in=5773,datum_out=4979
 
 Transformez provides a high-level API for embedding transformations directly into your Python scripts, Jupyter Notebooks, or automated pipelines.
 
-```ython
+```python
 import transformez
 
 # ---------------------------------------------------------
