@@ -10,6 +10,9 @@
 
 ---
 
+![Shift Grid Example](docs/images/mllw2nvd.png)
+*(Above: A generated vertical shift grid transforming MLLW to NAVD88)*
+
 ## Installation
 
 ### Prerequisites: HTDP

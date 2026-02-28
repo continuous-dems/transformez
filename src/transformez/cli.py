@@ -128,7 +128,7 @@ def transformez_cli():
         logger.warning("Run 'transformez --download-htdp' to get the software.")
         logger.warning("=" * 60)
 
-    cache_dir = args.cache_dir or os.path.join(os.path.expanduser('~'), '.transformez')
+    cache_dir = args.cache_dir or os.path.join(os.getcwd(), "transformez_cache")
     if not os.path.exists(cache_dir):
         os.makedirs(cache_dir)
 
