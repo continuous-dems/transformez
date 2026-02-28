@@ -86,6 +86,46 @@ class VerticalTransform:
         return WGS84_EPSG # Default
 
     def fetch_grid(self, module_name, **kwargs):
+        """Generic fetcher wrapper using the new fetchez API."""
+
+        files = fetchez.get(
+            module=module_name,
+            region=self.region.to_list(),
+            outdir=self.cache_dir,
+            threads=2,
+            **kwargs
+        )
+
+        valid = []
+
+        for fn in files:
+            if not os.path.exists(fn):
+                continue
+
+            if fn.endswith('.zip'):
+                datatype = kwargs.get('datatype')
+                fns_to_extract = [datatype] if datatype else None
+                extracted = fetchez.utils.p_f_unzip(fn, fns=fns_to_extract, outdir=self.cache_dir)
+                valid.extend([f for f in extracted if f.endswith(('.gtx', '.tif', '.grd', '.nc'))])
+
+            elif fn.endswith('.gz'):
+                try:
+                    out_fn = os.path.splitext(fn)[0]
+                    if not os.path.exists(out_fn):
+                        logger.info(f"Decompressing {fn}...")
+                        with gzip.open(fn, 'rb') as f_in:
+                            with open(out_fn, 'wb') as f_out:
+                                shutil.copyfileobj(f_in, f_out)
+                    valid.append(out_fn)
+                except Exception as e:
+                    logger.error(f"Failed to decompress {fn}: {e}")
+
+            elif fn.endswith(('.gtx', '.tif', '.grd', '.nc', '.mss')):
+                valid.append(fn)
+
+        return valid
+
+    def fetch_grid_(self, module_name, **kwargs):
         """Generic fetcher wrapper."""
 
         Mod = fetchez.registry.FetchezRegistry.load_module(module_name)
