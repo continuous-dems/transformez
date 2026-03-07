@@ -25,7 +25,7 @@ from .htdp import HAS_HTDP, download_htdp
 
 from fetchez import spatial
 from fetchez import utils
-from fetchez.spatial import parse_region
+from fetchez.spatial import parse_region, fix_argparse_region
 
 logging.basicConfig(level=logging.INFO, format="[ %(levelname)s ] %(message)s", stream=sys.stderr)
 logger = logging.getLogger("transformez")
@@ -34,6 +34,7 @@ logging.getLogger("fetchez").setLevel(logging.WARNING)
 
 def parse_compound_datum(datum_arg):
     """Parse string 'EPSG:GEOID' or 'NAME'."""
+
     if not datum_arg:
         return None, None
     s = str(datum_arg)
@@ -52,6 +53,7 @@ def parse_compound_datum(datum_arg):
 
 def list_supported_datums():
     """Pretty print supported datums."""
+
     print(f"\nTransformez v{__version__} - Supported Datums\n")
 
     print("--- Tidal Surfaces (Local & Global) ---")
@@ -74,9 +76,10 @@ def list_supported_datums():
 
 def transformez_cli():
     parser = argparse.ArgumentParser(
-        description=f"{utils.CYAN}%(prog)s{utils.RESET} ({__version__}) :: Global Vertical Datum Transformer",
+        #description=f"{utils.CYAN}%(prog)s{utils.RESET} ({__version__}) :: Global Vertical Datum Transformer",
+        description=utils._cli_logo("transformez", "Global Vertical Datum Transformer", __version__),
         epilog="Examples:\n"
-               "  transformez -R -166/-164/63/64 -I mllw -O 4979\n"
+               "  transformez -R -166/-164/63/64 -I mllw -O 4979 -E3s\n"
                "  transformez input_dem.tif -I mllw -O 5703:geoid=g2012b",
         formatter_class=argparse.RawDescriptionHelpFormatter
     )
@@ -107,6 +110,7 @@ def transformez_cli():
     )
 
     args = parser.parse_args()
+    fixed_argv = fix_argparse_region(sys.argv[1:])
 
     if args.download_htdp:
         download_htdp()
@@ -145,7 +149,7 @@ def transformez_cli():
     target_dem = args.input_file
 
     if target_dem:
-        # MODE A: Transform DEM
+        # Transform DEM
         if not os.path.exists(target_dem):
             parser.print_help()
             logger.error(f"Input file not found: {target_dem}")
@@ -164,7 +168,7 @@ def transformez_cli():
             dst_fn = args.output
 
     elif args.region:
-        # MODE B: Generate Grid
+        # Generate Grid
         if not args.increment:
             parser.print_help()
             logger.error("Increment (-E) is required when generating a grid from scratch.")
