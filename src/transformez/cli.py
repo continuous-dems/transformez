@@ -109,8 +109,8 @@ def transformez_cli():
         "-v", "--version", action="version", version=f"%(prog)s {__version__}"
     )
 
-    args = parser.parse_args()
     fixed_argv = fix_argparse_region(sys.argv[1:])
+    args = parser.parse_args(fixed_argv)
 
     if args.download_htdp:
         download_htdp()
