@@ -128,7 +128,7 @@ class VerticalTransform:
     def fetch_grid_(self, module_name, **kwargs):
         """Generic fetcher wrapper."""
 
-        Mod = fetchez.registry.FetchezRegistry.load_module(module_name)
+        Mod = fetchez.modules.registry.FetchezRegistry.load_module(module_name)
         if not Mod:
             return []
 

@@ -15,9 +15,6 @@ __credits__ = "CIRES"
 try:
     from transformez._version import __version__
 except ImportError:
-    # Fallback when using the package from source without installing
-    # in editable mode with pip (nobody should do this):
-    # <https://pip.pypa.io/en/stable/topics/local-project-installs/#editable-installs>
     import warnings
 
     warnings.warn(
@@ -35,7 +32,7 @@ import os
 import glob
 # from .hooks import TransformezHook
 # from fetchez.hooks.registry import HookRegistry
-from fetchez.registry import FetchezRegistry
+from fetchez.modules.registry import FetchezRegistry
 
 from .modules import TransformezMod
 
@@ -81,16 +78,7 @@ def setup_fetchez(registry_cls):
     Registers modules, hooks, and presets.
     """
 
-    registry_cls.register_module(
-        'transformez',
-        TransformezMod,
-        metadata={
-            'desc': 'Generate vertical datum shift grids on-demand.',
-            "tags": ["vdatum", "transformation", "shift-grid"],
-            "category": "Tools"
-        }
-    )
-
+    registry_cls._register_from_module(TransformezMod)
     # HookRegistry.register_hook(TransformezHook)
     # from fetchez.presets import register_global_preset
     # register_global_preset(

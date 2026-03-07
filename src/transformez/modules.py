@@ -21,17 +21,6 @@ from transformez.grid_engine import GridWriter
 logger = logging.getLogger(__name__)
 
 
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
-"""
-transformez.modules.transformez_mod
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-"""
-
-logger = logging.getLogger(__name__)
-
 @cli.cli_opts(
     help_text="Generate a vertical shift grid (e.g. MLLW to NAVD88).",
     src_datum="Source Datum (e.g. 'mllw', '5703', '4979').",
@@ -40,6 +29,12 @@ logger = logging.getLogger(__name__)
     output_name="Optional output filename override."
 )
 class TransformezMod(core.FetchModule):
+
+    name = "transformez"
+    meta_desc = 'Generate vertical datum shift grids on-demand.'
+    meta_category = "Tools"
+    meta_tags = ["vdatum", "transformation", "shift-grid"]
+
     """A dynamic Fetchez module that generates vertical shift grids on demand.
 
     Usage:
