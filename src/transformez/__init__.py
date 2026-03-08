@@ -5,12 +5,11 @@
 transformez
 ~~~~~~~~~~~~~
 
+Initialize the API and fetchez extension.
+
 :copyright: (c) 2010-2026 Regents of the University of Colorado
 :license: MIT, see LICENSE for more details.
 """
-
-__author__ = "Matthew Love"
-__credits__ = "CIRES"
 
 try:
     from transformez._version import __version__

@@ -29,17 +29,16 @@ logger = logging.getLogger(__name__)
     output_name="Optional output filename override."
 )
 class TransformezMod(core.FetchModule):
-
-    name = "transformez"
-    meta_desc = 'Generate vertical datum shift grids on-demand.'
-    meta_category = "Tools"
-    meta_tags = ["vdatum", "transformation", "shift-grid"]
-
     """A dynamic Fetchez module that generates vertical shift grids on demand.
 
     Usage:
       ... transformez --src-datum mllw --dst-datum 5703
     """
+
+    name = "transformez"
+    meta_desc = 'Generate vertical datum shift grids on-demand.'
+    meta_category = "Tools"
+    meta_tags = ["vdatum", "transformation", "shift-grid"]
 
     def __init__(self, src_datum='5703', dst_datum='4979', increment='3s', output_name=None, **kwargs):
         super().__init__(name="transformez", **kwargs)
