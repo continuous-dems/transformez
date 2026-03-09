@@ -6,7 +6,7 @@ build-backend = "hatchling.build"
 name = 'transformez'
 description = 'A standalone utility for vertical elevation datum transformations.'
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.12"
 license = { file = "LICENSE" }
 dynamic = ["version"]
 authors = [
@@ -14,6 +14,7 @@ authors = [
     {name = "Christopher Amante", email = "christopher.amante@colorado.edu"},
     {name = "Elliot Lim", email = "elliot.lim@colorado.edu"},
     {name = "Michael MacFerrin", email = "michael.macferrin@colorado.edu"},
+    {name = "Matt Fisher", email = "mfisher87@gmail.com"},
 ]
 maintainers = [
     {name = "Matthew Love", email = "matthew.love@colorado.edu"},
@@ -27,7 +28,7 @@ dependencies = [
     'numpy>1.24',
     'pyproj>3.6.1',
     'rasterio>1.4.0',
-    'fetchez>0.3.3',
+    'fetchez>=0.5.0',
     'scipy',
 ]
 
@@ -38,7 +39,6 @@ preview = ["matplotlib"]
 
 full = ["transformez[preview]"]
 
-
 [dependency-groups]
 dev = [
     "mypy",
@@ -48,7 +48,7 @@ test = [
     "pytest-cov",
 ]
 
-[project.entry-points."fetchez.plugins"]
+[project.entry-points."fetchez.modules"]
 transformez = "transformez"
 
 [project.scripts]
@@ -81,7 +81,6 @@ include = [
 exclude = [
   ".github",
 ]
-
 
 # --- Devtools configuration ---
 

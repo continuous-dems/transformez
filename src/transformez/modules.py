@@ -13,24 +13,14 @@ Some modules for `fetchez`
 
 import os
 import logging
-from fetchez import core, cli
+from fetchez import cli
+from fetchez.modules import FetchModule
 from transformez.transform import VerticalTransform
 from transformez.grid_engine import GridWriter
 # from transformez.definitions import Datums
 
 logger = logging.getLogger(__name__)
 
-
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
-"""
-transformez.modules.transformez_mod
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-"""
-
-logger = logging.getLogger(__name__)
 
 @cli.cli_opts(
     help_text="Generate a vertical shift grid (e.g. MLLW to NAVD88).",
@@ -39,12 +29,17 @@ logger = logging.getLogger(__name__)
     increment="Grid resolution (default: 3s).",
     output_name="Optional output filename override."
 )
-class TransformezMod(core.FetchModule):
+class TransformezMod(FetchModule):
     """A dynamic Fetchez module that generates vertical shift grids on demand.
 
     Usage:
       ... transformez --src-datum mllw --dst-datum 5703
     """
+
+    name = "transformez"
+    meta_desc = 'Generate vertical datum shift grids on-demand.'
+    meta_category = "Tools"
+    meta_tags = ["vdatum", "transformation", "shift-grid"]
 
     def __init__(self, src_datum='5703', dst_datum='4979', increment='3s', output_name=None, **kwargs):
         super().__init__(name="transformez", **kwargs)

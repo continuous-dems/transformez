@@ -5,19 +5,15 @@
 transformez
 ~~~~~~~~~~~~~
 
+Initialize the API and fetchez extension.
+
 :copyright: (c) 2010-2026 Regents of the University of Colorado
 :license: MIT, see LICENSE for more details.
 """
 
-__author__ = "Matthew Love"
-__credits__ = "CIRES"
-
 try:
     from transformez._version import __version__
 except ImportError:
-    # Fallback when using the package from source without installing
-    # in editable mode with pip (nobody should do this):
-    # <https://pip.pypa.io/en/stable/topics/local-project-installs/#editable-installs>
     import warnings
 
     warnings.warn(
@@ -33,10 +29,8 @@ from .api import generate_grid, transform_raster
 
 import os
 import glob
-# from .hooks import TransformezHook
-# from fetchez.hooks.registry import HookRegistry
-from fetchez.registry import FetchezRegistry
 
+# Expose the module for fetchez
 from .modules import TransformezMod
 
 def _find_proj_lib():
@@ -75,31 +69,4 @@ if "PROJ_LIB" in os.environ:
 if target_proj_lib:
     os.environ["PROJ_LIB"] = target_proj_lib
 
-def setup_fetchez(registry_cls):
-    """Called by fetchez when loading plugins.
-
-    Registers modules, hooks, and presets.
-    """
-
-    registry_cls.register_module(
-        'transformez',
-        TransformezMod,
-        metadata={
-            'desc': 'Generate vertical datum shift grids on-demand.',
-            "tags": ["vdatum", "transformation", "shift-grid"],
-            "category": "Tools"
-        }
-    )
-
-    # HookRegistry.register_hook(TransformezHook)
-    # from fetchez.presets import register_global_preset
-    # register_global_preset(
-    #     name="make-shift-grid",
-    #     help_text="Download datum grids and composite them into a single shift grid.",
-    #     hooks=[
-    #         {"name": "transformez", "args": {}}
-    #     ]
-    # )
-setup_fetchez(FetchezRegistry)
-
-__all__ = ["generate_grid", "transform_raster"]
+__all__ = ["generate_grid", "transform_raster", "TransformezMod"]

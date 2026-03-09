@@ -8,7 +8,11 @@ CMD = [sys.executable, "-m", "transformez.cli"]
 def run_transformez(args):
     """Run transformez and return result."""
 
-    return subprocess.run(CMD + args, capture_output=True, text=True)
+    result = subprocess.run(CMD + args, capture_output=True, text=True)
+    if result.returncode != 0:
+        print(f"CLI CRASHED!\nSTDERR:\n{result.stderr}")
+    result.check_returncode()
+    return result
 
 
 def test_help():

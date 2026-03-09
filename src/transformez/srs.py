@@ -55,6 +55,10 @@ class SRSParser:
         parts = str(srs_str).split('+geoid:')
         return parts[0], (parts[1] if len(parts) > 1 else None)
 
+    def _extract_vertical(self, srs_str):
+        parts = str(srs_str).split('+')
+        return parts[0], (parts[1] if len(parts) > 1 else None)
+
     def _get_epsg_int(self, crs):
         """Extract EPSG integer from a CRS."""
 
@@ -70,9 +74,16 @@ class SRSParser:
         try:
             self.tc['src_crs'] = CRS.from_user_input(clean_src)
             self.tc['dst_crs'] = CRS.from_user_input(clean_dst)
-        except Exception as e:
-            logger.error(f"Invalid SRS: {e}")
-            return
+        except Exception:
+            clean_src, vert_epsg_src = self._extract_vertical(self.src_srs_input)
+            clean_dst, vert_epsg_dst = self._extract_vertical(self.dst_srs_input)
+
+            try:
+                self.tc['src_crs'] = CRS.from_user_input(clean_src)
+                self.tc['dst_crs'] = CRS.from_user_input(clean_dst)
+            except Exception as e:
+                logger.error(f"Invalid SRS: {e}")
+                return
 
         # Extract vertical components before flattening
         if self.tc['src_crs'].is_compound:
@@ -87,6 +98,11 @@ class SRSParser:
             self.tc['dst_crs'] = self.tc['dst_crs'].sub_crs_list[0]
         elif self.tc['dst_crs'].is_vertical:
             self.tc['dst_vert_epsg'] = self._get_epsg_int(self.tc['dst_crs'])
+
+        if self.tc['src_vert_epsg'] is None:
+            self.tc['src_vert_epsg'] = vert_epsg_src
+        if self.tc['dst_vert_epsg'] is None:
+            self.tc['dst_vert_epsg'] = vert_epsg_dst
 
         # Lookup default geoids
         # If we have a vertical EPSG but no manual geoid, look it up in definitions.py
