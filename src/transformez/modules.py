@@ -13,7 +13,8 @@ Some modules for `fetchez`
 
 import os
 import logging
-from fetchez import core, cli
+from fetchez import cli
+from fetchez.modules import FetchModule
 from transformez.transform import VerticalTransform
 from transformez.grid_engine import GridWriter
 # from transformez.definitions import Datums
@@ -28,7 +29,7 @@ logger = logging.getLogger(__name__)
     increment="Grid resolution (default: 3s).",
     output_name="Optional output filename override."
 )
-class TransformezMod(core.FetchModule):
+class TransformezMod(FetchModule):
     """A dynamic Fetchez module that generates vertical shift grids on demand.
 
     Usage:

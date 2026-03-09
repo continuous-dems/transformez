@@ -29,10 +29,8 @@ from .api import generate_grid, transform_raster
 
 import os
 import glob
-# from .hooks import TransformezHook
-# from fetchez.hooks.registry import HookRegistry
-from fetchez.modules.registry import FetchezRegistry
 
+# Expose the module for fetchez
 from .modules import TransformezMod
 
 def _find_proj_lib():
@@ -71,22 +69,4 @@ if "PROJ_LIB" in os.environ:
 if target_proj_lib:
     os.environ["PROJ_LIB"] = target_proj_lib
 
-def setup_fetchez(registry_cls):
-    """Called by fetchez when loading plugins.
-
-    Registers modules, hooks, and presets.
-    """
-
-    registry_cls._register_from_module(TransformezMod)
-    # HookRegistry.register_hook(TransformezHook)
-    # from fetchez.presets import register_global_preset
-    # register_global_preset(
-    #     name="make-shift-grid",
-    #     help_text="Download datum grids and composite them into a single shift grid.",
-    #     hooks=[
-    #         {"name": "transformez", "args": {}}
-    #     ]
-    # )
-setup_fetchez(FetchezRegistry)
-
-__all__ = ["generate_grid", "transform_raster"]
+__all__ = ["generate_grid", "transform_raster", "TransformezMod"]
