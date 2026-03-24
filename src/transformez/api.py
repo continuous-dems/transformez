@@ -120,7 +120,7 @@ def generate_grid(
         return None
 
     if out_fn:
-        GridWriter.write(out_fn, shift_array, [region_obj.xmin, region_obj.xmax, region_obj.ymin, region_obj.ymax])
+        GridWriter.write(out_fn, shift_array, region_obj)
         logger.info(f"Saved shift grid to {out_fn}")
 
     return shift_array

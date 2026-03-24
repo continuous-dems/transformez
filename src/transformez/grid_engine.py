@@ -26,6 +26,7 @@ logger = logging.getLogger(__name__)
 
 def plot_grid(grid_array, region, title="Vertical Shift Preview"):
     """Plot the transformation grid using Matplotlib."""
+
     try:
         import matplotlib.pyplot as plt
     except ImportError:
@@ -63,7 +64,7 @@ def plot_grid(grid_array, region, title="Vertical Shift Preview"):
 
 class GridEngine:
     @staticmethod
-    def load_and_interpolate(source_files, target_region, nx, ny):
+    def load_and_interpolate(source_files, target_region, nx, ny, decay_pixels=100):
         """Composites grids using GDAL Warper."""
 
         xmin, xmax, ymin, ymax = target_region.xmin, target_region.xmax, target_region.ymin, target_region.ymax
@@ -109,7 +110,7 @@ class GridEngine:
                 continue
 
         # Fill inland areas (decaying to 0) before we clear the remaining NaNs
-        mosaic = GridEngine.fill_nans(mosaic, decay_pixels=100)
+        mosaic = GridEngine.fill_nans(mosaic, decay_pixels=decay_pixels)
         mosaic[np.isnan(mosaic)] = 0.0
 
         return mosaic

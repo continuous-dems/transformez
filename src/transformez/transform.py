@@ -73,7 +73,7 @@ class VerticalTransform:
     def _get_native_ellipsoid(self, epsg, ref_type):
         """Helper to identify the native frame of a datum."""
 
-        if ref_type == 'surface':
+        if ref_type in ["surface", "global_tidal"]:
             # NOAA VDatum = NAD83, Global = WGS84
             region = Datums.SURFACES[epsg].get('region')
             return NAD83_EPSG if region == 'usa' else WGS84_EPSG
@@ -245,6 +245,10 @@ class VerticalTransform:
 
         # LMSL -> Ortho (TSS)
         tss = self._get_grid('vdatum', 'tss')
+
+        if not np.any(tss):
+            return None, "Outside VDatum coverage (Missing TSS)"
+
         total_shift += tss
         desc.append("TSS(LMSL->NAVD88)")
 
@@ -312,7 +316,7 @@ class VerticalTransform:
         chain_shift = None
         chain_desc = ""
 
-        if ref_type == 'surface':
+        if ref_type in ["surface", "global_tidal"]:
             datum_name = Datums.SURFACES[epsg]['name']
             region_tag = Datums.SURFACES[epsg].get('region')
 
@@ -356,20 +360,44 @@ class VerticalTransform:
         total_out = np.zeros((self.ny, self.nx))
         desc_parts = []
 
+        htdp_shift = np.zeros((self.ny, self.nx))
+
         if self.hub_epsg != native_epsg:
              htdp_shift = self._get_htdp_shift(self.hub_epsg, native_epsg, self.epoch_in, epoch)
              total_out += htdp_shift
              desc_parts.append(f"Hub({self.hub_epsg}->{native_epsg})")
 
-        if ref_type == 'surface':
+        if ref_type in ["surface", "global_tidal"]:
             datum_name = Datums.SURFACES[epsg]['name']
+            region_tag = Datums.SURFACES[epsg].get('region')
             chain_geoid = geoid if geoid else 'g2018'
-            s, d = self._get_vdatum_chain(datum_name, chain_geoid)
-            if s is None:
-                return np.zeros((self.ny, self.nx)), "FAILED Output Chain"
 
-            total_out -= s
-            desc_parts.append(f"Native -> VDatum({datum_name})")
+            if region_tag == 'usa':
+                s, d = self._get_vdatum_chain(datum_name, chain_geoid)
+                if s is None:
+                    proxy_name = Datums.get_global_proxy(datum_name)
+                    if proxy_name:
+                        # Revert the erroneous HTDP shift to NAD83 (since global is WGS84)
+                        total_out -= htdp_shift
+                        if desc_parts: desc_parts.pop()
+
+                        s, d = self._get_global_chain(proxy_name, model='fes2014')
+                        if s is not None:
+                            total_out -= s
+                            desc_parts.append(f"GlobalProxy({proxy_name})")
+                        else:
+                            return np.zeros((self.ny, self.nx)), "FAILED Output Global Chain"
+                    else:
+                        return np.zeros((self.ny, self.nx)), "FAILED Output Chain"
+                else:
+                    total_out -= s
+                    desc_parts.append(f"Native -> VDatum({datum_name})")
+
+            elif region_tag == 'global':
+                s, d = self._get_global_chain(datum_name)
+                if s is not None:
+                    total_out -= s
+                    desc_parts.append(f"Native -> Global({datum_name})")
 
         elif ref_type == 'cdn':
             target_geoid = geoid if geoid else 'g2018'
