@@ -61,9 +61,10 @@ def generate_grid(
     increment: Union[str, float],
     datum_in: str,
     datum_out: str,
+    decay_pixels: int = 100,
     out_fn: Optional[str] = None,
     cache_dir: Optional[str] = None,
-    verbose: bool = False
+    verbose: bool = False,
 ) -> Optional[np.ndarray]:
     """Generate a vertical shift grid for a specific region.
 
@@ -72,6 +73,7 @@ def generate_grid(
         increment: Resolution (e.g., '3s' or 0.0008333).
         datum_in: Source datum (e.g., 'mllw', '5703').
         datum_out: Target datum (e.g., '4979', '6319').
+        decay_pixels: Set the pixel decay in case extrapolation is required.
         out_fn: If provided, saves the grid to this file (.tif or .gtx).
         cache_dir: Path to store downloaded grids.
         verbose: Enable debug logging.
@@ -109,6 +111,7 @@ def generate_grid(
         nx=nx, ny=ny,
         epsg_in=epsg_in, epsg_out=epsg_out,
         geoid_in=geoid_in, geoid_out=geoid_out,
+        decay_pixels=decay_pixels,
         cache_dir=cache_dir,
         verbose=verbose
     )
@@ -130,6 +133,7 @@ def transform_raster(
     input_raster: str,
     datum_in: str,
     datum_out: str,
+    decay_pixels: int = 100,
     output_raster: Optional[str] = None,
     cache_dir: Optional[str] = None,
     verbose: bool = False
@@ -141,6 +145,7 @@ def transform_raster(
         datum_in: Source datum of the DEM.
         datum_out: Target datum for the output DEM.
         output_raster: Path to save the transformed DEM. If None, auto-generates a name.
+        decay_pixels: Set the pixel decay in case extrapolation is required.
         cache_dir: Path to store downloaded grids.
         verbose: Enable debug logging.
 
@@ -177,6 +182,7 @@ def transform_raster(
         nx=nx, ny=ny,
         epsg_in=epsg_in, epsg_out=epsg_out,
         geoid_in=geoid_in, geoid_out=geoid_out,
+        decay_pixels=decay_pixels,
         cache_dir=cache_dir,
         verbose=verbose
     )

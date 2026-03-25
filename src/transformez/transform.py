@@ -33,7 +33,7 @@ class VerticalTransform:
 
     def __init__(self, region, nx, ny, epsg_in, epsg_out,
                  geoid_in=None, geoid_out=None, epoch_in=2010.0, epoch_out=2010.0,
-                 cache_dir=None, verbose=True):
+                 decay_pixels=100, cache_dir=None, verbose=True):
 
         self.region = region
         self.nx = nx
@@ -54,6 +54,8 @@ class VerticalTransform:
 
         self.ref_in = Datums.get_frame_type(self.epsg_in)
         self.ref_out = Datums.get_frame_type(self.epsg_out)
+
+        self.decay_pixels = decay_pixels
 
         # --- HUB SELECTION ---
         # Determine the Native Ellipsoid of Input and Output
@@ -178,9 +180,9 @@ class VerticalTransform:
         if provider == 'seanoe' or provider == 'fes':
             var_name = "lat_elevation" if "lat" in name.lower() else "msl_elevation"
             nc_path = f"netcdf:{files[0]}:{var_name}"
-            return GridEngine.load_and_interpolate([nc_path], self.region, self.nx, self.ny)
+            return GridEngine.load_and_interpolate([nc_path], self.region, self.nx, self.ny, decay_pixels=self.decay_pixels)
 
-        return GridEngine.load_and_interpolate(files, self.region, self.nx, self.ny)
+        return GridEngine.load_and_interpolate(files, self.region, self.nx, self.ny, decay_pixels=self.decay_pixels)
 
     def _get_htdp_shift(self, epsg_from, epsg_to, epoch_from, epoch_to):
         """Calculate Frame Shift via HTDP."""
@@ -232,32 +234,64 @@ class VerticalTransform:
     # =========================================================================
     def _get_vdatum_chain(self, datum_name, geoid_name):
         """Builds shift: Tidal -> [NAD83 Native]."""
-        total_shift = np.zeros((self.ny, self.nx))
+        hydro_shift = np.zeros((self.ny, self.nx))
         desc = []
 
         # Tidal -> LMSL
         if datum_name not in ['msl', '5714', 'lmsl']:
             grid = self._get_grid('vdatum', datum_name)
-            if not np.any(grid):
+            if np.isnan(grid).all() or (grid == 0).all():
                 return None, f"Missing Tidal Grid: {datum_name}"
-            total_shift += grid
+            hydro_shift += grid
             desc.append(f"({datum_name}->LMSL)")
 
         # LMSL -> Ortho (TSS)
         tss = self._get_grid('vdatum', 'tss')
-
-        if not np.any(tss):
+        if np.isnan(tss).all() or (tss == 0).all():
             return None, "Outside VDatum coverage (Missing TSS)"
 
-        total_shift += tss
+        hydro_shift += tss
         desc.append("TSS(LMSL->NAVD88)")
 
-        # Ortho -> NAD83 (Smart Geoid Fallback)
+        # Ortho -> NAD83 (Geoid)
+        # We fetch the geoid, but DO NOT add it to the shift yet!
         actual_geoid = geoid_name if geoid_name else 'g2018'
         geoid_grid, used_geoid = self._fetch_geoid_with_fallback(actual_geoid)
-
-        total_shift += geoid_grid
         desc.append(f"Geoid({used_geoid}->NAD83)")
+
+        # =======================================================
+        # Coastal Blend
+        # =======================================================
+        total_shift = np.zeros((self.ny, self.nx))
+
+        if np.isnan(hydro_shift).any():
+            proxy_name = Datums.get_global_proxy(datum_name)
+            if proxy_name:
+                logger.info(f"Partial VDatum coverage detected. Fetching {proxy_name.upper()} (FES) for offshore blending...")
+                global_shift, d_global = self._get_global_chain(proxy_name, model='fes2014')
+
+                if global_shift is not None and np.any(global_shift):
+                    # We have valid FES data. We must align it to NAD83.
+                    htdp_wgs_to_nad = self._get_htdp_shift(WGS84_EPSG, NAD83_EPSG, self.epoch_in, 2010.0)
+                    fes_full = global_shift + htdp_wgs_to_nad
+
+                    hydro_shift = GridEngine.coastal_aware_composite(
+                        vdatum_grid=hydro_shift,
+                        global_grid=fes_full,
+                        decay_pixels=self.decay_pixels,
+                        buffer_pixels=10,
+                        max_discontinuity=0.5
+                    )
+                    desc.append(f"Blended w/ Global({proxy_name.upper()})")
+                else:
+                    hydro_shift = GridEngine.fill_nans(hydro_shift, decay_pixels=self.decay_pixels, buffer_pixels=10)
+                    desc.append("Inland Hydro Decay")
+            else:
+                hydro_shift = GridEngine.fill_nans(hydro_shift, decay_pixels=self.decay_pixels, buffer_pixels=10)
+                desc.append("Inland Hydro Decay")
+
+        total_shift = hydro_shift + geoid_grid
+        total_shift[np.isnan(total_shift)] = 0.0
 
         return total_shift, " + ".join(desc)
 
