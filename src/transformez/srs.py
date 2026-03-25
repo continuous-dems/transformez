@@ -74,6 +74,8 @@ class SRSParser:
         try:
             self.tc['src_crs'] = CRS.from_user_input(clean_src)
             self.tc['dst_crs'] = CRS.from_user_input(clean_dst)
+            vert_epsg_src = None
+            vert_epsg_dst = None
         except Exception:
             clean_src, vert_epsg_src = self._extract_vertical(self.src_srs_input)
             clean_dst, vert_epsg_dst = self._extract_vertical(self.dst_srs_input)

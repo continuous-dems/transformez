@@ -100,6 +100,10 @@ def transformez_cli():
     grp_out.add_argument('-o', '--output', help='Output filename (default: auto-named).')
     grp_out.add_argument('--preview', action='store_true', help='Show plot of shift grid before saving.')
 
+    grp_proc = parser.add_argument_group('Process')
+    grp_proc.add_argument('--decay-pixels', type=int, default=100,
+                          help='Number of pixels to decay tidal shifts inland (default: 100). Set to 0 for strict VDatum boundaries.')
+
     grp_sys = parser.add_argument_group('System')
     grp_sys.add_argument('--list-datums', action='store_true', help='List supported datums.')
     grp_sys.add_argument('--download-htdp', action='store_true', help='Download the NGS HTDP software to the current directory.')
@@ -202,6 +206,7 @@ def transformez_cli():
         nx=nx, ny=ny,
         epsg_in=epsg_in, epsg_out=epsg_out,
         geoid_in=geoid_in, geoid_out=geoid_out,
+        decay_pixels=args.decay_pixels,
         cache_dir=cache_dir,
         verbose=args.verbose
     )

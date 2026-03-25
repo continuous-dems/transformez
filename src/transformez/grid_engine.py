@@ -26,6 +26,7 @@ logger = logging.getLogger(__name__)
 
 def plot_grid(grid_array, region, title="Vertical Shift Preview"):
     """Plot the transformation grid using Matplotlib."""
+
     try:
         import matplotlib.pyplot as plt
     except ImportError:
@@ -44,7 +45,8 @@ def plot_grid(grid_array, region, title="Vertical Shift Preview"):
     plt.figure(figsize=(10, 6))
     plot_region = [region.xmin, region.xmax, region.ymin, region.ymax]
 
-    im = plt.imshow(masked_data, extent=plot_region, cmap="RdBu_r", origin="upper")
+    # im = plt.imshow(masked_data, extent=plot_region, cmap="RdBu_r", origin="upper")
+    im = plt.imshow(masked_data, extent=plot_region, cmap="viridis", origin="upper")
     cbar = plt.colorbar(im)
     cbar.set_label("Vertical Shift (meters)")
     plt.title(title)
@@ -63,7 +65,7 @@ def plot_grid(grid_array, region, title="Vertical Shift Preview"):
 
 class GridEngine:
     @staticmethod
-    def load_and_interpolate(source_files, target_region, nx, ny):
+    def load_and_interpolate(source_files, target_region, nx, ny, decay_pixels=100):
         """Composites grids using GDAL Warper."""
 
         xmin, xmax, ymin, ymax = target_region.xmin, target_region.xmax, target_region.ymin, target_region.ymax
@@ -109,14 +111,71 @@ class GridEngine:
                 continue
 
         # Fill inland areas (decaying to 0) before we clear the remaining NaNs
-        mosaic = GridEngine.fill_nans(mosaic, decay_pixels=100)
-        mosaic[np.isnan(mosaic)] = 0.0
+        # mosaic = GridEngine.fill_nans(mosaic, decay_pixels=decay_pixels)
+        # mosaic[np.isnan(mosaic)] = 0.0
 
         return mosaic
 
     @staticmethod
-    def fill_nans(data, decay_pixels=100):
-        """Fill NaNs with the nearest valid value, decayed to zero over distance."""
+    def smart_blend(in_grid, background_grid, blend_pixels=50):
+        """Smoothly blends the grid into a background grid."""
+
+        mask = np.isnan(in_grid)
+
+        if not mask.any():
+            return in_grid
+
+        if mask.all():
+            return background_grid
+
+        dist = ndimage.distance_transform_edt(mask)
+        alpha = np.clip(dist / blend_pixels, 0.0, 1.0)
+
+        nearest_indices = ndimage.distance_transform_edt(mask, return_distances=False, return_indices=True)
+        extended_vdatum = in_grid.copy()
+        extended_vdatum[mask] = in_grid[tuple(nearest_indices)][mask]
+
+        blended_data = (extended_vdatum * (1.0 - alpha)) + (background_grid * alpha)
+
+        return blended_data
+
+    @staticmethod
+    def coastal_aware_composite(vdatum_grid, global_grid, decay_pixels=100, buffer_pixels=10, max_discontinuity=0.5):
+        """Intelligently handles inland decay vs. offshore blending, while
+        filtering out low-resolution global artifacts.
+        """
+
+        final_grid = vdatum_grid.copy()
+        vdatum_mask = np.isnan(vdatum_grid)
+        if not vdatum_mask.all():
+            nearest_idx = ndimage.distance_transform_edt(vdatum_mask, return_distances=False, return_indices=True)
+            nearest_vdatum_vals = vdatum_grid[tuple(nearest_idx)]
+
+            fes_anomaly_mask = np.abs(global_grid - nearest_vdatum_vals) > max_discontinuity
+
+            global_grid[fes_anomaly_mask] = np.nan
+
+        is_vdatum = ~np.isnan(vdatum_grid)
+        is_ocean = ~np.isnan(global_grid)
+
+        is_inland = ~is_vdatum & ~is_ocean
+        is_offshore = ~is_vdatum & is_ocean
+
+        if is_offshore.any():
+            blended_ocean = GridEngine.smart_blend(vdatum_grid, global_grid, blend_pixels=50)
+            final_grid[is_offshore] = blended_ocean[is_offshore]
+
+        if is_inland.any():
+            decayed_inland = GridEngine.fill_nans(vdatum_grid, decay_pixels=decay_pixels, buffer_pixels=buffer_pixels)
+            final_grid[is_inland] = decayed_inland[is_inland]
+
+        return final_grid
+
+    @staticmethod
+    def fill_nans(data, decay_pixels=100, buffer_pixels=50):
+        """Extrapolates nearest valid value for 'buffer_pixels',
+        then decays to zero over 'decay_pixels'.
+        """
 
         mask = np.isnan(data)
         if not mask.any() or mask.all():
@@ -126,7 +185,10 @@ class GridEngine:
             mask, return_distances=True, return_indices=True
         )
         coast_values = data[tuple(indices)]
-        decay_factor = np.clip((decay_pixels - dist) / decay_pixels, 0, 1)
+
+        # Subtract the buffer from the distance. Anything <= 0 is in the buffer zone.
+        effective_dist = np.clip(dist - buffer_pixels, 0, None)
+        decay_factor = np.clip((decay_pixels - effective_dist) / decay_pixels, 0, 1)
 
         out_data = data.copy()
         out_data[mask] = coast_values[mask] * decay_factor[mask]
