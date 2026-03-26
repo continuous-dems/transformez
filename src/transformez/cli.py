@@ -20,6 +20,7 @@ logger = logging.getLogger(__name__)
 
 
 @click.group(name="transform")
+@click.version_option(package_name='transformez')
 def transformez_cli():
     """Apply vertical datum transformations and generate shift grids."""
 
