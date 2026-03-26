@@ -30,6 +30,7 @@ dependencies = [
     'rasterio>1.4.0',
     'fetchez>=0.5.0',
     'scipy',
+    'click',
 ]
 
 keywords = ["Geospatial"]
