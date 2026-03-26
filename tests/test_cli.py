@@ -32,7 +32,7 @@ def test_version():
 def test_list_modules():
     """Can we list datums without crashing?"""
 
-    result = run_transformez(["--list-datums"])
+    result = run_transformez(["list"])
     assert result.returncode == 0
     assert "lat" in result.stdout
     assert "mllw" in result.stdout
