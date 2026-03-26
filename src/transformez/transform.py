@@ -196,7 +196,7 @@ class VerticalTransform:
             tool = htdp.HTDP(verbose=False)
             grid = tool.run_grid(self.region, self.nx, self.ny, epsg_from, epsg_to, epoch_from, epoch_to)
             if np.any(grid):
-                logger.info(f"    [HTDP] Applied (Mean: {np.mean(grid):.3f}m)")
+                logger.info(f"    [HTDP] Component Shift (Mean: {np.mean(grid):.3f}m)")
             return grid
 
         except Exception as e:
@@ -472,6 +472,14 @@ class VerticalTransform:
             total_shift += grid_2
         else:
             logger.info(f"  2. {desc_2} (No Shift/Zero)")
+
+        if np.any(total_shift) and not np.isnan(total_shift).all():
+            mean_shift = np.nanmean(total_shift)
+            min_shift = np.nanmin(total_shift)
+            max_shift = np.nanmax(total_shift)
+            logger.info(f"  => Total Shift Applied (Mean: {mean_shift:.3f}m | Min: {min_shift:.3f}m | Max: {max_shift:.3f}m)")
+        else:
+            logger.info("  => Total Shift Applied (Zero / Identity)")
 
         logger.info("-" * 60)
         return total_shift, total_unc
