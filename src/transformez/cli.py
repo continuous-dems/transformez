@@ -11,224 +11,119 @@ The command-line interface for Transformez.
 :license: MIT, see LICENSE for more details.
 """
 
-import os
 import sys
-import argparse
+import click
 import logging
-import rasterio
+from transformez import api
 
-from . import __version__
-from .transform import VerticalTransform
-from .definitions import Datums
-from .grid_engine import plot_grid, GridWriter, GridEngine
-from .htdp import HAS_HTDP, download_htdp
-
-from fetchez import spatial
-from fetchez import utils
-from fetchez.spatial import parse_region, fix_argparse_region
-
-logging.basicConfig(level=logging.INFO, format="[ %(levelname)s ] %(message)s", stream=sys.stderr)
-logger = logging.getLogger("transformez")
-logging.getLogger("fetchez").setLevel(logging.WARNING)
+logger = logging.getLogger(__name__)
 
 
-def parse_compound_datum(datum_arg):
-    """Parse string 'EPSG:GEOID' or 'NAME'."""
-
-    if not datum_arg:
-        return None, None
-    s = str(datum_arg)
-    if ':' in s:
-        parts = s.split(':')
-        # Handle "5703:geoid=g2012b" or "5703:g2012b"
-        geoid_part = parts[1]
-        if 'geoid=' in geoid_part:
-            geoid = geoid_part.split('=')[1]
-        else:
-            geoid = geoid_part
-        return Datums.get_vdatum_by_name(parts[0]), geoid
-    else:
-        return Datums.get_vdatum_by_name(s), None
-
-
-def list_supported_datums():
-    """Pretty print supported datums."""
-
-    print(f"\nTransformez v{__version__} - Supported Datums\n")
-
-    print("--- Tidal Surfaces (Local & Global) ---")
-    for k, v in Datums.SURFACES.items():
-        region = v.get("region", "global").upper()
-        print(f"  {v['name']:<10} : {v['description']} [{region}]")
-
-    print("\n--- Ellipsoidal / Frame (HTDP) ---")
-    print(f"  {'NAD83':<10} : North American Datum 1983 (EPSG:6319)")
-    print(f"  {'WGS84':<10} : World Geodetic System 1984 (EPSG:4979)")
-
-    print("\n--- Orthometric / Geoid-Based ---")
-    for k, v in Datums.CDN.items():
-        print(f"  {v['name']:<20} (Default Geoid: {v.get('default_geoid', 'None')})")
-
-    print("\n--- Available Geoids ---")
-    print(f"  {', '.join(Datums.GEOIDS.keys())}")
-    print("\n")
-
-
+@click.group(name="transform")
+@click.version_option(package_name='transformez')
 def transformez_cli():
-    parser = argparse.ArgumentParser(
-        #description=f"{utils.CYAN}%(prog)s{utils.RESET} ({__version__}) :: Global Vertical Datum Transformer",
-        description=utils._cli_logo("transformez", "Global Vertical Datum Transformer", __version__),
-        epilog="Examples:\n"
-               "  transformez -R -166/-164/63/64 -I mllw -O 4979 -E3s\n"
-               "  transformez input_dem.tif -I mllw -O 5703:geoid=g2012b",
-        formatter_class=argparse.RawDescriptionHelpFormatter
-    )
+    """Apply vertical datum transformations and generate shift grids."""
 
-    parser.add_argument('input_file', nargs='?', help="Input DEM (GeoTIFF) to transform.")
+    pass
 
-    grp_loc = parser.add_argument_group('Location & Resolution (if no input file)')
-    grp_loc.add_argument('-R', '--region', nargs='?', help='Region (West/East/South/North).')
-    grp_loc.add_argument('-E', '--increment', nargs='?', help='Resolution (e.g. 1s, 0.0001).')
+@transformez_cli.command("run")
+@click.argument("input_file", required=False)
+@click.option("-R", "--region", help="Bounding box or location string (if no input file).")
+@click.option("-E", "--increment", help="Resolution (e.g., 1s, 30m) (if no input file).")
+@click.option("-I", "--input-datum", required=True, help="Source Datum (e.g., 'mllw', '5703').")
+@click.option("-O", "--output-datum", required=True, help="Target Datum (e.g., '4979', '5703:g2012b').")
+@click.option("--out", "-o", help="Output filename (default: auto-named).")
+@click.option("--decay-pixels", type=int, default=100, help="Number of pixels to decay tidal shifts inland.")
+def transform_run(input_file, region, increment, input_datum, output_datum, out, decay_pixels):
+    """Transform a raster's vertical datum or generate a standalone shift grid.
 
-    grp_dat = parser.add_argument_group('Vertical Datums')
-    grp_dat.add_argument('-I', '--input-datum', '--vdatum-in',
-                         help='Source Datum (e.g. "mllw", "5703", "4979").')
-    grp_dat.add_argument('-O', '--output-datum', '--vdatum-out',
-                         help='Target Datum (e.g. "5703:geoid=g2012b", "4979").')
+    If an INPUT_FILE is provided, that specific raster is transformed in place.
+    If no INPUT_FILE is provided, -R and -E must be used to generate a shift grid.
 
-    grp_out = parser.add_argument_group('Output')
-    grp_out.add_argument('-o', '--output', help='Output filename (default: auto-named).')
-    grp_out.add_argument('--preview', action='store_true', help='Show plot of shift grid before saving.')
+    Examples:
+      Transform a DEM : transformez run my_dem.tif -I mllw -O 5703
+      Generate a Grid : transformez run -R loc:"Miami" -E 1s -I mllw -O 4979
+    """
+    if input_file:
+        click.secho(f"🚀 Transforming raster: {input_file}", fg="cyan", bold=True)
+        click.echo(f"   Shift: {input_datum} ➔ {output_datum}")
 
-    grp_proc = parser.add_argument_group('Process')
-    grp_proc.add_argument('--decay-pixels', type=int, default=100,
-                          help='Number of pixels to decay tidal shifts inland (default: 100). Set to 0 for strict VDatum boundaries.')
+        result = api.transform_raster(
+            input_raster=input_file,
+            datum_in=input_datum,
+            datum_out=output_datum,
+            decay_pixels=decay_pixels,
+            output_raster=out,
+            verbose=True
+        )
 
-    grp_sys = parser.add_argument_group('System')
-    grp_sys.add_argument('--list-datums', action='store_true', help='List supported datums.')
-    grp_sys.add_argument('--download-htdp', action='store_true', help='Download the NGS HTDP software to the current directory.')
-    grp_sys.add_argument('--cache-dir', help='Override cache directory.')
-    grp_sys.add_argument('--verbose', action='store_true', help='Enable debug logging.')
-    grp_sys.add_argument(
-        "-v", "--version", action="version", version=f"%(prog)s {__version__}"
-    )
-
-    fixed_argv = fix_argparse_region(sys.argv[1:])
-    args = parser.parse_args(fixed_argv)
-
-    if args.download_htdp:
-        download_htdp()
-        sys.exit(0)
-
-    if args.list_datums:
-        list_supported_datums()
-        sys.exit(0)
-
-    # Validation & Setup
-    if args.verbose:
-        logger.setLevel(logging.DEBUG)
-        logging.getLogger('fetchez').setLevel(logging.INFO)
-
-    if not HAS_HTDP:
-        logger.warning("=" * 60)
-        logger.warning("HTDP tool not found in PATH.")
-        logger.warning("Frame transformations (e.g., NAD83 <-> WGS84) will return zero shift.")
-        logger.warning("Run 'transformez --download-htdp' to get the software.")
-        logger.warning("=" * 60)
-
-    cache_dir = args.cache_dir or os.path.join(os.getcwd(), "transformez_cache")
-    if not os.path.exists(cache_dir):
-        os.makedirs(cache_dir)
-
-    # Parse Datums
-    epsg_in, geoid_in = parse_compound_datum(args.input_datum)
-    epsg_out, geoid_out = parse_compound_datum(args.output_datum)
-
-    if not epsg_in or not epsg_out:
-        parser.print_help()
-        logger.error("Invalid datum specified. Use --list-datums to see options.")
-        sys.exit(1)
-
-    # Mode Selection (DEM vs Grid)
-    target_dem = args.input_file
-
-    if target_dem:
-        # Transform DEM
-        if not os.path.exists(target_dem):
-            parser.print_help()
-            logger.error(f"Input file not found: {target_dem}")
-            sys.exit(1)
-
-        logger.info(f"Reading bounds from: {target_dem}")
-        with rasterio.open(target_dem) as src:
-            bounds = src.bounds
-            region_obj = spatial.Region(bounds.left, bounds.right, bounds.bottom, bounds.top)
-            nx, ny = src.width, src.height
-
-        if not args.output:
-            base, ext = os.path.splitext(target_dem)
-            dst_fn = f"{base}_trans_{args.output_datum.replace(':','_')}{ext}"
+        if result:
+            click.secho(f"✅ Successfully transformed raster: {result}", fg="green", bold=True)
         else:
-            dst_fn = args.output
-
-    elif args.region:
-        # Generate Grid
-        if not args.increment:
-            parser.print_help()
-            logger.error("Increment (-E) is required when generating a grid from scratch.")
+            click.secho("❌ Failed to transform raster.", fg="red")
             sys.exit(1)
 
-        regions = parse_region(args.region)
-        region_obj = regions[0]
+    elif region and increment:
+        click.secho(f"🚀 Generating vertical shift grid for region...", fg="cyan", bold=True)
+        click.echo(f"   Shift: {input_datum} ➔ {output_datum} @ {increment}")
 
-        # Parse Increment
-        try:
-            inc_val = utils.str2inc(args.increment)
-            nx = int(region_obj.width / inc_val)
-            ny = int(region_obj.height / inc_val)
-        except Exception as e:
-            parser.print_help()
-            logger.error(f"Invalid increment: {args.increment}: {e}")
-            sys.exit(1)
+        # Auto-generate an output name if one wasn't provided
+        out_fn = out or f"shift_{input_datum}_to_{output_datum.replace(':', '_')}.tif"
 
-        if not args.output:
-            dst_fn = f"shift_{args.input_datum}_to_{args.output_datum.replace(':','_')}.tif"
+        result = api.generate_grid(
+            region=region,
+            increment=increment,
+            datum_in=input_datum,
+            datum_out=output_datum,
+            decay_pixels=decay_pixels,
+            out_fn=out_fn,
+            verbose=True
+        )
+
+        if result is not None:
+            click.secho(f"✅ Successfully generated shift grid: {out_fn}", fg="green", bold=True)
         else:
-            dst_fn = args.output
+            click.secho("❌ Failed to generate shift grid.", fg="red")
+            sys.exit(1)
 
     else:
-        parser.print_help()
-        logger.error("Either an input file OR a region (-R) is required.")
+        click.secho("❌ Error: You must provide either an INPUT_FILE or both --region and --increment.", fg="red")
         sys.exit(1)
 
-    vt = VerticalTransform(
-        region=region_obj,
-        nx=nx, ny=ny,
-        epsg_in=epsg_in, epsg_out=epsg_out,
-        geoid_in=geoid_in, geoid_out=geoid_out,
-        decay_pixels=args.decay_pixels,
-        cache_dir=cache_dir,
-        verbose=args.verbose
-    )
 
-    logger.info(f"Computing Shift: {args.input_datum} -> {args.output_datum}")
-    shift_array, _ = vt._vertical_transform(vt.epsg_in, vt.epsg_out)
+@transformez_cli.command("list")
+def transform_list():
+    """List all supported vertical datums, EPSG codes, and geoids."""
+    try:
+        from transformez.definitions import Datums
 
-    if shift_array is None:
-        logger.error("Transformation failed (No coverage found).")
-        sys.exit(1)
+        click.secho("\n🌊 Supported Tidal Surfaces:", fg="cyan", bold=True)
+        # For tidal datums, the user types the dictionary key (e.g., 'mllw')
+        for key, v in Datums.SURFACES.items():
+            region_str = v.get('region', 'global').upper()
+            click.echo(f"  {key:<12} : {v.get('name', key):<30} [{region_str}]")
 
-    if args.preview:
-        plot_grid(shift_array, region_obj, title=f"{args.input_datum} -> {args.output_datum}")
+        click.secho("\n🌐 Ellipsoidal / Frame Datums (EPSG):", fg="cyan", bold=True)
+        # For ellipsoidal, explicitly list the EPSG codes
+        click.echo(f"  {'4979':<12} : WGS84 - World Geodetic System 1984")
+        click.echo(f"  {'6319':<12} : NAD83 - North American Datum 1983")
 
-    if target_dem:
-        logger.info(f"Applying shift to {target_dem}...")
-        GridEngine.apply_vertical_shift(target_dem, shift_array, dst_fn)
-    else:
-        logger.info(f"Writing shift {dst_fn}...")
-        GridWriter.write(dst_fn, shift_array, region_obj)
+        click.secho("\n🏔️  Orthometric / Geoid-Based (EPSG):", fg="cyan", bold=True)
+        # For orthometric, the key in Datums.CDN is typically the EPSG code (e.g., '5703')
+        for epsg_key, v in Datums.CDN.items():
+            # Fallback to the key if 'epsg' isn't explicitly defined in the dict
+            epsg_code = v.get('epsg', epsg_key)
+            geoid_str = v.get('default_geoid', 'None')
+            click.echo(f"  {str(epsg_code):<12} : {v.get('name', 'Unknown'):<30} (Default Geoid: {geoid_str})")
 
-    logger.info(f"Success: {dst_fn}")
+        click.secho("\n🌍 Available Geoids:", fg="cyan", bold=True)
+        click.echo(f"  {', '.join(Datums.GEOIDS.keys())}")
+
+        click.secho("\n💡 Pro-Tip:", fg="yellow", bold=True, nl=False)
+        click.echo(" Combine an EPSG and a specific Geoid using a colon (e.g., -O 5703:g2012b)\n")
+
+    except ImportError:
+        click.secho("❌ Error: Could not load Transformez datum definitions.", fg="red")
 
 if __name__ == '__main__':
     transformez_cli()
