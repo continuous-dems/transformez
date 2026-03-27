@@ -56,6 +56,54 @@ def _parse_datum(datum_arg: str) -> Tuple[Optional[int], Optional[str]]:
     return Datums.get_vdatum_by_name(s), None
 
 
+def plot_grid(grid_array, region, title="Vertical Shift Preview"):
+    """Plot the transformation grid using Matplotlib."""
+
+    try:
+        import matplotlib.pyplot as plt
+    except ImportError:
+        logger.warning("Matplotlib is not installed. Cannot generate preview.")
+        return
+
+    if isinstance(region, Region):
+        region_obj = region
+    else:
+        regions = parse_region(region)
+        if not regions:
+            logger.error(f"Could not parse region: {region}")
+            return None
+        region_obj = regions[0]
+
+    masked_data = np.ma.masked_where(
+        (np.isnan(grid_array)) | (grid_array == -9999) | (grid_array == 0),
+        grid_array
+    )
+
+    if masked_data.count() == 0:
+        logger.warning("Preview skipped: Grid contains no valid data.")
+        return
+
+    plt.figure(figsize=(10, 6))
+    plot_region = [region_obj.xmin, region_obj.xmax, region_obj.ymin, region_obj.ymax]
+
+    # im = plt.imshow(masked_data, extent=plot_region, cmap="RdBu_r", origin="upper")
+    im = plt.imshow(masked_data, extent=plot_region, cmap="viridis", origin="upper")
+    cbar = plt.colorbar(im)
+    cbar.set_label("Vertical Shift (meters)")
+    plt.title(title)
+    plt.xlabel("Longitude")
+    plt.ylabel("Latitude")
+    plt.grid(True, linestyle=':', alpha=0.6)
+
+    stats = (f"Min: {masked_data.min():.3f} m\n"
+             f"Max: {masked_data.max():.3f} m\n"
+             f"Mean: {masked_data.mean():.3f} m")
+    plt.annotate(stats, xy=(0.02, 0.02), xycoords='axes fraction',
+                 bbox=dict(boxstyle="round,pad=0.3", fc="white", ec="gray", alpha=0.8))
+    logger.info("Displaying preview... Close the plot window to continue.")
+    plt.show()
+
+
 def generate_grid(
     region: Union[List[float], str, Region],
     increment: Union[str, float],

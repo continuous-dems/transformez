@@ -15,6 +15,7 @@ import sys
 import click
 import logging
 from transformez import api
+from transformez import grid_engine
 
 logger = logging.getLogger(__name__)
 
@@ -35,13 +36,14 @@ def transformez_cli():
 @click.option("-O", "--output-datum", required=True, help="Target Datum (e.g., '4979', '5703:g2012b').")
 @click.option("--out", "-o", help="Output filename (default: auto-named).")
 @click.option("--decay-pixels", type=int, default=100, help="Number of pixels to decay tidal shifts inland.")
-def transform_run(input_file, region, increment, input_datum, output_datum, out, decay_pixels):
+@click.option("--preview", is_flag=True, help="Preview the transformation output.")
+def transform_run(input_file, region, increment, input_datum, output_datum, out, decay_pixels, preview):
     """Transform a raster's vertical datum or generate a standalone shift grid.
 
     If an INPUT_FILE is provided, that specific raster is transformed in place.
     If no INPUT_FILE is provided, -R and -E must be used to generate a shift grid.
 
-    Examples:
+    Examples:\n
       Transform a DEM : transformez run my_dem.tif -I mllw -O 5703
       Generate a Grid : transformez run -R loc:"Miami" -E 1s -I mllw -O 4979
     """
@@ -66,7 +68,7 @@ def transform_run(input_file, region, increment, input_datum, output_datum, out,
             sys.exit(1)
 
     elif region and increment:
-        click.secho(f"Generating vertical shift grid for region...", fg="cyan", bold=True)
+        click.secho(f"Generating vertical shift grid for region: {region}...", fg="cyan", bold=True)
         click.echo(f"   Shift: {input_datum} ➔ {output_datum} @ {increment}")
 
         # Auto-generate an output name if one wasn't provided
@@ -81,6 +83,9 @@ def transform_run(input_file, region, increment, input_datum, output_datum, out,
             out_fn=out_fn,
             verbose=True
         )
+
+        if preview:
+            api.plot_grid(result, region)
 
         if result is not None:
             click.secho(f"Successfully generated shift grid: {out_fn}", fg="green", bold=True)
