@@ -116,25 +116,27 @@ out_file = transformez.transform_raster(
 
 🌊 **Supported Tidal Surfaces:**
 
-  1089         : mllw                           [USA]
-  5866         : mllw                           [USA]
-  1091         : mlw                            [USA]
-  5869         : mhhw                           [USA]
-  5868         : mhw                            [USA]
-  5714         : msl                            [USA]
-  5713         : mtl                            [USA]
-  0            : crd                            [USA]
-  5609         : IGLD85                         [USA]
-  9000         : LWD_IGLD85                     [USA]
-  5702         : NGVD29                         [GLOBAL]
-  9001         : lat                            [GLOBAL]
-  9002         : hat                            [GLOBAL]
-  9003         : mss                            [GLOBAL]
+| EPSG | NAME |DESC |
+| --- | --- | --- |
+|  1089         | mllw                        |   [USA] |
+|  5866         | mllw                        |   [USA]|
+|  1091         | mlw                         |   [USA]|
+|  5869         | mhhw                        |   [USA]|
+|  5868         | mhw                         |   [USA]|
+|  5714         | msl                         |   [USA]|
+|  5713         | mtl                         |   [USA]|
+|  0            | crd                         |   [USA]|
+|  5609         | IGLD85                      |   [USA]|
+|  9000         | LWD_IGLD85                  |   [USA]|
+|  5702         | NGVD29                      |   [GLOBAL]|
+|  9001         | lat                         |   [GLOBAL]|
+|  9002         | hat                         |   [GLOBAL]|
+|  9003         | mss                         |   [GLOBAL]|
 
 🌐 **Ellipsoidal / Frame Datums (EPSG)**:
 
-|EPSG|NAME |DESC |
-|--|---|---|
+| EPSG | NAME |DESC |
+| --- | --- | --- |
 |  4979         | WGS84 | World Geodetic System 1984 |
 |  6319         | NAD83 | North American Datum 1983 |
 
