@@ -142,14 +142,16 @@ out_file = transformez.transform_raster(
 
 🏔️  **Orthometric / Geoid-Based (EPSG)**:
 
-  5703         : NAVD88 height                  (Default Geoid: g2018)
-  6360         : NAVD88 height (usFt)           (Default Geoid: g2018)
-  8228         : NAVD88 height (Ft)             (Default Geoid: g2018)
-  6641         : PRVD02 height                  (Default Geoid: g2018)
-  6642         : VIVD09 height                  (Default Geoid: g2018)
-  6647         : CGVD2013(CGG2013)              (Default Geoid: CGG2013)
-  3855         : EGM2008 height                 (Default Geoid: egm2008)
-  5773         : EGM96 height                   (Default Geoid: egm96)
+| EPSG | NAME |DESC |
+| --- | --- | --- |
+|  5703         | NAVD88 height            |      (Default Geoid: g2018)|
+|  6360         | NAVD88 height (usFt)     |      (Default Geoid: g2018)|
+|  8228         | NAVD88 height (Ft)       |      (Default Geoid: g2018)|
+|  6641         | PRVD02 height            |      (Default Geoid: g2018)|
+|  6642         | VIVD09 height            |      (Default Geoid: g2018)|
+|  6647         | CGVD2013(CGG2013)        |      (Default Geoid: CGG2013)|
+|  3855         | EGM2008 height           |      (Default Geoid: egm2008)|
+|  5773         | EGM96 height             |      (Default Geoid: egm96)|
 
 🌍 **Available Geoids**:
 
