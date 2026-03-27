@@ -115,6 +115,7 @@ out_file = transformez.transform_raster(
 ## Supported Datums
 
 🌊 **Supported Tidal Surfaces:**
+
   1089         : mllw                           [USA]
   5866         : mllw                           [USA]
   1091         : mlw                            [USA]
@@ -131,10 +132,12 @@ out_file = transformez.transform_raster(
   9003         : mss                            [GLOBAL]
 
 🌐 **Ellipsoidal / Frame Datums (EPSG)**:
+
   4979         : WGS84 - World Geodetic System 1984
   6319         : NAD83 - North American Datum 1983
 
 🏔️  **Orthometric / Geoid-Based (EPSG)**:
+
   5703         : NAVD88 height                  (Default Geoid: g2018)
   6360         : NAVD88 height (usFt)           (Default Geoid: g2018)
   8228         : NAVD88 height (Ft)             (Default Geoid: g2018)
@@ -145,6 +148,7 @@ out_file = transformez.transform_raster(
   5773         : EGM96 height                   (Default Geoid: egm96)
 
 🌍 **Available Geoids**:
+
   g2018, g2012b, geoid09, xgeoid20b, xgeoid19b, egm2008, egm96, CGG2013
 
 ## License
