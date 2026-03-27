@@ -20,6 +20,7 @@
 
 ![Shift Grid Example](docs/images/mllw2nvd.png)
 *(Above: A generated vertical shift grid transforming MLLW to NAVD88)*
+```transformez run -R loc:"new orleans" -E 3s -I mllw -O 5703```
 
 ## Installation
 
@@ -59,20 +60,14 @@ pip install transformez
 
 ```bash
 # Transform MLLW to WGS84 Ellipsoid in Norton Sound, AK
-# (Where NOAA has no coverage!)
-transformez -R -166/-164/63/64 -E 3s \
-    --input-datum mllw \
-    --output-datum 4979 \
-    --output shift_ak.tif
+
+transformez run -R -166/-164/63/64 -E 1s -I mllw -O 4979
 ```
 
 **Transform a raster directly.** Transformez reads the bounds/resolution from the file.
 
 ```bash
-transformez --dem input_bathymetry.tif \
-    --input-datum "mllw" \
-    --output-datum "5703:geoid=geoid12b" \
-    --output output_navd88.tif
+transformez run my_dem.tif -I mllw -O 5703
 ```
 
 **Integrate directly into your download pipeline.**
@@ -118,13 +113,38 @@ out_file = transformez.transform_raster(
 
 ## Supported Datums
 
-* **Tidal**: mllw, mhhw, msl, lat
+🌊 **Supported Tidal Surfaces:**
+  1089         : mllw                           [USA]
+  5866         : mllw                           [USA]
+  1091         : mlw                            [USA]
+  5869         : mhhw                           [USA]
+  5868         : mhw                            [USA]
+  5714         : msl                            [USA]
+  5713         : mtl                            [USA]
+  0            : crd                            [USA]
+  5609         : IGLD85                         [USA]
+  9000         : LWD_IGLD85                     [USA]
+  5702         : NGVD29                         [GLOBAL]
+  9001         : lat                            [GLOBAL]
+  9002         : hat                            [GLOBAL]
+  9003         : mss                            [GLOBAL]
 
-* **Ellipsoidal**: 4979 (WGS84), 6319 (NAD83 2011)
+🌐 **Ellipsoidal / Frame Datums (EPSG)**:
+  4979         : WGS84 - World Geodetic System 1984
+  6319         : NAD83 - North American Datum 1983
 
-* **Orthometric**: 5703 (NAVD88), egm2008, egm96
+🏔️  **Orthometric / Geoid-Based (EPSG)**:
+  5703         : NAVD88 height                  (Default Geoid: g2018)
+  6360         : NAVD88 height (usFt)           (Default Geoid: g2018)
+  8228         : NAVD88 height (Ft)             (Default Geoid: g2018)
+  6641         : PRVD02 height                  (Default Geoid: g2018)
+  6642         : VIVD09 height                  (Default Geoid: g2018)
+  6647         : CGVD2013(CGG2013)              (Default Geoid: CGG2013)
+  3855         : EGM2008 height                 (Default Geoid: egm2008)
+  5773         : EGM96 height                   (Default Geoid: egm96)
 
-* **Geoids**: g2018, g2012b, geoid09, xgeoid20b
+🌍 **Available Geoids**:
+  g2018, g2012b, geoid09, xgeoid20b, xgeoid19b, egm2008, egm96, CGG2013
 
 ## License
 
