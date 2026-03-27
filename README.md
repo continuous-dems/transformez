@@ -133,8 +133,10 @@ out_file = transformez.transform_raster(
 
 🌐 **Ellipsoidal / Frame Datums (EPSG)**:
 
-  4979         : WGS84 - World Geodetic System 1984
-  6319         : NAD83 - North American Datum 1983
+|-|-|-|
+-------
+|  4979         | WGS84 | World Geodetic System 1984 |
+|  6319         | NAD83 | North American Datum 1983 |
 
 🏔️  **Orthometric / Geoid-Based (EPSG)**:
 
