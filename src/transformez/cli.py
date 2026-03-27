@@ -26,6 +26,7 @@ def transformez_cli():
 
     pass
 
+
 @transformez_cli.command("run")
 @click.argument("input_file", required=False)
 @click.option("-R", "--region", help="Bounding box or location string (if no input file).")
@@ -44,8 +45,9 @@ def transform_run(input_file, region, increment, input_datum, output_datum, out,
       Transform a DEM : transformez run my_dem.tif -I mllw -O 5703
       Generate a Grid : transformez run -R loc:"Miami" -E 1s -I mllw -O 4979
     """
+
     if input_file:
-        click.secho(f"🚀 Transforming raster: {input_file}", fg="cyan", bold=True)
+        click.secho(f"Transforming raster: {input_file}", fg="cyan", bold=True)
         click.echo(f"   Shift: {input_datum} ➔ {output_datum}")
 
         result = api.transform_raster(
@@ -58,13 +60,13 @@ def transform_run(input_file, region, increment, input_datum, output_datum, out,
         )
 
         if result:
-            click.secho(f"✅ Successfully transformed raster: {result}", fg="green", bold=True)
+            click.secho(f"Successfully transformed raster: {result}", fg="green", bold=True)
         else:
-            click.secho("❌ Failed to transform raster.", fg="red")
+            click.secho("Failed to transform raster.", fg="red")
             sys.exit(1)
 
     elif region and increment:
-        click.secho(f"🚀 Generating vertical shift grid for region...", fg="cyan", bold=True)
+        click.secho(f"Generating vertical shift grid for region...", fg="cyan", bold=True)
         click.echo(f"   Shift: {input_datum} ➔ {output_datum} @ {increment}")
 
         # Auto-generate an output name if one wasn't provided
@@ -81,13 +83,13 @@ def transform_run(input_file, region, increment, input_datum, output_datum, out,
         )
 
         if result is not None:
-            click.secho(f"✅ Successfully generated shift grid: {out_fn}", fg="green", bold=True)
+            click.secho(f"Successfully generated shift grid: {out_fn}", fg="green", bold=True)
         else:
-            click.secho("❌ Failed to generate shift grid.", fg="red")
+            click.secho("Failed to generate shift grid.", fg="red")
             sys.exit(1)
 
     else:
-        click.secho("❌ Error: You must provide either an INPUT_FILE or both --region and --increment.", fg="red")
+        click.secho("Error: You must provide either an INPUT_FILE or both --region and --increment.", fg="red")
         sys.exit(1)
 
 
@@ -123,7 +125,8 @@ def transform_list():
         click.echo(" Combine an EPSG and a specific Geoid using a colon (e.g., -O 5703:g2012b)\n")
 
     except ImportError:
-        click.secho("❌ Error: Could not load Transformez datum definitions.", fg="red")
+        click.secho("Error: Could not load Transformez datum definitions.", fg="red")
+
 
 if __name__ == '__main__':
     transformez_cli()
