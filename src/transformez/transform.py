@@ -413,7 +413,8 @@ class VerticalTransform:
                     if proxy_name:
                         # Revert the erroneous HTDP shift to NAD83 (since global is WGS84)
                         total_out -= htdp_shift
-                        if desc_parts: desc_parts.pop()
+                        if desc_parts:
+                            desc_parts.pop()
 
                         s, d = self._get_global_chain(proxy_name, model='fes2014')
                         if s is not None:

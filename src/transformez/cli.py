@@ -15,7 +15,6 @@ import sys
 import click
 import logging
 from transformez import api
-from transformez import grid_engine
 
 logger = logging.getLogger(__name__)
 
