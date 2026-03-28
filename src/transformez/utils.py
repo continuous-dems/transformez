@@ -18,8 +18,10 @@ import numpy as np
 import rasterio
 
 logger = logging.getLogger(__name__)
-cmd_exists = lambda x: any(os.access(os.path.join(path, x), os.X_OK)
-                           for path in os.environ['PATH'].split(os.pathsep))
+cmd_exists = lambda x: any(
+    os.access(os.path.join(path, x), os.X_OK)
+    for path in os.environ["PATH"].split(os.pathsep)
+)
 
 
 def run_cmd(args):
@@ -31,7 +33,7 @@ def run_cmd(args):
         args,
         shell=False if isinstance(args, list) else True,
         capture_output=True,
-        text=True
+        text=True,
     )
     return result.stdout, result.returncode
 
@@ -84,10 +86,7 @@ class RasterQuery:
         cols = np.floor(cols_f).astype(int)
         rows = np.floor(rows_f).astype(int)
 
-        valid = (
-            (rows >= 0) & (rows < self.height) &
-            (cols >= 0) & (cols < self.width)
-        )
+        valid = (rows >= 0) & (rows < self.height) & (cols >= 0) & (cols < self.width)
 
         results = np.full_like(q_x, self.default_nodata, dtype=self.data.dtype)
         if np.any(valid):

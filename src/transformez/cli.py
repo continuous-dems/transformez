@@ -15,13 +15,12 @@ import sys
 import click
 import logging
 from transformez import api
-from transformez import grid_engine
 
 logger = logging.getLogger(__name__)
 
 
 @click.group(name="transform")
-@click.version_option(package_name='transformez')
+@click.version_option(package_name="transformez")
 def transformez_cli():
     """Apply vertical datum transformations and generate shift grids."""
 
@@ -30,14 +29,32 @@ def transformez_cli():
 
 @transformez_cli.command("run")
 @click.argument("input_file", required=False)
-@click.option("-R", "--region", help="Bounding box or location string (if no input file).")
-@click.option("-E", "--increment", help="Resolution (e.g., 1s, 30m) (if no input file).")
-@click.option("-I", "--input-datum", required=True, help="Source Datum (e.g., 'mllw', '5703').")
-@click.option("-O", "--output-datum", required=True, help="Target Datum (e.g., '4979', '5703:g2012b').")
+@click.option(
+    "-R", "--region", help="Bounding box or location string (if no input file)."
+)
+@click.option(
+    "-E", "--increment", help="Resolution (e.g., 1s, 30m) (if no input file)."
+)
+@click.option(
+    "-I", "--input-datum", required=True, help="Source Datum (e.g., 'mllw', '5703')."
+)
+@click.option(
+    "-O",
+    "--output-datum",
+    required=True,
+    help="Target Datum (e.g., '4979', '5703:g2012b').",
+)
 @click.option("--out", "-o", help="Output filename (default: auto-named).")
-@click.option("--decay-pixels", type=int, default=100, help="Number of pixels to decay tidal shifts inland.")
+@click.option(
+    "--decay-pixels",
+    type=int,
+    default=100,
+    help="Number of pixels to decay tidal shifts inland.",
+)
 @click.option("--preview", is_flag=True, help="Preview the transformation output.")
-def transform_run(input_file, region, increment, input_datum, output_datum, out, decay_pixels, preview):
+def transform_run(
+    input_file, region, increment, input_datum, output_datum, out, decay_pixels, preview
+):
     """Transform a raster's vertical datum or generate a standalone shift grid.
 
     If an INPUT_FILE is provided, that specific raster is transformed in place.
@@ -58,17 +75,23 @@ def transform_run(input_file, region, increment, input_datum, output_datum, out,
             datum_out=output_datum,
             decay_pixels=decay_pixels,
             output_raster=out,
-            verbose=True
+            verbose=True,
         )
 
         if result:
-            click.secho(f"Successfully transformed raster: {result}", fg="green", bold=True)
+            click.secho(
+                f"Successfully transformed raster: {result}", fg="green", bold=True
+            )
         else:
             click.secho("Failed to transform raster.", fg="red")
             sys.exit(1)
 
     elif region and increment:
-        click.secho(f"Generating vertical shift grid for region: {region}...", fg="cyan", bold=True)
+        click.secho(
+            f"Generating vertical shift grid for region: {region}...",
+            fg="cyan",
+            bold=True,
+        )
         click.echo(f"   Shift: {input_datum} ➔ {output_datum} @ {increment}")
 
         # Auto-generate an output name if one wasn't provided
@@ -81,20 +104,25 @@ def transform_run(input_file, region, increment, input_datum, output_datum, out,
             datum_out=output_datum,
             decay_pixels=decay_pixels,
             out_fn=out_fn,
-            verbose=True
+            verbose=True,
         )
 
         if preview:
             api.plot_grid(result, region)
 
         if result is not None:
-            click.secho(f"Successfully generated shift grid: {out_fn}", fg="green", bold=True)
+            click.secho(
+                f"Successfully generated shift grid: {out_fn}", fg="green", bold=True
+            )
         else:
             click.secho("Failed to generate shift grid.", fg="red")
             sys.exit(1)
 
     else:
-        click.secho("Error: You must provide either an INPUT_FILE or both --region and --increment.", fg="red")
+        click.secho(
+            "Error: You must provide either an INPUT_FILE or both --region and --increment.",
+            fg="red",
+        )
         sys.exit(1)
 
 
@@ -107,7 +135,7 @@ def transform_list():
         click.secho("\n🌊 Supported Tidal Surfaces:", fg="cyan", bold=True)
         # For tidal datums, the user types the dictionary key (e.g., 'mllw')
         for key, v in Datums.SURFACES.items():
-            region_str = v.get('region', 'global').upper()
+            region_str = v.get("region", "global").upper()
             click.echo(f"  {key:<12} : {v.get('name', key):<30} [{region_str}]")
 
         click.secho("\n🌐 Ellipsoidal / Frame Datums (EPSG):", fg="cyan", bold=True)
@@ -119,19 +147,23 @@ def transform_list():
         # For orthometric, the key in Datums.CDN is typically the EPSG code (e.g., '5703')
         for epsg_key, v in Datums.CDN.items():
             # Fallback to the key if 'epsg' isn't explicitly defined in the dict
-            epsg_code = v.get('epsg', epsg_key)
-            geoid_str = v.get('default_geoid', 'None')
-            click.echo(f"  {str(epsg_code):<12} : {v.get('name', 'Unknown'):<30} (Default Geoid: {geoid_str})")
+            epsg_code = v.get("epsg", epsg_key)
+            geoid_str = v.get("default_geoid", "None")
+            click.echo(
+                f"  {str(epsg_code):<12} : {v.get('name', 'Unknown'):<30} (Default Geoid: {geoid_str})"
+            )
 
         click.secho("\n🌍 Available Geoids:", fg="cyan", bold=True)
         click.echo(f"  {', '.join(Datums.GEOIDS.keys())}")
 
         click.secho("\n💡 Pro-Tip:", fg="yellow", bold=True, nl=False)
-        click.echo(" Combine an EPSG and a specific Geoid using a colon (e.g., -O 5703:g2012b)\n")
+        click.echo(
+            " Combine an EPSG and a specific Geoid using a colon (e.g., -O 5703:g2012b)\n"
+        )
 
     except ImportError:
         click.secho("Error: Could not load Transformez datum definitions.", fg="red")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     transformez_cli()

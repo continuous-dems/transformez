@@ -34,8 +34,7 @@ def plot_grid(grid_array, region, title="Vertical Shift Preview"):
         return
 
     masked_data = np.ma.masked_where(
-        (np.isnan(grid_array)) | (grid_array == -9999) | (grid_array == 0),
-        grid_array
+        (np.isnan(grid_array)) | (grid_array == -9999) | (grid_array == 0), grid_array
     )
 
     if masked_data.count() == 0:
@@ -52,13 +51,19 @@ def plot_grid(grid_array, region, title="Vertical Shift Preview"):
     plt.title(title)
     plt.xlabel("Longitude")
     plt.ylabel("Latitude")
-    plt.grid(True, linestyle=':', alpha=0.6)
+    plt.grid(True, linestyle=":", alpha=0.6)
 
-    stats = (f"Min: {masked_data.min():.3f} m\n"
-             f"Max: {masked_data.max():.3f} m\n"
-             f"Mean: {masked_data.mean():.3f} m")
-    plt.annotate(stats, xy=(0.02, 0.02), xycoords='axes fraction',
-                 bbox=dict(boxstyle="round,pad=0.3", fc="white", ec="gray", alpha=0.8))
+    stats = (
+        f"Min: {masked_data.min():.3f} m\n"
+        f"Max: {masked_data.max():.3f} m\n"
+        f"Mean: {masked_data.mean():.3f} m"
+    )
+    plt.annotate(
+        stats,
+        xy=(0.02, 0.02),
+        xycoords="axes fraction",
+        bbox=dict(boxstyle="round,pad=0.3", fc="white", ec="gray", alpha=0.8),
+    )
     logger.info("Displaying preview... Close the plot window to continue.")
     plt.show()
 
@@ -68,9 +73,14 @@ class GridEngine:
     def load_and_interpolate(source_files, target_region, nx, ny, decay_pixels=100):
         """Composites grids using GDAL Warper."""
 
-        xmin, xmax, ymin, ymax = target_region.xmin, target_region.xmax, target_region.ymin, target_region.ymax
+        xmin, xmax, ymin, ymax = (
+            target_region.xmin,
+            target_region.xmax,
+            target_region.ymin,
+            target_region.ymax,
+        )
         dst_transform = from_bounds(xmin, ymin, xmax, ymax, nx, ny)
-        dst_crs = 'EPSG:4326'
+        dst_crs = "EPSG:4326"
 
         mosaic = np.full((ny, nx), np.nan, dtype=np.float32)
 
@@ -85,7 +95,7 @@ class GridEngine:
 
                     if src_nodata is not None:
                         src_data[np.isclose(src_data, src_nodata, atol=1e-4)] = np.nan
-                    if fn.endswith('.gtx'):
+                    if fn.endswith(".gtx"):
                         src_data[np.isclose(src_data, -88.8888, atol=1e-2)] = np.nan
 
                     temp_buffer = np.full((ny, nx), np.nan, dtype=np.float32)
@@ -95,12 +105,12 @@ class GridEngine:
                             source=src_data,
                             destination=temp_buffer,
                             src_transform=src.transform,
-                            src_crs=src.crs or 'EPSG:4326',
+                            src_crs=src.crs or "EPSG:4326",
                             src_nodata=np.nan,
                             dst_transform=dst_transform,
                             dst_crs=dst_crs,
                             dst_nodata=np.nan,
-                            resampling=Resampling.bilinear
+                            resampling=Resampling.bilinear,
                         )
 
                     valid_mask = ~np.isnan(temp_buffer)
@@ -131,7 +141,9 @@ class GridEngine:
         dist = ndimage.distance_transform_edt(mask)
         alpha = np.clip(dist / blend_pixels, 0.0, 1.0)
 
-        nearest_indices = ndimage.distance_transform_edt(mask, return_distances=False, return_indices=True)
+        nearest_indices = ndimage.distance_transform_edt(
+            mask, return_distances=False, return_indices=True
+        )
         extended_vdatum = in_grid.copy()
         extended_vdatum[mask] = in_grid[tuple(nearest_indices)][mask]
 
@@ -140,7 +152,13 @@ class GridEngine:
         return blended_data
 
     @staticmethod
-    def coastal_aware_composite(vdatum_grid, global_grid, decay_pixels=100, buffer_pixels=10, max_discontinuity=0.5):
+    def coastal_aware_composite(
+        vdatum_grid,
+        global_grid,
+        decay_pixels=100,
+        buffer_pixels=10,
+        max_discontinuity=0.5,
+    ):
         """Intelligently handles inland decay vs. offshore blending, while
         filtering out low-resolution global artifacts.
         """
@@ -148,10 +166,14 @@ class GridEngine:
         final_grid = vdatum_grid.copy()
         vdatum_mask = np.isnan(vdatum_grid)
         if not vdatum_mask.all():
-            nearest_idx = ndimage.distance_transform_edt(vdatum_mask, return_distances=False, return_indices=True)
+            nearest_idx = ndimage.distance_transform_edt(
+                vdatum_mask, return_distances=False, return_indices=True
+            )
             nearest_vdatum_vals = vdatum_grid[tuple(nearest_idx)]
 
-            fes_anomaly_mask = np.abs(global_grid - nearest_vdatum_vals) > max_discontinuity
+            fes_anomaly_mask = (
+                np.abs(global_grid - nearest_vdatum_vals) > max_discontinuity
+            )
 
             global_grid[fes_anomaly_mask] = np.nan
 
@@ -162,11 +184,15 @@ class GridEngine:
         is_offshore = ~is_vdatum & is_ocean
 
         if is_offshore.any():
-            blended_ocean = GridEngine.smart_blend(vdatum_grid, global_grid, blend_pixels=50)
+            blended_ocean = GridEngine.smart_blend(
+                vdatum_grid, global_grid, blend_pixels=50
+            )
             final_grid[is_offshore] = blended_ocean[is_offshore]
 
         if is_inland.any():
-            decayed_inland = GridEngine.fill_nans(vdatum_grid, decay_pixels=decay_pixels, buffer_pixels=buffer_pixels)
+            decayed_inland = GridEngine.fill_nans(
+                vdatum_grid, decay_pixels=decay_pixels, buffer_pixels=buffer_pixels
+            )
             final_grid[is_inland] = decayed_inland[is_inland]
 
         return final_grid
@@ -205,7 +231,9 @@ class GridEngine:
                 data = src.read(1)
 
                 if data.shape != shift_array.shape:
-                    raise ValueError(f"Dimension mismatch: DEM {data.shape} vs Shift {shift_array.shape}")
+                    raise ValueError(
+                        f"Dimension mismatch: DEM {data.shape} vs Shift {shift_array.shape}"
+                    )
 
                 nodata = src.nodata if src.nodata is not None else -9999
                 profile.update(nodata=nodata)
@@ -214,13 +242,14 @@ class GridEngine:
                 data[valid_mask] += shift_array[valid_mask]
                 data[~valid_mask] = nodata
 
-                with rasterio.open(dst_dem, 'w', **profile) as dst:
+                with rasterio.open(dst_dem, "w", **profile) as dst:
                     dst.write(data, 1)
             logger.info(f"Successfully wrote transformed DEM to: {dst_dem}")
             return True
         except Exception as e:
             logger.error(f"Failed to apply shift to DEM: {e}")
             return False
+
 
 class GridWriter:
     @staticmethod
@@ -231,8 +260,8 @@ class GridWriter:
         if dirname and not os.path.exists(dirname):
             os.makedirs(dirname)
 
-        if not filename.endswith('.tif'):
-            filename = os.path.splitext(filename)[0] + '.tif'
+        if not filename.endswith(".tif"):
+            filename = os.path.splitext(filename)[0] + ".tif"
 
         rows, cols = data.shape
         xmin, xmax, ymin, ymax = region.xmin, region.xmax, region.ymin, region.ymax
@@ -242,9 +271,17 @@ class GridWriter:
         transform = rasterio.transform.from_origin(xmin, ymax, res_x, res_y)
 
         with rasterio.open(
-            filename, 'w', driver='GTiff', height=rows, width=cols, count=1,
-            dtype='float32', crs='EPSG:4326', transform=transform,
-            compress='deflate', tiled=True
+            filename,
+            "w",
+            driver="GTiff",
+            height=rows,
+            width=cols,
+            count=1,
+            dtype="float32",
+            crs="EPSG:4326",
+            transform=transform,
+            compress="deflate",
+            tiled=True,
         ) as dst:
-            dst.write(data.astype('float32'), 1)
+            dst.write(data.astype("float32"), 1)
         return filename

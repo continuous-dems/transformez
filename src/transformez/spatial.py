@@ -26,7 +26,6 @@ logger = logging.getLogger(__name__)
 
 
 class TransRegion(Region):
-
     # gtl is (geo-transform, xcount, ycount)
     @classmethod
     def from_geo_transform(cls, gtl):
@@ -41,7 +40,7 @@ class TransRegion(Region):
 
         return cls(xmin, xmax, ymin, ymax)
 
-    def srcwin(self, geo_transform, x_count, y_count, node='grid'):
+    def srcwin(self, geo_transform, x_count, y_count, node="grid"):
         """Output the appropriate GDAL srcwin (xoff, yoff, xsize, ysize)."""
 
         ul = _geo2pixel(self.xmin, self.ymax, geo_transform, node=node)
@@ -60,11 +59,13 @@ class TransRegion(Region):
         y_size = y_stop - y_start
 
         if x_size <= 0 or y_size <= 0:
-             return 0, 0, 0, 0
+            return 0, 0, 0, 0
 
         return int(x_start), int(y_start), int(x_size), int(y_size)
 
-    def geo_transform(self, x_inc: float = 0, y_inc: Optional[float] = None, node: str = 'grid'):
+    def geo_transform(
+        self, x_inc: float = 0, y_inc: Optional[float] = None, node: str = "grid"
+    ):
         """Return dimensions and a geotransform based on the region and a cellsize.
 
         Returns:
@@ -80,7 +81,11 @@ class TransRegion(Region):
         this_origin = _geo2pixel(self.xmin, self.ymax, dst_gt, node=node)
         this_end = _geo2pixel(self.xmax, self.ymin, dst_gt, node=node)
 
-        return int(this_end[0] - this_origin[0]), int(this_end[1] - this_origin[1]), dst_gt
+        return (
+            int(this_end[0] - this_origin[0]),
+            int(this_end[1] - this_origin[1]),
+            dst_gt,
+        )
 
     def geo_transform_from_count(self, x_count: int = 0, y_count: int = 0):
         x_inc = (self.xmax - self.xmin) / x_count
@@ -133,16 +138,18 @@ class TransRegion(Region):
         xs.extend(np.linspace(self.xmax, self.xmin, density))
         ys.extend([self.ymin] * density)
 
-        #return list(zip(xs, ys))
+        # return list(zip(xs, ys))
         return xs, ys
 
     def transform_densify(self, transformer=None, transform_direction="FORWARD"):
         if transformer is None or not self.valid_p():
-            logger.error(f'Could not perform region transformation; {self}')
+            logger.error(f"Could not perform region transformation; {self}")
             return self
 
         points_x, points_y = self.densify_edges(20)
-        trans_points_x, trans_points_y = transformer.transform(points_x, points_y, direction=transform_direction)
+        trans_points_x, trans_points_y = transformer.transform(
+            points_x, points_y, direction=transform_direction
+        )
 
         self.xmin = min(trans_points_x)
         self.xmax = max(trans_points_x)
@@ -150,35 +157,39 @@ class TransRegion(Region):
         self.ymax = max(trans_points_y)
 
         # set the new SRS
-        #self.src_srs = d_srs.ExportToWkt()
+        # self.src_srs = d_srs.ExportToWkt()
 
         return self
 
     def transform(self, transformer=None, transform_direction="FORWARD"):
         if transformer is None or not self.valid_p():
-            logger.error(f'Could not perform region transformation; {self}')
+            logger.error(f"Could not perform region transformation; {self}")
             return self
 
-        self.xmin, self.ymin = transformer.transform(self.xmin, self.ymin, direction=transform_direction)
-        self.xmax, self.ymax = transformer.transform(self.xmax, self.ymax, direction=transform_direction)
+        self.xmin, self.ymin = transformer.transform(
+            self.xmin, self.ymin, direction=transform_direction
+        )
+        self.xmax, self.ymax = transformer.transform(
+            self.xmax, self.ymax, direction=transform_direction
+        )
 
         return self
 
-    def warp(self, dst_srs='epsg:4326'):
+    def warp(self, dst_srs="epsg:4326"):
         """Transform region horizontally to a new CRS."""
 
         if str_or(self.srs) is None:
-            logger.warning(f'Region has no valid associated srs: {self.srs}')
+            logger.warning(f"Region has no valid associated srs: {self.srs}")
             return self
 
         with warnings.catch_warnings():
-            warnings.simplefilter('ignore')
+            warnings.simplefilter("ignore")
             transform = srs.SRSParser(src_srs=self.srs, dst_srs=dst_srs)
 
-            if transform.tc['src_horz_crs'] and transform.tc['dst_horz_crs']:
-                pipeline_str = '+proj=pipeline +step {} +inv +step {}'.format(
-                    transform.tc['src_horz_crs'].to_proj4(),
-                    transform.tc['dst_horz_crs'].to_proj4()
+            if transform.tc["src_horz_crs"] and transform.tc["dst_horz_crs"]:
+                pipeline_str = "+proj=pipeline +step {} +inv +step {}".format(
+                    transform.tc["src_horz_crs"].to_proj4(),
+                    transform.tc["dst_horz_crs"].to_proj4(),
                 )
                 transformer = pyproj.Transformer.from_pipeline(pipeline_str)
 
@@ -189,28 +200,36 @@ class TransRegion(Region):
         return self
 
 
-def _geo2pixel(geo_x, geo_y, geo_transform, node='grid'):
+def _geo2pixel(geo_x, geo_y, geo_transform, node="grid"):
     """Convert a geographic x,y value to a pixel location."""
 
     if geo_transform[2] + geo_transform[4] == 0:
         pixel_x = (geo_x - geo_transform[0]) / geo_transform[1]
         pixel_y = (geo_y - geo_transform[3]) / geo_transform[5]
-        if node == 'grid':
-            pixel_x += .5
-            pixel_y += .5
+        if node == "grid":
+            pixel_x += 0.5
+            pixel_y += 0.5
     else:
         pixel_x, pixel_y = _apply_gt(geo_x, geo_y, _invert_gt(geo_transform))
 
     return int(pixel_x), int(pixel_y)
 
 
-def _apply_gt(in_x, in_y, geo_transform, node='pixel'):
+def _apply_gt(in_x, in_y, geo_transform, node="pixel"):
     """Apply geotransform to in_x, in_y."""
 
-    offset = 0.5 if node == 'pixel' else 0
+    offset = 0.5 if node == "pixel" else 0
 
-    out_x = geo_transform[0] + (in_x + offset) * geo_transform[1] + (in_y + offset) * geo_transform[2]
-    out_y = geo_transform[3] + (in_x + offset) * geo_transform[4] + (in_y + offset) * geo_transform[5]
+    out_x = (
+        geo_transform[0]
+        + (in_x + offset) * geo_transform[1]
+        + (in_y + offset) * geo_transform[2]
+    )
+    out_y = (
+        geo_transform[3]
+        + (in_x + offset) * geo_transform[4]
+        + (in_y + offset) * geo_transform[5]
+    )
     return out_x, out_y
 
 
@@ -227,8 +246,12 @@ def _invert_gt(geo_transform):
     out_gt[4] = -geo_transform[4] * inv_det
     out_gt[2] = -geo_transform[2] * inv_det
     out_gt[5] = geo_transform[1] * inv_det
-    out_gt[0] = (geo_transform[2] * geo_transform[3] - geo_transform[0] * geo_transform[5]) * inv_det
-    out_gt[3] = (-geo_transform[1] * geo_transform[3] + geo_transform[0] * geo_transform[4]) * inv_det
+    out_gt[0] = (
+        geo_transform[2] * geo_transform[3] - geo_transform[0] * geo_transform[5]
+    ) * inv_det
+    out_gt[3] = (
+        -geo_transform[1] * geo_transform[3] + geo_transform[0] * geo_transform[4]
+    ) * inv_det
     return out_gt
 
 

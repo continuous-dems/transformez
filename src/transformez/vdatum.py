@@ -23,10 +23,21 @@ HAS_VDATUM = utils.cmd_check("vdatum.jar", vdatum_cmd).decode()
 
 
 class Vdatum:
-    def __init__(self, jar=None, ivert="navd88:m:height", overt="mhw:m:height",
-                 ihorz="NAD83_2011", ohorz="NAD83_2011", region="4", fmt="txt",
-                 xyzl="0,1,2", skip=0, delim="space", result_dir="result",
-                 verbose=False):
+    def __init__(
+        self,
+        jar=None,
+        ivert="navd88:m:height",
+        overt="mhw:m:height",
+        ihorz="NAD83_2011",
+        ohorz="NAD83_2011",
+        region="4",
+        fmt="txt",
+        xyzl="0,1,2",
+        skip=0,
+        delim="space",
+        result_dir="result",
+        verbose=False,
+    ):
         self.jar = jar
         self.ivert = ivert
         self.overt = overt
@@ -69,8 +80,8 @@ class Vdatum:
         if self.jar is not None:
             out, _ = utils.run_cmd(f"java -jar {self.jar} -", verbose=self.verbose)
             for i in out.decode("utf-8").split("\n"):
-                if '- v' in i.strip():
-                    return i.strip().split('v')[-1]
+                if "- v" in i.strip():
+                    return i.strip().split("v")[-1]
         return None
 
     def vdatum_xyz(self, xyz):
@@ -80,12 +91,13 @@ class Vdatum:
             self.vdatum_locate_jar()
         if self.jar is not None:
             epoch_str = f"epoch:{self.epoch} " if self.epoch is not None else ""
-            vdc = (f"ihorz:{self.ihorz} ivert:{self.ivert} ohorz:{self.ohorz} overt:{self.overt} "
-                   f"-nodata -pt:{xyz[0]},{xyz[1]},{xyz[2]} {epoch_str}region:{self.region}")
+            vdc = (
+                f"ihorz:{self.ihorz} ivert:{self.ivert} ohorz:{self.ohorz} overt:{self.overt} "
+                f"-nodata -pt:{xyz[0]},{xyz[1]},{xyz[2]} {epoch_str}region:{self.region}"
+            )
 
             out, _ = utils.run_cmd(
-                f"java -Djava.awt.headless=false -jar {self.jar} {vdc}",
-                verbose=False
+                f"java -Djava.awt.headless=false -jar {self.jar} {vdc}", verbose=False
             )
             z = xyz[2]
             for i in out.split("\n"):
@@ -115,9 +127,11 @@ class Vdatum:
             self.vdatum_locate_jar()
         if self.jar is not None:
             epoch_str = f"epoch:{self.epoch} " if self.epoch is not None else ""
-            vdc = (f"ihorz:{self.ihorz} ivert:{self.ivert} ohorz:{self.ohorz} overt:{self.overt} "
-                   f"-nodata -file:txt:{self.delim},{self.xyzl},skip{self.skip}:{src_fn}:{self.result_dir} "
-                   f"{epoch_str}region:{self.region}")
+            vdc = (
+                f"ihorz:{self.ihorz} ivert:{self.ivert} ohorz:{self.ohorz} overt:{self.overt} "
+                f"-nodata -file:txt:{self.delim},{self.xyzl},skip{self.skip}:{src_fn}:{self.result_dir} "
+                f"{epoch_str}region:{self.region}"
+            )
             return utils.run_cmd(f"java -jar {self.jar} {vdc}", verbose=self.verbose)
         else:
             return [], -1

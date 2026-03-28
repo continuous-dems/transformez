@@ -29,13 +29,18 @@ logger = logging.getLogger(__name__)
 
 ae = ".exe" if sys.platform == "win32" else ""
 # Validating HTDP existence
-htdp_cmd = "echo 0 | htdp 2>&1" if sys.platform == "win32" else "echo 0 | htdp 2>&1 | grep SOFTWARE | awk '{print $3}'"
-HAS_HTDP = utils.cmd_check(f'htdp{ae}', htdp_cmd)
+htdp_cmd = (
+    "echo 0 | htdp 2>&1"
+    if sys.platform == "win32"
+    else "echo 0 | htdp 2>&1 | grep SOFTWARE | awk '{print $3}'"
+)
+HAS_HTDP = utils.cmd_check(f"htdp{ae}", htdp_cmd)
+
 
 class HTDP:
     """Wrapper for the NGS HTDP software."""
 
-    def __init__(self, htdp_bin: str = 'htdp', verbose: bool = True):
+    def __init__(self, htdp_bin: str = "htdp", verbose: bool = True):
         self.htdp_bin = htdp_bin
         self.verbose = verbose
         if not HAS_HTDP:
@@ -54,16 +59,14 @@ class HTDP:
         # transform.py passes ints (EPSGs), we need HTDP internal IDs
         def get_id(epsg):
             if epsg in Datums.HTDP:
-                return Datums.HTDP[epsg]['htdp_id']
+                return Datums.HTDP[epsg]["htdp_id"]
             # Fallback for common codes if not in dictionary
             if epsg == 6319:
                 return 1  # NAD83(2011)
 
             if epsg == 4979:
-                return 10 # WGS84(G1762)
-            raise ValueError(
-                f"EPSG {epsg} not defined in HTDP dictionary."
-            )
+                return 10  # WGS84(G1762)
+            raise ValueError(f"EPSG {epsg} not defined in HTDP dictionary.")
 
         try:
             id_in = get_id(epsg_in)
@@ -83,7 +86,7 @@ class HTDP:
             lats = np.linspace(region.ymin, region.ymax, ny)
 
             # Write input file
-            with open(in_fn, 'w') as f:
+            with open(in_fn, "w") as f:
                 for y_idx, lat in enumerate(lats):
                     for x_idx, lon in enumerate(lons):
                         # "Lat Lon Height TextID"
@@ -92,9 +95,7 @@ class HTDP:
 
             # Write Control File
             self._write_control(
-                ctl_fn, out_fn, in_fn,
-                id_in, epoch_in,
-                id_out, epoch_out
+                ctl_fn, out_fn, in_fn, id_in, epoch_in, id_out, epoch_out
             )
 
             # Run HTDP
@@ -113,13 +114,13 @@ class HTDP:
         """Parses HTDP output, mapping PNT_x_y tags to grid indices."""
 
         grid = np.zeros(shape)
-        with open(filename, 'r') as f:
+        with open(filename, "r") as f:
             for line in f:
                 if "PNT_" not in line:
                     continue
 
                 try:
-                    parts = line.replace('"', ' ').split()
+                    parts = line.replace('"', " ").split()
 
                     # HTDP Output Format: Lat, Lon, Height, Text
                     idx_off = 1 if parts[0] == "*" else 0
@@ -139,8 +140,9 @@ class HTDP:
 
         return grid
 
-    def _write_control(self, control_fn, out_fn, in_fn,
-                       id_in, epoch_in, id_out, epoch_out):
+    def _write_control(
+        self, control_fn, out_fn, in_fn, id_in, epoch_in, id_out, epoch_out
+    ):
         """Writes the batch control file."""
         # 4 = Transform Positions
         # 2 = Input file
@@ -169,19 +171,19 @@ class HTDP:
             f"0\n"
             f"0\n"
         )
-        with open(control_fn, 'w') as f:
+        with open(control_fn, "w") as f:
             f.write(content)
 
     def run_cmd(self, control_fn):
         """Executes the binary."""
         try:
-            with open(control_fn, 'r') as stdin:
+            with open(control_fn, "r") as stdin:
                 subprocess.run(
                     [self.htdp_bin],
                     stdin=stdin,
                     check=True,
                     stdout=subprocess.DEVNULL,
-                    stderr=subprocess.PIPE
+                    stderr=subprocess.PIPE,
                 )
         except Exception as e:
             logger.error(f"HTDP Runtime Error: {e}")
@@ -199,13 +201,11 @@ def download_htdp(target_dir=None):
 
     os.makedirs(target_dir, exist_ok=True)
 
-    if sys.platform == 'win32':
+    if sys.platform == "win32":
         # Windows: Download pre-compiled EXE
         url = "https://geodesy.noaa.gov/TOOLS/Htdp/htdp.exe"
         out_path = os.path.join(target_dir, "htdp.exe")
-        logger.info(
-            "Downloading HTDP executable for Windows from NOAA..."
-        )
+        logger.info("Downloading HTDP executable for Windows from NOAA...")
         try:
             urllib.request.urlretrieve(url, out_path)
             logger.info(f"Success! Downloaded to: {out_path}")
@@ -221,13 +221,11 @@ def download_htdp(target_dir=None):
         zip_path = os.path.join(target_dir, "HTDP-download.zip")
         src_dir = os.path.join(target_dir, "htdp_source")
 
-        logger.info(
-            "Downloading HTDP source code for Unix from NOAA..."
-        )
+        logger.info("Downloading HTDP source code for Unix from NOAA...")
         try:
             urllib.request.urlretrieve(url, zip_path)
 
-            with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+            with zipfile.ZipFile(zip_path, "r") as zip_ref:
                 zip_ref.extractall(src_dir)
 
             os.remove(zip_path)
@@ -236,11 +234,11 @@ def download_htdp(target_dir=None):
             logger.info(
                 "HTDP requires compilation on Linux/macOS. Run the following commands:"
             )
-            print("\n" + "="*50)
+            print("\n" + "=" * 50)
             print(f"cd {src_dir}")
             print("gfortran -o htdp htdp.f")
             print("sudo mv htdp /usr/local/bin/")
-            print("="*50 + "\n")
+            print("=" * 50 + "\n")
 
         except Exception as e:
             logger.error(f"Failed to download or extract HTDP source: {e}")

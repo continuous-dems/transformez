@@ -46,12 +46,10 @@ def _parse_datum(datum_arg: str) -> Tuple[Optional[int], Optional[str]]:
     if not datum_arg:
         return None, None
     s = str(datum_arg)
-    if ':' in s:
-        parts = s.split(':')
+    if ":" in s:
+        parts = s.split(":")
         geoid_part = parts[1]
-        geoid = (
-            geoid_part.split('=')[1] if 'geoid=' in geoid_part else geoid_part
-        )
+        geoid = geoid_part.split("=")[1] if "geoid=" in geoid_part else geoid_part
         return Datums.get_vdatum_by_name(parts[0]), geoid
     return Datums.get_vdatum_by_name(s), None
 
@@ -75,8 +73,7 @@ def plot_grid(grid_array, region, title="Vertical Shift Preview"):
         region_obj = regions[0]
 
     masked_data = np.ma.masked_where(
-        (np.isnan(grid_array)) | (grid_array == -9999) | (grid_array == 0),
-        grid_array
+        (np.isnan(grid_array)) | (grid_array == -9999) | (grid_array == 0), grid_array
     )
 
     if masked_data.count() == 0:
@@ -93,13 +90,19 @@ def plot_grid(grid_array, region, title="Vertical Shift Preview"):
     plt.title(title)
     plt.xlabel("Longitude")
     plt.ylabel("Latitude")
-    plt.grid(True, linestyle=':', alpha=0.6)
+    plt.grid(True, linestyle=":", alpha=0.6)
 
-    stats = (f"Min: {masked_data.min():.3f} m\n"
-             f"Max: {masked_data.max():.3f} m\n"
-             f"Mean: {masked_data.mean():.3f} m")
-    plt.annotate(stats, xy=(0.02, 0.02), xycoords='axes fraction',
-                 bbox=dict(boxstyle="round,pad=0.3", fc="white", ec="gray", alpha=0.8))
+    stats = (
+        f"Min: {masked_data.min():.3f} m\n"
+        f"Max: {masked_data.max():.3f} m\n"
+        f"Mean: {masked_data.mean():.3f} m"
+    )
+    plt.annotate(
+        stats,
+        xy=(0.02, 0.02),
+        xycoords="axes fraction",
+        bbox=dict(boxstyle="round,pad=0.3", fc="white", ec="gray", alpha=0.8),
+    )
     logger.info("Displaying preview... Close the plot window to continue.")
     plt.show()
 
@@ -156,12 +159,15 @@ def generate_grid(
 
     vt = VerticalTransform(
         region=region_obj,
-        nx=nx, ny=ny,
-        epsg_in=epsg_in, epsg_out=epsg_out,
-        geoid_in=geoid_in, geoid_out=geoid_out,
+        nx=nx,
+        ny=ny,
+        epsg_in=epsg_in,
+        epsg_out=epsg_out,
+        geoid_in=geoid_in,
+        geoid_out=geoid_out,
         decay_pixels=decay_pixels,
         cache_dir=cache_dir,
-        verbose=verbose
+        verbose=verbose,
     )
 
     shift_array, _ = vt._vertical_transform(vt.epsg_in, vt.epsg_out)
@@ -184,7 +190,7 @@ def transform_raster(
     decay_pixels: int = 100,
     output_raster: Optional[str] = None,
     cache_dir: Optional[str] = None,
-    verbose: bool = False
+    verbose: bool = False,
 ) -> Optional[str]:
     """Apply a vertical datum transformation directly to an existing raster file.
 
@@ -209,9 +215,7 @@ def transform_raster(
 
     with rasterio.open(input_raster) as src:
         bounds = src.bounds
-        region_obj = (
-            Region(bounds.left, bounds.right, bounds.bottom, bounds.top)
-        )
+        region_obj = Region(bounds.left, bounds.right, bounds.bottom, bounds.top)
         nx, ny = src.width, src.height
 
     epsg_in, geoid_in = _parse_datum(datum_in)
@@ -227,12 +231,15 @@ def transform_raster(
 
     vt = VerticalTransform(
         region=region_obj,
-        nx=nx, ny=ny,
-        epsg_in=epsg_in, epsg_out=epsg_out,
-        geoid_in=geoid_in, geoid_out=geoid_out,
+        nx=nx,
+        ny=ny,
+        epsg_in=epsg_in,
+        epsg_out=epsg_out,
+        geoid_in=geoid_in,
+        geoid_out=geoid_out,
         decay_pixels=decay_pixels,
         cache_dir=cache_dir,
-        verbose=verbose
+        verbose=verbose,
     )
 
     shift_array, _ = vt._vertical_transform(vt.epsg_in, vt.epsg_out)
