@@ -33,11 +33,13 @@ import glob
 # Expose the module for fetchez
 from .modules import TransformezMod
 
+
 def _find_proj_lib():
     """Locate the best available PROJ_LIB path."""
 
     try:
         import rasterio
+
         r_path = os.path.join(os.path.dirname(rasterio.__file__), "proj_data")
         if os.path.exists(os.path.join(r_path, "proj.db")):
             return r_path
@@ -53,6 +55,7 @@ def _find_proj_lib():
 
     try:
         import pyproj
+
         p_path = pyproj.datadir.get_data_dir()
         if os.path.exists(os.path.join(p_path, "proj.db")):
             return p_path
@@ -60,6 +63,7 @@ def _find_proj_lib():
         pass
 
     return None
+
 
 target_proj_lib = _find_proj_lib()
 

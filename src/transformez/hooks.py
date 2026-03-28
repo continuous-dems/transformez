@@ -39,9 +39,16 @@ class TransformezHook(FetchHook):
     stage = "pre"
     desc = "Generate a vertical transformation shift grid."
 
-    def __init__(self, datum_in="5703", datum_out="6319", increment="3s",
-                 output_grid="shift.tif", keep_grid=True, apply=False,
-                 **kwargs):
+    def __init__(
+        self,
+        datum_in="5703",
+        datum_out="6319",
+        increment="3s",
+        output_grid="shift.tif",
+        keep_grid=True,
+        apply=False,
+        **kwargs,
+    ):
         super().__init__(**kwargs)
         self.datum_in = datum_in
         self.datum_out = datum_out
@@ -57,7 +64,9 @@ class TransformezHook(FetchHook):
         module = entries[0][0]
         region = getattr(module, "region", None)
         if not region:
-            logger.warning("Module has no region defined. Cannot generate shift grid in PRE stage.")
+            logger.warning(
+                "Module has no region defined. Cannot generate shift grid in PRE stage."
+            )
             return entries
 
         logger.info(f"Generating vertical shift grid for region: {region}")
@@ -75,7 +84,9 @@ class TransformezHook(FetchHook):
         """Apply the shift grid to specific files."""
 
         if not os.path.exists(self.output_grid):
-            logger.warning(f"Shift grid {self.output_grid} not found. Skipping transform.")
+            logger.warning(
+                f"Shift grid {self.output_grid} not found. Skipping transform."
+            )
             return entries
 
         for mod, entry in entries:
@@ -114,10 +125,11 @@ class TransformezHook(FetchHook):
 
         vt = VerticalTransform(
             extent=region,
-            nx=nx, ny=ny,
+            nx=nx,
+            ny=ny,
             epsg_in=self.datum_in,
             epsg_out=self.datum_out,
-            verbose=False
+            verbose=False,
         )
 
         shift_array, _ = vt._vertical_transform(vt.epsg_in, vt.epsg_out)
@@ -125,9 +137,7 @@ class TransformezHook(FetchHook):
         if shift_array is None:
             logger.error("Transformation failed to generate a grid.")
         else:
-            GridWriter.write(
-                self.output_grid, shift_array, region.to_list()
-            )
+            GridWriter.write(self.output_grid, shift_array, region.to_list())
             logger.info(f"Saved shift grid to {self.output_grid}")
 
     def _apply_raster(self, src, grid):
