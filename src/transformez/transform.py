@@ -272,6 +272,7 @@ class VerticalTransform:
     # =========================================================================
     def _get_vdatum_chain(self, datum_name, geoid_name):
         """Builds shift: Tidal -> [NAD83 Native]."""
+
         hydro_shift = np.zeros((self.ny, self.nx))
         desc = []
 
@@ -288,7 +289,7 @@ class VerticalTransform:
         if np.isnan(tss).all() or (tss == 0).all():
             return None, "Outside VDatum coverage (Missing TSS)"
 
-        hydro_shift += tss
+        hydro_shift -= tss
         desc.append("TSS(LMSL->NAVD88)")
 
         # Ortho -> NAD83 (Geoid)

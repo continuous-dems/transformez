@@ -16,7 +16,7 @@ import click
 import logging
 from transformez import api
 
-logger = logging.getLogger(__name__)
+# logger = logging.getLogger(__name__)
 
 
 @click.group(name="transform")
@@ -24,6 +24,7 @@ logger = logging.getLogger(__name__)
 def transformez_cli():
     """Apply vertical datum transformations and generate shift grids."""
 
+    logging.basicConfig(level=logging.INFO, format='[%(levelname)s] %(message)s')
     pass
 
 
