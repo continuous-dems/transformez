@@ -128,6 +128,7 @@ class VerticalTransform:
                         f
                         for f in extracted
                         if f.endswith((".gtx", ".tif", ".grd", ".nc"))
+                        and "unc." not in f
                     ]
                 )
 
@@ -145,7 +146,6 @@ class VerticalTransform:
 
             elif fn.endswith((".gtx", ".tif", ".grd", ".nc", ".mss")):
                 valid.append(fn)
-
         return valid
 
     def fetch_grid_(self, module_name, **kwargs):
@@ -174,6 +174,7 @@ class VerticalTransform:
                         f
                         for f in extracted
                         if f.endswith((".gtx", ".tif", ".grd", ".nc"))
+                        and "unc." not in f
                     ]
                 )
             elif fn.endswith(".gz"):
@@ -190,9 +191,12 @@ class VerticalTransform:
                     logger.error(f"Failed to decompress {fn}: {e}")
             elif fn.endswith((".gtx", ".tif", ".grd", ".nc", ".mss")):
                 valid.append(fn)
+
         return valid
 
     def _get_grid(self, provider, name):
+        import re
+
         if not name:
             return np.zeros((self.ny, self.nx))
 
@@ -203,6 +207,26 @@ class VerticalTransform:
             name = name.split("=")[1]
 
         files = self.fetch_grid(provider, datatype=name, query=name)
+
+        if provider == "vdatum":
+            groups = {}
+            for item in files:
+                base = os.path.basename(item).split('.')[0].replace("_8301", "")
+                base_clean = base.replace('_', '')
+
+                match = re.match(r'([A-Za-z]+)(\d+)', base_clean)
+                if not match:
+                    continue
+
+                name, num = match.groups()
+                num = int(num)
+
+                if name not in groups or num > groups[name][0]:
+                    groups[name] = (num, item)
+
+            files = [v[1] for v in groups.values()]
+            files.reverse()
+
         if not files:
             return np.zeros((self.ny, self.nx))
 
