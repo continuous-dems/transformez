@@ -381,18 +381,44 @@ class VerticalTransform:
         provider = model_def["provider"]
 
         # Tidal -> MSS
-        if datum_name in ["lat", "hat"]:
-            grid_name = model_def["grids"].get(datum_name)
+        if datum_name == "lat":
+            grid_name = model_def["grids"].get("lat")
             if grid_name:
                 grid = self._get_grid(provider, grid_name)
-                # Sign Correction
-                if datum_name == "lat" and np.nanmean(grid) > 0:
-                    grid *= -1.0
-                elif datum_name == "hat" and np.nanmean(grid) < 0:
+                # Sign Correction (LAT should be negative relative to MSS)
+                if np.nanmean(grid) > 0:
                     grid *= -1.0
 
                 total_shift += grid
-                desc.append(f"{datum_name.upper()}->MSS")
+                desc.append("LAT->MSS")
+
+        elif datum_name == "hat":
+            lat_name = model_def["grids"].get("lat")
+            if lat_name:
+                logger.info("HAT requested. Computing FES deep-water symmetry...")
+                grid = self._get_grid(provider, lat_name)
+
+                if np.nanmean(grid) > 0:
+                    grid *= -1.0
+
+                # Symmetry Math: HAT offset is the exact inverse of LAT offset
+                hat_grid = grid * -1.0
+
+                total_shift += hat_grid
+                desc.append("HAT->MSS(Symmetry)")
+
+        # if datum_name in ["lat", "hat"]:
+        #     grid_name = model_def["grids"].get(datum_name)
+        #     if grid_name:
+        #         grid = self._get_grid(provider, grid_name)
+        #         # Sign Correction
+        #         if datum_name == "lat" and np.nanmean(grid) > 0:
+        #             grid *= -1.0
+        #         elif datum_name == "hat" and np.nanmean(grid) < 0:
+        #             grid *= -1.0
+
+        #         total_shift += grid
+        #         desc.append(f"{datum_name.upper()}->MSS")
 
         # MSS -> WGS84
         mss_name = model_def["grids"].get("mss")
