@@ -166,5 +166,21 @@ def transform_list():
         click.secho("Error: Could not load Transformez datum definitions.", fg="red")
 
 
+# --- HTDP CLI GROUP ---
+@transformez_cli.group("htdp")
+def htdp_group():
+    """Manage and run NGS HTDP (Horizontal Time-Dependent Positioning)."""
+
+    pass
+
+
+@htdp_group.command("install")
+def install_htdp():
+    """Downloads and compiles the HTDP executable."""
+
+    from transformez.htdp import install_htdp_binary
+    install_htdp_binary()
+
+
 if __name__ == "__main__":
     transformez_cli()
