@@ -184,3 +184,19 @@ def install_htdp():
 
 if __name__ == "__main__":
     transformez_cli()
+
+
+# --- VDATUM CLI GROUP ---
+@transformez_cli.group("vdatum")
+def vdatum_group():
+    """Manage and run the NOAA VDatum Java engine."""
+
+    pass
+
+
+@vdatum_group.command("install")
+def install_vdatum():
+    """Downloads and extracts the local VDatum software."""
+
+    from transformez.vdatum import install_vdatum_jar
+    install_vdatum_jar()

@@ -13,6 +13,9 @@ This wraps the NGS 'VDatum' tool.
 
 import os
 import logging
+import zipfile
+import subprocess
+from fetchez.core import Fetch
 
 from . import utils
 
@@ -135,3 +138,39 @@ class Vdatum:
             return utils.run_cmd(f"java -jar {self.jar} {vdc}", verbose=self.verbose)
         else:
             return [], -1
+
+
+def install_vdatum_jar():
+    """Downloads and extracts NOAA VDatum, checking for Java first."""
+
+    logger.info("Checking system for Java...")
+    try:
+        subprocess.run(["java", "-version"], check=True, capture_output=True)
+    except (FileNotFoundError, subprocess.CalledProcessError):
+        logger.error(" Java is not installed or not in PATH! VDatum requires Java to run.")
+        logger.info("Please install the Java JRE (e.g., 'sudo apt install default-jre') and try again.")
+        return
+
+    cache_dir = os.path.join(os.getcwd(), "transformez_cache", "vdatum")
+    os.makedirs(cache_dir, exist_ok=True)
+
+    # current version 4.8
+    #url = "https://vdatum.noaa.gov/download/data/vdatum_all_20250917.zip"
+    url = "https://vdatum.noaa.gov/download/data/vdatum_v4.8.zip"
+    zip_path = os.path.join(cache_dir, "vdatum.zip")
+
+    logger.info(f"Downloading VDatum Software (~2GB). This may take a while...")
+    try:
+        Fetch(url).fetch_file(zip_path)
+    except Exception as e:
+        logger.error(f" Failed to download VDatum: {e}")
+        return
+
+    logger.info("Extracting VDatum...")
+    with zipfile.ZipFile(zip_path, 'r') as z:
+        z.extractall(cache_dir)
+
+    os.remove(zip_path)
+
+    jar_path = os.path.join(cache_dir, "vdatum", "vdatum.jar")
+    logger.info(f"✅ VDatum installed successfully! Engine located at: {jar_path}")
