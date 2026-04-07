@@ -23,13 +23,14 @@ class AliasedGroup(click.Group):
     """A custom Click Group that handles deprecated aliases."""
 
     def get_command(self, ctx, cmd_name):
-        if cmd_name == 'run':
+        if cmd_name == "run":
             click.secho(
                 " DEPRECATION WARNING: 'transformez run' is deprecated and will be removed in a future release.\n"
                 "Please use 'transformez grid' to generate shift grids instead.",
-                fg="yellow", err=True
+                fg="yellow",
+                err=True,
             )
-            return click.Group.get_command(self, ctx, 'grid')
+            return click.Group.get_command(self, ctx, "grid")
 
         return click.Group.get_command(self, ctx, cmd_name)
 
@@ -39,7 +40,7 @@ class AliasedGroup(click.Group):
 def transformez_cli():
     """Apply vertical datum transformations and generate shift grids."""
 
-    logging.basicConfig(level=logging.INFO, format='[%(levelname)s] %(message)s')
+    logging.basicConfig(level=logging.INFO, format="[%(levelname)s] %(message)s")
     pass
 
 
@@ -148,12 +149,25 @@ def transformez_cli():
 @transformez_cli.command("grid")
 @click.option("-R", "--region", required=True, help="Bounding box or location string.")
 @click.option("-E", "--increment", required=True, help="Resolution (e.g., 1s, 30m).")
-@click.option("-I", "--input-datum", required=True, help="Source Datum (e.g., 'mllw', '5703').")
-@click.option("-O", "--output-datum", required=True, help="Target Datum (e.g., '4979', '5703:g2012b').")
+@click.option(
+    "-I", "--input-datum", required=True, help="Source Datum (e.g., 'mllw', '5703')."
+)
+@click.option(
+    "-O",
+    "--output-datum",
+    required=True,
+    help="Target Datum (e.g., '4979', '5703:g2012b').",
+)
 @click.option("--out", "-o", help="Output filename (default: auto-named).")
-@click.option("--decay-pixels", type=int, default=100, help="Pixels to decay tidal shifts inland.")
-@click.option("--preview", is_flag=True, help="Show matplotlib preview instead of saving.")
-def transform_grid(region, increment, input_datum, output_datum, out, decay_pixels, preview):
+@click.option(
+    "--decay-pixels", type=int, default=100, help="Pixels to decay tidal shifts inland."
+)
+@click.option(
+    "--preview", is_flag=True, help="Show matplotlib preview instead of saving."
+)
+def transform_grid(
+    region, increment, input_datum, output_datum, out, decay_pixels, preview
+):
     """Generate a standalone vertical shift grid for a specified region."""
 
     click.secho(
@@ -194,12 +208,28 @@ def transform_grid(region, increment, input_datum, output_datum, out, decay_pixe
 @transformez_cli.command("raster")
 @click.argument("input_file", type=click.Path(exists=True))
 @click.option("-I", "--input-datum", required=True, help="Source Datum (e.g., 'mllw').")
-@click.option("-O", "--output-datum", required=True, help="Target Datum (e.g., '5703:g2012b').")
-@click.option("--in-units", default="auto", type=click.Choice(['auto', 'm', 'ft', 'us-ft']), help="Z-units of the input DEM.")
-@click.option("--out-units", default="auto", type=click.Choice(['auto', 'm', 'ft', 'us-ft']), help="Desired Z-units for the output DEM.")
+@click.option(
+    "-O", "--output-datum", required=True, help="Target Datum (e.g., '5703:g2012b')."
+)
+@click.option(
+    "--in-units",
+    default="auto",
+    type=click.Choice(["auto", "m", "ft", "us-ft"]),
+    help="Z-units of the input DEM.",
+)
+@click.option(
+    "--out-units",
+    default="auto",
+    type=click.Choice(["auto", "m", "ft", "us-ft"]),
+    help="Desired Z-units for the output DEM.",
+)
 @click.option("--out", "-o", help="Output filename (default: auto-named).")
-@click.option("--decay-pixels", type=int, default=100, help="Pixels to decay tidal shifts inland.")
-def transform_raster(input_file, input_datum, output_datum, in_units, out_units, out, decay_pixels):
+@click.option(
+    "--decay-pixels", type=int, default=100, help="Pixels to decay tidal shifts inland."
+)
+def transform_raster(
+    input_file, input_datum, output_datum, in_units, out_units, out, decay_pixels
+):
     """Apply a vertical datum shift (and optional unit conversion) to an existing DEM."""
 
     click.secho(f"Transforming raster: {input_file}", fg="cyan", bold=True)
@@ -217,9 +247,7 @@ def transform_raster(input_file, input_datum, output_datum, in_units, out_units,
     )
 
     if result:
-        click.secho(
-            f"Successfully transformed raster: {result}", fg="green", bold=True
-        )
+        click.secho(f"Successfully transformed raster: {result}", fg="green", bold=True)
     else:
         click.secho("Failed to transform raster.", fg="red")
         sys.exit(1)
@@ -277,6 +305,7 @@ def install_htdp():
     """Downloads and compiles the HTDP executable."""
 
     from transformez.htdp import install_htdp_binary
+
     install_htdp_binary()
 
 
@@ -293,6 +322,7 @@ def install_vdatum():
     """Downloads and extracts the local VDatum software."""
 
     from transformez.vdatum import install_vdatum_jar
+
     install_vdatum_jar()
 
 

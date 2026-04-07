@@ -24,13 +24,13 @@ class Datums:
     # Unit Conversions (Multiplier to convert TO meters)
     # =========================================================================
     UNITS = {
-        'm': 1.0,
-        'meter': 1.0,
-        'meters': 1.0,
-        'ft': 0.3048,  # International Foot
-        'foot': 0.3048,
-        'us-ft': 1200.0 / 3937.0,  # US Survey Foot
-        'us-foot': 1200.0 / 3937.0
+        "m": 1.0,
+        "meter": 1.0,
+        "meters": 1.0,
+        "ft": 0.3048,  # International Foot
+        "foot": 0.3048,
+        "us-ft": 1200.0 / 3937.0,  # US Survey Foot
+        "us-foot": 1200.0 / 3937.0,
     }
 
     @classmethod
@@ -371,7 +371,11 @@ class Datums:
             "ellipsoid": 6319,
         },
         6360: {"name": "NAVD88 height (usFt)", "default_geoid": "g2018"},
-        8228: {"name": "NAVD88 height (Ft)", "default_geoid": "g2012b", "z_unit": "us-ft"},
+        8228: {
+            "name": "NAVD88 height (Ft)",
+            "default_geoid": "g2012b",
+            "z_unit": "us-ft",
+        },
         # Puerto Rico
         6641: {
             "name": "PRVD02 height",
@@ -433,15 +437,15 @@ class Datums:
         """Retrieves the Z-unit for a given EPSG code, defaulting to meters."""
 
         if not epsg:
-            return 'm'
+            return "m"
 
         if epsg in cls.CDN:
-            return cls.CDN[epsg].get('z_unit', 'm')
+            return cls.CDN[epsg].get("z_unit", "m")
 
         if epsg in cls.SURFACES:
-            return cls.SURFACES[epsg].get('z_unit', 'm')
+            return cls.SURFACES[epsg].get("z_unit", "m")
 
-        return 'm'
+        return "m"
 
     @classmethod
     def get_vdatum_by_name(cls, datum_name, region_check=None):

@@ -222,7 +222,9 @@ class GridEngine:
         return out_data
 
     @staticmethod
-    def apply_vertical_shift(src_dem, shift_array, dst_dem, z_unit_in='m', z_unit_out='m'):
+    def apply_vertical_shift(
+        src_dem, shift_array, dst_dem, z_unit_in="m", z_unit_out="m"
+    ):
         """Apply a vertical shift array to a source DEM."""
 
         from .definitions import Datums
