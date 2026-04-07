@@ -30,7 +30,7 @@ class AliasedGroup(click.Group):
                 fg="yellow",
                 err=True,
             )
-            return click.Group.get_command(self, ctx, "grid")
+            return click.Group.get_command(self, ctx, "run")
 
         return click.Group.get_command(self, ctx, cmd_name)
 
@@ -44,103 +44,103 @@ def transformez_cli():
     pass
 
 
-# @transformez_cli.command("run")
-# @click.argument("input_file", required=False)
-# @click.option(
-#     "-R", "--region", help="Bounding box or location string (if no input file)."
-# )
-# @click.option(
-#     "-E", "--increment", help="Resolution (e.g., 1s, 30m) (if no input file)."
-# )
-# @click.option(
-#     "-I", "--input-datum", required=True, help="Source Datum (e.g., 'mllw', '5703')."
-# )
-# @click.option(
-#     "-O",
-#     "--output-datum",
-#     required=True,
-#     help="Target Datum (e.g., '4979', '5703:g2012b').",
-# )
-# @click.option("--out", "-o", help="Output filename (default: auto-named).")
-# @click.option(
-#     "--decay-pixels",
-#     type=int,
-#     default=100,
-#     help="Number of pixels to decay tidal shifts inland.",
-# )
-# @click.option("--preview", is_flag=True, help="Preview the transformation output.")
-# def transform_run(
-#     input_file, region, increment, input_datum, output_datum, out, decay_pixels, preview
-# ):
-#     """Transform a raster's vertical datum or generate a standalone shift grid.
+@transformez_cli.command("run")
+@click.argument("input_file", required=False)
+@click.option(
+    "-R", "--region", help="Bounding box or location string (if no input file)."
+)
+@click.option(
+    "-E", "--increment", help="Resolution (e.g., 1s, 30m) (if no input file)."
+)
+@click.option(
+    "-I", "--input-datum", required=True, help="Source Datum (e.g., 'mllw', '5703')."
+)
+@click.option(
+    "-O",
+    "--output-datum",
+    required=True,
+    help="Target Datum (e.g., '4979', '5703:g2012b').",
+)
+@click.option("--out", "-o", help="Output filename (default: auto-named).")
+@click.option(
+    "--decay-pixels",
+    type=int,
+    default=100,
+    help="Number of pixels to decay tidal shifts inland.",
+)
+@click.option("--preview", is_flag=True, help="Preview the transformation output.")
+def transform_run(
+    input_file, region, increment, input_datum, output_datum, out, decay_pixels, preview
+):
+    """Transform a raster's vertical datum or generate a standalone shift grid.
 
-#     If an INPUT_FILE is provided, that specific raster is transformed in place.
-#     If no INPUT_FILE is provided, -R and -E must be used to generate a shift grid.
+    If an INPUT_FILE is provided, that specific raster is transformed in place.
+    If no INPUT_FILE is provided, -R and -E must be used to generate a shift grid.
 
-#     Examples:\n
-#       Transform a DEM : transformez run my_dem.tif -I mllw -O 5703
-#       Generate a Grid : transformez run -R loc:"Miami" -E 1s -I mllw -O 4979
-#     """
+    Examples:\n
+      Transform a DEM : transformez run my_dem.tif -I mllw -O 5703
+      Generate a Grid : transformez run -R loc:"Miami" -E 1s -I mllw -O 4979
+    """
 
-#     if input_file:
-#         click.secho(f"Transforming raster: {input_file}", fg="cyan", bold=True)
-#         click.echo(f"   Shift: {input_datum} ➔ {output_datum}")
+    if input_file:
+        click.secho(f"Transforming raster: {input_file}", fg="cyan", bold=True)
+        click.echo(f"   Shift: {input_datum} ➔ {output_datum}")
 
-#         result = api.transform_raster(
-#             input_raster=input_file,
-#             datum_in=input_datum,
-#             datum_out=output_datum,
-#             decay_pixels=decay_pixels,
-#             output_raster=out,
-#             verbose=True,
-#         )
+        result = api.transform_raster(
+            input_raster=input_file,
+            datum_in=input_datum,
+            datum_out=output_datum,
+            decay_pixels=decay_pixels,
+            output_raster=out,
+            verbose=True,
+        )
 
-#         if result:
-#             click.secho(
-#                 f"Successfully transformed raster: {result}", fg="green", bold=True
-#             )
-#         else:
-#             click.secho("Failed to transform raster.", fg="red")
-#             sys.exit(1)
+        if result:
+            click.secho(
+                f"Successfully transformed raster: {result}", fg="green", bold=True
+            )
+        else:
+            click.secho("Failed to transform raster.", fg="red")
+            sys.exit(1)
 
-#     elif region and increment:
-#         click.secho(
-#             f"Generating vertical shift grid for region: {region}...",
-#             fg="cyan",
-#             bold=True,
-#         )
-#         click.echo(f"   Shift: {input_datum} ➔ {output_datum} @ {increment}")
+    elif region and increment:
+        click.secho(
+            f"Generating vertical shift grid for region: {region}...",
+            fg="cyan",
+            bold=True,
+        )
+        click.echo(f"   Shift: {input_datum} ➔ {output_datum} @ {increment}")
 
-#         # Auto-generate an output name if one wasn't provided
-#         out_fn = out or f"shift_{input_datum}_to_{output_datum.replace(':', '_')}.tif"
+        # Auto-generate an output name if one wasn't provided
+        out_fn = out or f"shift_{input_datum}_to_{output_datum.replace(':', '_')}.tif"
 
-#         result = api.generate_grid(
-#             region=region,
-#             increment=increment,
-#             datum_in=input_datum,
-#             datum_out=output_datum,
-#             decay_pixels=decay_pixels,
-#             out_fn=out_fn,
-#             verbose=True,
-#         )
+        result = api.generate_grid(
+            region=region,
+            increment=increment,
+            datum_in=input_datum,
+            datum_out=output_datum,
+            decay_pixels=decay_pixels,
+            out_fn=out_fn,
+            verbose=True,
+        )
 
-#         if preview:
-#             api.plot_grid(result, region)
+        if preview:
+            api.plot_grid(result, region)
 
-#         if result is not None:
-#             click.secho(
-#                 f"Successfully generated shift grid: {out_fn}", fg="green", bold=True
-#             )
-#         else:
-#             click.secho("Failed to generate shift grid.", fg="red")
-#             sys.exit(1)
+        if result is not None:
+            click.secho(
+                f"Successfully generated shift grid: {out_fn}", fg="green", bold=True
+            )
+        else:
+            click.secho("Failed to generate shift grid.", fg="red")
+            sys.exit(1)
 
-#     else:
-#         click.secho(
-#             "Error: You must provide either an INPUT_FILE or both --region and --increment.",
-#             fg="red",
-#         )
-#         sys.exit(1)
+    else:
+        click.secho(
+            "Error: You must provide either an INPUT_FILE or both --region and --increment.",
+            fg="red",
+        )
+        sys.exit(1)
 
 
 # =====================================================================
