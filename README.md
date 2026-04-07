@@ -28,34 +28,18 @@ Vertical Datum transformations can cause a lot of confusion and headache when tr
 
 ## 📦 Installation
 
-### Prerequisites: HTDP
-Transformez relies on the NGS Horizontal Time-Dependent Positioning (HTDP) software to perform highly accurate plate tectonic and frame transformations. **You must install this separately.**
-
-**For Windows:**
-1. Download the pre-compiled executable (`htdp.exe`) directly from the [NOAA HTDP page](https://geodesy.noaa.gov/TOOLS/Htdp/Htdp.shtml).
-2. Place `htdp.exe` in a directory that is in your system's `PATH` (e.g., `C:\Windows\System32` or a custom scripts folder).
-
-**For Linux / macOS:**
-
-You will need a Fortran compiler (like `gfortran`) to compile the source code.
-
-```bash
-# 1. Download the Fortran source code
-wget https://geodesy.noaa.gov/TOOLS/Htdp/HTDP-download.zip
-unzip HTDP-download.zip
-
-# 2. Compile it
-gfortran -o htdp htdp.f
-
-# 3. Move it to your PATH
-sudo mv htdp /usr/local/bin/
-```
-
-### Install Transformez
-Once HTDP is accessible in your terminal, install the python package:
+**Install Transformez**
+Install the transformez python package:
 
 ```bash
 pip install transformez
+```
+
+**Install HTDP**
+The NGS Horizontal Time-Dependent Positioning (HTDP) software is required to perform highly accurate plate tectonic and frame transformations, you can install it with transformez!:
+
+```bash
+transformez htdp install
 ```
 
 ## 🐄 Quickstart
