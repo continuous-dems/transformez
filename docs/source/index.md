@@ -1,8 +1,14 @@
 # Transformez Documentation
 
+**Global vertical datum transformations, simplified**
+
+*Transformez Les Données*
+
 **Transformez** is a standalone Python engine for converting geospatial data between vertical datums (e.g., `MLLW` ↔ `NAVD88` ↔ `Ellipsoid`).
 
----
+Originally developed as the core transformation engine for the [CUDEM](https://github.com/continuous-dems/cudem) project, Transformez has evolved into a standalone datum transformation suite.
+
+## Quickstart
 
 ![Shift Grid Example](_static/mllw2nvd.png)
 *(Above: A generated vertical shift grid transforming MLLW to NAVD88)*
@@ -48,13 +54,13 @@ pip install transformez
 ```bash
 # Transform MLLW to WGS84 Ellipsoid in Norton Sound, AK
 
-transformez run -R -166/-164/63/64 -E 1s -I mllw -O 4979
+transformez grid -R -166/-164/63/64 -E 1s -I mllw -O 4979
 ```
 
 **Transform a raster directly.** Transformez reads the bounds/resolution from the file.
 
 ```bash
-transformez run my_dem.tif -I mllw -O 5703
+transformez raster my_dem.tif -I mllw -O 5703
 ```
 
 **Integrate directly into your download pipeline.**
