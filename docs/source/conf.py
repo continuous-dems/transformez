@@ -23,6 +23,7 @@ nitpicky = True
 nitpick_ignore = [
     ("py:data", "typing.Union"),
     ("py:class", "wsgiref.types.WSGIEnvironment"),
+    ("py:class", "fetchez.spatial.Region"),
 ]
 
 extensions = [

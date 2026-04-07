@@ -6,7 +6,8 @@ transformez.api
 ~~~~~~~~~~~~~~~
 High-level Python Interface for Transformez.
 
-Usage:
+Usage::
+
     import transformez
 
     # Generate a shift grid (returns a numpy array)
