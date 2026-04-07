@@ -104,6 +104,52 @@ out_file = transformez.transform_raster(
 )
 ```
 
+## Supported Datums
+
+🌊 **Supported Tidal Surfaces:**
+
+| EPSG | NAME |DESC |
+| --- | --- | --- |
+|  1089         | mllw                        |   [USA] |
+|  5866         | mllw                        |   [USA]|
+|  1091         | mlw                         |   [USA]|
+|  5869         | mhhw                        |   [USA]|
+|  5868         | mhw                         |   [USA]|
+|  5714         | msl                         |   [USA]|
+|  5713         | mtl                         |   [USA]|
+|  0            | crd                         |   [USA]|
+|  5609         | IGLD85                      |   [USA]|
+|  9000         | LWD_IGLD85                  |   [USA]|
+|  5702         | NGVD29                      |   [GLOBAL]|
+|  9001         | lat                         |   [GLOBAL]|
+|  9002         | hat                         |   [GLOBAL]|
+|  9003         | mss                         |   [GLOBAL]|
+
+🌐 **Ellipsoidal / Frame Datums (EPSG)**:
+
+| EPSG | NAME |DESC |
+| --- | --- | --- |
+|  4979         | WGS84 | World Geodetic System 1984 |
+|  6319         | NAD83 | North American Datum 1983 |
+
+🏔️  **Orthometric / Geoid-Based (EPSG)**:
+
+| EPSG | NAME |DESC |
+| --- | --- | --- |
+|  5703         | NAVD88 height            |      (Default Geoid: g2018)|
+|  6360         | NAVD88 height (usFt)     |      (Default Geoid: g2018)|
+|  8228         | NAVD88 height (Ft)       |      (Default Geoid: g2018)|
+|  6641         | PRVD02 height            |      (Default Geoid: g2018)|
+|  6642         | VIVD09 height            |      (Default Geoid: g2018)|
+|  6647         | CGVD2013(CGG2013)        |      (Default Geoid: CGG2013)|
+|  3855         | EGM2008 height           |      (Default Geoid: egm2008)|
+|  5773         | EGM96 height             |      (Default Geoid: egm96)|
+
+🌍 **Available Geoids**:
+
+  g2018, g2012b, geoid09, xgeoid20b, xgeoid19b, egm2008, egm96, CGG2013
+
+
 ```{toctree}
 :maxdepth: 2
 :hidden:
