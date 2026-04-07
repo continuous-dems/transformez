@@ -65,13 +65,13 @@ pip install transformez
 ```bash
 # Transform MLLW to WGS84 Ellipsoid in Norton Sound, AK
 
-transformez run -R -166/-164/63/64 -E 1s -I mllw -O 4979
+transformez grid -R -166/-164/63/64 -E 1s -I mllw -O 4979
 ```
 
 **Transform a raster directly.** Transformez reads the bounds/resolution from the file.
 
 ```bash
-transformez run my_dem.tif -I mllw -O 5703
+transformez raster my_dem.tif -I mllw -O 5703
 ```
 
 **Integrate directly into your download pipeline.**
