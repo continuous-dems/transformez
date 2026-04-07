@@ -155,6 +155,7 @@ out_file = transformez.transform_raster(
 :hidden:
 :caption: User Guide:
 
+user_guide/index
 api/index
 ```
 
