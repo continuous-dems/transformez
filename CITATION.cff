@@ -11,9 +11,9 @@ authors:
     given-names: Elliot
   - family-names: Fisher
     given-names: Matt
-  
-website: https://ciresdem.github.io/transformez/
+
+website: https://transformez.readthedocs.io
 title: "Transformez"
-version: 0.1.0
-date-released: 2026-02-10
-url: "https://github.com/ciresdem/transformez"
+version: 0.3.4
+date-released: 2026-04-06
+url: "https://github.com/continuous-dems/transformez"
