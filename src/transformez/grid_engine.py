@@ -222,8 +222,15 @@ class GridEngine:
         return out_data
 
     @staticmethod
-    def apply_vertical_shift(src_dem, shift_array, dst_dem):
+    def apply_vertical_shift(
+        src_dem, shift_array, dst_dem, z_unit_in="m", z_unit_out="m"
+    ):
         """Apply a vertical shift array to a source DEM."""
+
+        from .definitions import Datums
+
+        factor_in = Datums.get_unit_factor(z_unit_in)
+        factor_out = Datums.get_unit_factor(z_unit_out)
 
         try:
             with rasterio.open(src_dem) as src:
@@ -239,8 +246,20 @@ class GridEngine:
                 profile.update(nodata=nodata)
 
                 valid_mask = (data != nodata) & (~np.isnan(shift_array))
-                data[valid_mask] += shift_array[valid_mask]
+
+                # Scale input to meters
+                data_meters = data[valid_mask] * factor_in
+
+                # Add the meter-based datum shift
+                data_shifted_meters = data_meters + shift_array[valid_mask]
+
+                # Scale to target output units
+                data[valid_mask] = data_shifted_meters / factor_out
                 data[~valid_mask] = nodata
+
+                # valid_mask = (data != nodata) & (~np.isnan(shift_array))
+                # data[valid_mask] += shift_array[valid_mask]
+                # data[~valid_mask] = nodata
 
                 with rasterio.open(dst_dem, "w", **profile) as dst:
                     dst.write(data, 1)

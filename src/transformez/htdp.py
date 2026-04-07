@@ -21,7 +21,6 @@ import urllib.request
 import zipfile
 import numpy as np
 from typing import Tuple
-import subprocess
 
 from . import utils
 from .definitions import Datums  # Required for ID lookups
@@ -256,7 +255,7 @@ def install_htdp_binary():
         url = "https://geodesy.noaa.gov/TOOLS/Htdp/htdp.exe"
         exe_path = os.path.join(cache_dir, "htdp.exe")
         urllib.request.urlretrieve(url, exe_path)
-        logger.info(f"✅ HTDP installed successfully to: {exe_path}")
+        logger.info(f"HTDP installed successfully to: {exe_path}")
 
     else:
         logger.info("Downloading Unix HTDP source code...")
@@ -265,7 +264,7 @@ def install_htdp_binary():
 
         urllib.request.urlretrieve(url, zip_path)
 
-        with zipfile.ZipFile(zip_path, 'r') as z:
+        with zipfile.ZipFile(zip_path, "r") as z:
             z.extractall(cache_dir)
         os.remove(zip_path)
 
@@ -274,9 +273,15 @@ def install_htdp_binary():
 
         logger.info("Compiling HTDP with gfortran...")
         try:
-            subprocess.run(["gfortran", "-o", out_bin, fortran_file], check=True, capture_output=True)
-            logger.info(f"✅ HTDP compiled successfully to: {out_bin}")
+            subprocess.run(
+                ["gfortran", "-o", out_bin, fortran_file],
+                check=True,
+                capture_output=True,
+            )
+            logger.info(f"HTDP compiled successfully to: {out_bin}")
         except FileNotFoundError:
-            logger.error("❌ 'gfortran' not found! Please install gfortran (e.g., 'sudo apt install gfortran' or 'brew install gcc').")
+            logger.error(
+                "'gfortran' not found! Please install gfortran (e.g., 'sudo apt install gfortran' or 'brew install gcc')."
+            )
         except subprocess.CalledProcessError as e:
-            logger.error(f"❌ Compilation failed: {e.stderr.decode()}")
+            logger.error(f"Compilation failed: {e.stderr.decode()}")

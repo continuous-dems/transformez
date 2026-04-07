@@ -190,6 +190,8 @@ def transform_raster(
     decay_pixels: int = 100,
     output_raster: Optional[str] = None,
     cache_dir: Optional[str] = None,
+    z_unit_in: Optional[str] = "auto",
+    z_unit_out: Optional[str] = "auto",
     verbose: bool = False,
 ) -> Optional[str]:
     """Apply a vertical datum transformation directly to an existing raster file.
@@ -201,6 +203,8 @@ def transform_raster(
         output_raster: Path to save the transformed DEM. If None, auto-generates a name.
         decay_pixels: Set the pixel decay in case extrapolation is required.
         cache_dir: Path to store downloaded grids.
+        z_unit_in: Input DEM z units.
+        z_unit_out: Output DEM z units.
         verbose: Enable debug logging.
 
     Returns:
@@ -220,6 +224,15 @@ def transform_raster(
 
     epsg_in, geoid_in = _parse_datum(datum_in)
     epsg_out, geoid_out = _parse_datum(datum_out)
+
+    if z_unit_in == "auto":
+        z_unit_in = Datums.get_unit(epsg_in)
+
+    if z_unit_out == "auto":
+        z_unit_out = Datums.get_unit(epsg_out)
+
+    if z_unit_in != "m" or z_unit_out != "m":
+        logger.info(f"Auto-detected Unit Conversion: {z_unit_in} -> {z_unit_out}")
 
     if not epsg_in or not epsg_out:
         logger.error(f"Invalid datum specified: {datum_in} -> {datum_out}")
@@ -248,7 +261,13 @@ def transform_raster(
         logger.error("Failed to generate shift array for the raster bounds.")
         return None
 
-    success = GridEngine.apply_vertical_shift(input_raster, shift_array, output_raster)
+    success = GridEngine.apply_vertical_shift(
+        input_raster,
+        shift_array,
+        output_raster,
+        z_unit_in=z_unit_in,
+        z_unit_out=z_unit_out,
+    )
 
     if success:
         return output_raster

@@ -211,10 +211,10 @@ class VerticalTransform:
         if provider == "vdatum":
             groups = {}
             for item in files:
-                base = os.path.basename(item).split('.')[0].replace("_8301", "")
-                base_clean = base.replace('_', '')
+                base = os.path.basename(item).split(".")[0].replace("_8301", "")
+                base_clean = base.replace("_", "")
 
-                match = re.match(r'([A-Za-z]+)(\d+)', base_clean)
+                match = re.match(r"([A-Za-z]+)(\d+)", base_clean)
                 if not match:
                     continue
 
