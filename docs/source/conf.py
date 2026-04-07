@@ -23,7 +23,6 @@ nitpicky = True
 nitpick_ignore = [
     ("py:data", "typing.Union"),
     ("py:class", "wsgiref.types.WSGIEnvironment"),
-    ("py:class", "fetchez.spatial.Region"),
 ]
 
 extensions = [
@@ -116,4 +115,5 @@ typehints_defaults = "comma"
 intersphinx_mapping = {
     "python": ("https://docs.python.org/3/", None),
     "requests": ("https://requests.readthedocs.io/en/latest/", None),
+    "fetchez": ("https://fetchez.readthedocs.io/en/latest/", None),
 }
