@@ -103,6 +103,7 @@ out_file = transformez.transform_raster(
 :hidden:
 :caption: User Guide:
 
+api/index
 ```
 
 Indices and tables
