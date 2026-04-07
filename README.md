@@ -26,7 +26,7 @@ Vertical Datum transformations can cause a lot of confusion and headache when tr
 
 **Transformez simplifies this process!**
 
-## Installation
+## 📦 Installation
 
 ### Prerequisites: HTDP
 Transformez relies on the NGS Horizontal Time-Dependent Positioning (HTDP) software to perform highly accurate plate tectonic and frame transformations. **You must install this separately.**
@@ -58,7 +58,7 @@ Once HTDP is accessible in your terminal, install the python package:
 pip install transformez
 ```
 
-## Quickstart
+## 🐄 Quickstart
 
 **Generate a vertical shift grid for anywhere on Earth.**
 
@@ -88,7 +88,7 @@ Would you like to know more? Check out our [Official Documentation](https://tran
 
 ---
 
-## License
+## ⚖ License
 
 This project is licensed under the MIT License - see the [LICENSE](https://github.com/ciresdem/transformez/blob/main/LICENSE) file for details.
 Copyright (c) 2010-2026 Regents of the University of Colorado
