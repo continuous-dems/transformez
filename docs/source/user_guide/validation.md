@@ -1,6 +1,6 @@
 # Validation & Accuracy
 
-Geodetic transformations require extreme precision. To ensure `transformez` is mathematically sound and safe for production pipelines, we continuously run it through a gauntlet of validation tests.
+Geodetic transformations require extreme precision. To ensure `transformez` is mathematically safe and sound for production pipelines, we continuously run it through a gauntlet of validation tests.
 
 We test against real-world tide gauges (ground truth), legacy geodetic software (engine-to-engine comparison), and global satellite models.
 
@@ -39,7 +39,7 @@ We validated across three highly complex physical environments:
 
 ## Test 2: Engine vs. Engine (NOAA VDatum)
 
-While matching physical tide stations is critical, it is equally important that our internal math (handling EPSG codes, unit scaling, and grid compositing) matches the official standard.
+While matching physical tide stations is critical, it is equally important that our internal processes (handling EPSG codes, unit scaling, and grid compositing) matches the official standard.
 
 We tested `transformez` directly against the **NOAA VDatum Java CLI** by generating 100 random offshore coordinates in Tampa Bay, Florida, and translating them from NAVD88 to MLLW usingxs both engines.
 
@@ -54,7 +54,7 @@ We tested `transformez` directly against the **NOAA VDatum Java CLI** by generat
 <!--   <img src="../_static/validation_vdatum_hist.png" alt="VDatum Error Histogram" width="70%"> -->
 <!-- </p> -->
 
-As the histogram shows, the difference between `transformez` and the legacy Java executable is effectively zero. The only minor deviations (in the millimeter range) are due to our use of modern bilinear interpolation near grid boundaries.
+As the histogram shows, the difference between `transformez` and the legacy Java executable is effectively zero. The only minor deviations (in the millimeter range) are due to our use of modern bilinear interpolation near grid boundaries and floating point error.
 
 ## Test 3: Global Reach (FES2014 Altimetry)
 
@@ -67,7 +67,7 @@ We compared our on-the-fly LAT-to-MSL calculations against the official historic
 <!--   <img src="../_static/validation_international_bars.png" alt="International Gauge Bar Chart" width="80%"> -->
 <!-- </p> -->
 
-Even across wildly different tidal regimes—from the massive 3.6 meter drop in France to the sub-meter shift in Australia—the satellite-derived transformation aligns with the physical coastal gauges.
+Even across wildly different tidal regimes, from the 3.6 meter drop in France to the sub-meter shift in Australia, the satellite-derived transformation aligns with the physical coastal gauges.
 
 ## Conclusion
 
