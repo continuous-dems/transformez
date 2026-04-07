@@ -6,7 +6,8 @@ transformez.api
 ~~~~~~~~~~~~~~~
 High-level Python Interface for Transformez.
 
-Usage:
+Usage::
+
     import transformez
 
     # Generate a shift grid (returns a numpy array)
@@ -14,7 +15,7 @@ Usage:
         region=[-90, -89, 29, 30],
         increment="3s",
         datum_in="mllw",
-        datum_out="5703"
+        datum_out="5703",
     )
 
     # Transform an existing DEM directly
@@ -22,7 +23,7 @@ Usage:
         input_raster="my_dem_mllw.tif",
         datum_in="mllw",
         datum_out="5703:g2012b",
-        output_raster="my_dem_navd88.tif"
+        output_raster="my_dem_navd88.tif",
     )
 """
 
