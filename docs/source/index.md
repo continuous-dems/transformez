@@ -63,7 +63,7 @@ transformez grid -R -166/-164/63/64 -E 1s -I mllw -O 4979
 transformez raster my_dem.tif -I mllw -O 5703
 ```
 
-**Integrate directly into your download pipeline.**
+**Integrate directly into your fetchez pipeline.**
 
 ```bash
 # Download GEBCO and shift EGM96 to WGS84 on the fly
