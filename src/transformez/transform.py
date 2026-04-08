@@ -207,18 +207,18 @@ class VerticalTransform:
             name = name.split("=")[1]
 
         files = self.fetch_grid(provider, datatype=name, query=name)
-        # if provider == 'vdatum':
-        #     import rasterio
-        #     def get_bbox_area(filepath):
-        #         try:
-        #             with rasterio.open(filepath) as src:
-        #                 b = src.bounds
-        #                 return (b.right - b.left) * (b.top - b.bottom)
-        #         except Exception:
-        #             return float('inf')
+        if provider == 'vdatum':
+            import rasterio
+            def get_bbox_area(filepath):
+                try:
+                    with rasterio.open(filepath) as src:
+                        b = src.bounds
+                        return (b.right - b.left) * (b.top - b.bottom)
+                except Exception:
+                    return float('inf')
 
-        #     # Largest (Offshore) loads first, Smallest (Rivers) load last and overwrite
-        #     files.sort(key=get_bbox_area, reverse=True)
+            # Largest (Offshore) loads first, Smallest (Rivers) load last and overwrite
+            files.sort(key=get_bbox_area, reverse=True)
 
         if not files:
             return np.zeros((self.ny, self.nx))
