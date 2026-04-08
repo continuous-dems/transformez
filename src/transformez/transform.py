@@ -207,25 +207,18 @@ class VerticalTransform:
             name = name.split("=")[1]
 
         files = self.fetch_grid(provider, datatype=name, query=name)
+        if provider == 'vdatum':
+            import rasterio
+            def get_bbox_area(filepath):
+                try:
+                    with rasterio.open(filepath) as src:
+                        b = src.bounds
+                        return (b.right - b.left) * (b.top - b.bottom)
+                except Exception:
+                    return float('inf')
 
-        if provider == "vdatum":
-            groups = {}
-            for item in files:
-                base = os.path.basename(item).split(".")[0].replace("_8301", "")
-                base_clean = base.replace("_", "")
-
-                match = re.match(r"([A-Za-z]+)(\d+)", base_clean)
-                if not match:
-                    continue
-
-                name, num = match.groups()
-                num = int(num)
-
-                if name not in groups or num > groups[name][0]:
-                    groups[name] = (num, item)
-
-            files = [v[1] for v in groups.values()]
-            files.reverse()
+            # Largest (Offshore) loads first, Smallest (Rivers) load last and overwrite
+            files.sort(key=get_bbox_area, reverse=True)
 
         if not files:
             return np.zeros((self.ny, self.nx))
@@ -317,7 +310,6 @@ class VerticalTransform:
         desc.append("TSS(LMSL->NAVD88)")
 
         # Ortho -> NAD83 (Geoid)
-        # We fetch the geoid, but DO NOT add it to the shift yet!
         actual_geoid = geoid_name if geoid_name else "g2018"
         geoid_grid, used_geoid = self._fetch_geoid_with_fallback(actual_geoid)
         desc.append(f"Geoid({used_geoid}->NAD83)")
@@ -338,15 +330,15 @@ class VerticalTransform:
                 )
 
                 if global_shift is not None and np.any(global_shift):
-                    # We have valid FES data. We must align it to NAD83.
+                    # FES is Proxy -> WGS84. We convert to NAD83.
                     htdp_wgs_to_nad = self._get_htdp_shift(
                         WGS84_EPSG, NAD83_EPSG, self.epoch_in, 2010.0
                     )
-                    fes_full = global_shift + htdp_wgs_to_nad
-
+                    fes_nad83 = global_shift + htdp_wgs_to_nad
+                    fes_navd88 = fes_nad83 - geoid_grid
                     hydro_shift = GridEngine.coastal_aware_composite(
                         vdatum_grid=hydro_shift,
-                        global_grid=fes_full,
+                        global_grid=fes_navd88,
                         decay_pixels=self.decay_pixels,
                         buffer_pixels=10,
                         max_discontinuity=0.5,
@@ -406,19 +398,6 @@ class VerticalTransform:
 
                 total_shift += hat_grid
                 desc.append("HAT->MSS(Symmetry)")
-
-        # if datum_name in ["lat", "hat"]:
-        #     grid_name = model_def["grids"].get(datum_name)
-        #     if grid_name:
-        #         grid = self._get_grid(provider, grid_name)
-        #         # Sign Correction
-        #         if datum_name == "lat" and np.nanmean(grid) > 0:
-        #             grid *= -1.0
-        #         elif datum_name == "hat" and np.nanmean(grid) < 0:
-        #             grid *= -1.0
-
-        #         total_shift += grid
-        #         desc.append(f"{datum_name.upper()}->MSS")
 
         # MSS -> WGS84
         mss_name = model_def["grids"].get("mss")
