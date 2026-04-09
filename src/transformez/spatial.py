@@ -17,7 +17,7 @@ from typing import Optional
 
 import numpy as np
 from fetchez.utils import str_or
-from fetchez.spatial import *
+from fetchez.spatial import Region
 from . import srs
 
 import pyproj
