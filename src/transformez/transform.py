@@ -195,7 +195,6 @@ class VerticalTransform:
         return valid
 
     def _get_grid(self, provider, name):
-        import re
 
         if not name:
             return np.zeros((self.ny, self.nx))
@@ -207,15 +206,16 @@ class VerticalTransform:
             name = name.split("=")[1]
 
         files = self.fetch_grid(provider, datatype=name, query=name)
-        if provider == 'vdatum':
+        if provider == "vdatum":
             import rasterio
+
             def get_bbox_area(filepath):
                 try:
                     with rasterio.open(filepath) as src:
                         b = src.bounds
                         return (b.right - b.left) * (b.top - b.bottom)
                 except Exception:
-                    return float('inf')
+                    return float("inf")
 
             # Largest (Offshore) loads first, Smallest (Rivers) load last and overwrite
             files.sort(key=get_bbox_area, reverse=True)

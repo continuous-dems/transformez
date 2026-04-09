@@ -329,17 +329,30 @@ def install_vdatum():
 @vdatum_group.command("run")
 @click.argument("input_file", type=click.Path(exists=True))
 @click.argument("output_file", type=click.Path())
-@click.option("-I", "--in-datum", required=True, help="VDatum input datum string (e.g., 'navd88')")
-@click.option("-O", "--out-datum", required=True, help="VDatum output datum string (e.g., 'nad83_2011')")
+@click.option(
+    "-I", "--in-datum", required=True, help="VDatum input datum string (e.g., 'navd88')"
+)
+@click.option(
+    "-O",
+    "--out-datum",
+    required=True,
+    help="VDatum output datum string (e.g., 'nad83_2011')",
+)
 @click.option("--in-unit", default="m", help="Input units (m, ft, us-ft)")
 @click.option("--out-unit", default="m", help="Output units (m, ft, us-ft)")
 @click.option("--region", default="4", help="VDatum region grid")
-def run_vdatum_cli(input_file, output_file, in_datum, out_datum, in_unit, out_unit, region):
+def run_vdatum_cli(
+    input_file, output_file, in_datum, out_datum, in_unit, out_unit, region
+):
     """Process an XYZ text file through the local VDatum Java engine."""
 
     from transformez.vdatum import Vdatum
 
-    vd = Vdatum(ivert=f"{in_datum}:{in_unit}:height", overt=f"{out_datum}:{out_unit}:height", region=region).run_vdatum(input_file)
+    Vdatum(
+        ivert=f"{in_datum}:{in_unit}:height",
+        overt=f"{out_datum}:{out_unit}:height",
+        region=region,
+    ).run_vdatum(input_file)
 
 
 @vdatum_group.command("list")
@@ -350,6 +363,7 @@ def vdatum_list():
 
     vd = Vdatum().vdatum_help()
     click.echo(vd)
+
 
 if __name__ == "__main__":
     transformez_cli()

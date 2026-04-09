@@ -22,7 +22,7 @@ Originally developed as the core transformation engine for the [CUDEM](https://g
 
 ### ❓ Why Transformez?
 
-Vertical Datum transformations can cause a lot of confusion and headache when trying to process heterogeneous data from around the world into a single unified vertial reference. 
+Vertical Datum transformations can cause a lot of confusion and headache when trying to process heterogeneous data from around the world into a single unified vertial reference.
 
 **Transformez simplifies this process!**
 

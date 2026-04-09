@@ -81,7 +81,7 @@ class Vdatum:
         if self.jar is None:
             self.vdatum_locate_jar()
         if self.jar is not None:
-            out, _ = utils.run_cmd(f"java -jar {self.jar} -")#, verbose=self.verbose)
+            out, _ = utils.run_cmd(f"java -jar {self.jar} -")  # , verbose=self.verbose)
             for i in out.decode("utf-8").split("\n"):
                 if "- v" in i.strip():
                     return i.strip().split("v")[-1]
@@ -108,7 +108,7 @@ class Vdatum:
             )
 
             out, _ = utils.run_cmd(
-                f"java -Djava.awt.headless=false -jar {self.jar} {vdc}"#, verbose=False
+                f"java -Djava.awt.headless=false -jar {self.jar} {vdc}"  # , verbose=False
             )
             z = xyz[2]
             for i in out.split("\n"):
@@ -143,7 +143,9 @@ class Vdatum:
                 f"-nodata -file:txt:{self.delim},{self.xyzl},skip{self.skip}:{src_fn}:{self.result_dir} "
                 f"{epoch_str}region:{self.region}"
             )
-            return utils.run_cmd(f"java -jar {self.jar} {vdc}")#, verbose=self.verbose)
+            return utils.run_cmd(
+                f"java -jar {self.jar} {vdc}"
+            )  # , verbose=self.verbose)
         else:
             return [], -1
 
