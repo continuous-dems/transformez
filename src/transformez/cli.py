@@ -348,7 +348,7 @@ def run_vdatum_cli(
 
     from transformez.vdatum import Vdatum
 
-    vd = Vdatum(
+    Vdatum(
         ivert=f"{in_datum}:{in_unit}:height",
         overt=f"{out_datum}:{out_unit}:height",
         region=region,
