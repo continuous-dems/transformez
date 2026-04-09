@@ -23,5 +23,5 @@ repos:
     rev: v0.15.2
     hooks:
       - id: ruff-check
-        args: ['--fix']
+        args: ['--fix', '--show-fixes']
       - id: ruff-format
