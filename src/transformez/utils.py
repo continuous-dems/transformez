@@ -18,10 +18,13 @@ import numpy as np
 import rasterio
 
 logger = logging.getLogger(__name__)
-cmd_exists = lambda x: any(
-    os.access(os.path.join(path, x), os.X_OK)
-    for path in os.environ["PATH"].split(os.pathsep)
-)
+
+
+def cmd_exists(x: str) -> bool:
+    return any(
+        os.access(os.path.join(path, x), os.X_OK)
+        for path in os.environ["PATH"].split(os.pathsep)
+    )
 
 
 def run_cmd(args):
