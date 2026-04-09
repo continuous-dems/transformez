@@ -47,7 +47,6 @@ __all__ = [
     "parse_region",
     "x360",
     "transform_increment",
-    
     # Fetchez
     "Region",
     "parse_region",
