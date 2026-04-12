@@ -170,6 +170,7 @@ class VerticalTransform:
                 continue
 
             if fn.endswith(".zip"):
+                datatype = kwargs.get("datatype")
                 if datatype:
                     fns_to_extract = [datatype, ".met", ".inf"]
                 else:
@@ -223,14 +224,16 @@ class VerticalTransform:
                 """Finds and parses the release date from VDatum metadata files."""
 
                 dir_name = os.path.dirname(gtx_path)
-                meta_files = [f for f in os.listdir(dir_name) if f.endswith((".met", ".inf"))]
+                meta_files = [
+                    f for f in os.listdir(dir_name) if f.endswith((".met", ".inf"))
+                ]
 
                 if not meta_files:
                     return datetime(1970, 1, 1)
 
                 meta_path = os.path.join(dir_name, meta_files[0])
                 try:
-                    with open(meta_path, 'r') as f:
+                    with open(meta_path, "r") as f:
                         content = f.read().splitlines()
 
                     if not content:
@@ -244,8 +247,20 @@ class VerticalTransform:
                         if len(parts) >= 6:
                             year = int(parts[-1])
                             day = int(parts[2])
-                            month_map = {'Jan':1, 'Feb':2, 'Mar':3, 'Apr':4, 'May':5, 'Jun':6,
-                                         'Jul':7, 'Aug':8, 'Sep':9, 'Oct':10, 'Nov':11, 'Dec':12}
+                            month_map = {
+                                "Jan": 1,
+                                "Feb": 2,
+                                "Mar": 3,
+                                "Apr": 4,
+                                "May": 5,
+                                "Jun": 6,
+                                "Jul": 7,
+                                "Aug": 8,
+                                "Sep": 9,
+                                "Oct": 10,
+                                "Nov": 11,
+                                "Dec": 12,
+                            }
                             month = month_map.get(parts[1][:3].title(), 1)
                             return datetime(year, month, day)
 
