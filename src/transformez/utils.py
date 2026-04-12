@@ -30,8 +30,7 @@ def cmd_exists(x: str) -> bool:
 def run_cmd(args):
     """Standalone replacement for utils.run_cmd using subprocess."""
 
-    logger.info(f"Running: {' '.join(args) if isinstance(args, list) else args}")
-
+    logger.debug(f"Running: {' '.join(args) if isinstance(args, list) else args}")
     result = subprocess.run(
         args,
         shell=False if isinstance(args, list) else True,
