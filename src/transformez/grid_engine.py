@@ -159,7 +159,7 @@ class GridEngine:
         buffer_pixels=10,
         max_discontinuity=0.5,
     ):
-        """Intelligently handles inland decay vs. offshore blending, while
+        """Handles inland decay vs. offshore blending, while
         filtering out low-resolution global artifacts.
         """
 

@@ -20,11 +20,13 @@ Originally developed as the core transformation engine for the [CUDEM](https://g
 
 ---
 
-### ❓ Why Transformez?
+## ❓ Why Transformez?
 
 Vertical Datum transformations can cause a lot of confusion and headache when trying to process heterogeneous data from around the world into a single unified vertial reference.
 
 **Transformez simplifies this process!**
+
+---
 
 ## 📦 Installation
 
@@ -64,6 +66,7 @@ transformez raster my_dem.tif -I mllw -O 5703
 # Download GEBCO and shift EGM96 to WGS84 on the fly
 fetchez gebco ... --hook transformez:datum_in=5773,datum_out=4979
 ```
+---
 
 ## 📚 Documentation
 Would you like to know more? Check out our [Official Documentation](https://transformez.readthedocs.io) to learn about:

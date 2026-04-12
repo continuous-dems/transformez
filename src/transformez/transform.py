@@ -119,7 +119,11 @@ class VerticalTransform:
 
             if fn.endswith(".zip"):
                 datatype = kwargs.get("datatype")
-                fns_to_extract = [datatype] if datatype else None
+                if datatype:
+                    fns_to_extract = [datatype, ".met", ".inf"]
+                else:
+                    fns_to_extract = None
+
                 extracted = fetchez.utils.p_f_unzip(
                     fn, fns=fns_to_extract, outdir=self.cache_dir
                 )
@@ -166,8 +170,13 @@ class VerticalTransform:
                 continue
 
             if fn.endswith(".zip"):
+                if datatype:
+                    fns_to_extract = [datatype, ".met", ".inf"]
+                else:
+                    fns_to_extract = None
+
                 extracted = fetchez.utils.p_f_unzip(
-                    fn, fns=[r["data_type"]], outdir=self.cache_dir
+                    fn, fns=fns_to_extract, outdir=self.cache_dir
                 )
                 valid.extend(
                     [
@@ -208,17 +217,64 @@ class VerticalTransform:
         files = self.fetch_grid(provider, datatype=name, query=name)
         if provider == "vdatum":
             import rasterio
+            from datetime import datetime
 
-            def get_bbox_area(filepath):
+            def get_vdatum_date(gtx_path):
+                """Finds and parses the release date from VDatum metadata files."""
+
+                dir_name = os.path.dirname(gtx_path)
+                meta_files = [f for f in os.listdir(dir_name) if f.endswith((".met", ".inf"))]
+
+                if not meta_files:
+                    return datetime(1970, 1, 1)
+
+                meta_path = os.path.join(dir_name, meta_files[0])
+                try:
+                    with open(meta_path, 'r') as f:
+                        content = f.read().splitlines()
+
+                    if not content:
+                        return datetime(1970, 1, 1)
+
+                    first_line = content[0]
+
+                    # Parse the first line "#Mon Jul 08 10:27:07 EDT 2019"
+                    if first_line.startswith("#"):
+                        parts = first_line.replace("#", "").split()
+                        if len(parts) >= 6:
+                            year = int(parts[-1])
+                            day = int(parts[2])
+                            month_map = {'Jan':1, 'Feb':2, 'Mar':3, 'Apr':4, 'May':5, 'Jun':6,
+                                         'Jul':7, 'Aug':8, 'Sep':9, 'Oct':10, 'Nov':11, 'Dec':12}
+                            month = month_map.get(parts[1][:3].title(), 1)
+                            return datetime(year, month, day)
+
+                    # Fallback to scanning for "released_date="
+                    for line in content:
+                        if "released_date=" in line:
+                            date_str = line.split("=")[1].strip()
+                            m, d, y = map(int, date_str.split("/"))
+                            return datetime(y, m, d)
+
+                except Exception as e:
+                    logger.debug(f"Failed to parse date from {meta_path}: {e}")
+
+                return datetime(1970, 1, 1)
+
+            def sort_key(filepath):
+                # Time Sorting (Oldest -> Newest)
+                date_val = get_vdatum_date(filepath)
+
                 try:
                     with rasterio.open(filepath) as src:
                         b = src.bounds
-                        return (b.right - b.left) * (b.top - b.bottom)
+                        area = (b.right - b.left) * (b.top - b.bottom)
                 except Exception:
-                    return float("inf")
+                    area = float("inf")
 
-            # Largest (Offshore) loads first, Smallest (Rivers) load last and overwrite
-            files.sort(key=get_bbox_area, reverse=True)
+                return (date_val.timestamp(), -area)
+
+            files.sort(key=sort_key, reverse=True)
 
         if not files:
             return np.zeros((self.ny, self.nx))
