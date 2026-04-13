@@ -42,9 +42,11 @@ In this test we tested `transformez` directly against the **NOAA VDatum Java CLI
 
 | Region | RMSE | Mean Difference | Random Points |
 | :--- | :--- | :--- | :--- |
+| **Chesapeake Bay** | ~ 0.0089 | ~0.0006 m | 64 |
 | **Astoria, OR** | ~ 0.0002 m | ~ 0.0000 m | 59 |
 | **Tampa Bay, FL** | ~ 0.0011 m | ~ -0.0001 m |  85 |
 
+![VDatum Error Histogram](../_static/validation_vdatum_hist_chesapeake.png)
 ![VDatum Error Histogram](../_static/validation_vdatum_hist_astoria.png)
 ![VDatum Error Histogram](../_static/validation_vdatum_hist_tampa.png)
 
