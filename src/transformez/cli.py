@@ -68,9 +68,12 @@ def transformez_cli():
     default=100,
     help="Number of pixels to decay tidal shifts inland.",
 )
+@click.option(
+    "--use-stations", is_flag=True, help="Force RBF interpolation using live tide stations instead of global satellite models."
+)
 @click.option("--preview", is_flag=True, help="Preview the transformation output.")
 def transform_run(
-    input_file, region, increment, input_datum, output_datum, out, decay_pixels, preview
+    input_file, region, increment, input_datum, output_datum, out, decay_pixels, use_stations, preview
 ):
     """Transform a raster's vertical datum or generate a standalone shift grid.
 
@@ -92,6 +95,7 @@ def transform_run(
             datum_out=output_datum,
             decay_pixels=decay_pixels,
             output_raster=out,
+            use_stations=use_stations,
             verbose=True,
         )
 
@@ -163,10 +167,13 @@ def transform_run(
     "--decay-pixels", type=int, default=100, help="Pixels to decay tidal shifts inland."
 )
 @click.option(
+    "--use-stations", is_flag=True, help="Force RBF interpolation using live tide stations instead of global satellite models."
+)
+@click.option(
     "--preview", is_flag=True, help="Show matplotlib preview instead of saving."
 )
 def transform_grid(
-    region, increment, input_datum, output_datum, out, decay_pixels, preview
+    region, increment, input_datum, output_datum, out, decay_pixels, use_stations, preview
 ):
     """Generate a standalone vertical shift grid for a specified region."""
 
@@ -187,6 +194,7 @@ def transform_grid(
         datum_out=output_datum,
         decay_pixels=decay_pixels,
         out_fn=out_fn,
+        use_stations=use_stations,
         verbose=True,
     )
 
@@ -227,8 +235,11 @@ def transform_grid(
 @click.option(
     "--decay-pixels", type=int, default=100, help="Pixels to decay tidal shifts inland."
 )
+@click.option(
+    "--use-stations", is_flag=True, help="Force RBF interpolation using live tide stations instead of global satellite models."
+)
 def transform_raster(
-    input_file, input_datum, output_datum, in_units, out_units, out, decay_pixels
+    input_file, input_datum, output_datum, in_units, out_units, out, decay_pixels, use_stations
 ):
     """Apply a vertical datum shift (and optional unit conversion) to an existing DEM."""
 
@@ -243,6 +254,7 @@ def transform_raster(
         output_raster=out,
         z_unit_in=in_units,
         z_unit_out=out_units,
+        use_stations=use_stations,
         verbose=True,
     )
 
@@ -253,6 +265,7 @@ def transform_raster(
         sys.exit(1)
 
 
+# --- LIST DATUMS, ETC. ---
 @transformez_cli.command("list")
 def transform_list():
     """List all supported vertical datums, EPSG codes, and geoids."""
@@ -260,20 +273,16 @@ def transform_list():
         from transformez.definitions import Datums
 
         click.secho("\n🌊 Supported Tidal Surfaces:", fg="cyan", bold=True)
-        # For tidal datums, the user types the dictionary key (e.g., 'mllw')
         for key, v in Datums.SURFACES.items():
             region_str = v.get("region", "global").upper()
             click.echo(f"  {key:<12} : {v.get('name', key):<30} [{region_str}]")
 
         click.secho("\n🌐 Ellipsoidal / Frame Datums (EPSG):", fg="cyan", bold=True)
-        # For ellipsoidal, explicitly list the EPSG codes
         click.echo(f"  {'4979':<12} : WGS84 - World Geodetic System 1984")
         click.echo(f"  {'6319':<12} : NAD83 - North American Datum 1983")
 
         click.secho("\n🏔️  Orthometric / Geoid-Based (EPSG):", fg="cyan", bold=True)
-        # For orthometric, the key in Datums.CDN is typically the EPSG code (e.g., '5703')
         for epsg_key, v in Datums.CDN.items():
-            # Fallback to the key if 'epsg' isn't explicitly defined in the dict
             epsg_code = v.get("epsg", epsg_key)
             geoid_str = v.get("default_geoid", "None")
             click.echo(
@@ -282,6 +291,14 @@ def transform_list():
 
         click.secho("\n🌍 Available Geoids:", fg="cyan", bold=True)
         click.echo(f"  {', '.join(Datums.GEOIDS.keys())}")
+
+        # ---> HIERARCHY DOCUMENTATION <---
+        click.secho("\n🔄 Dynamic Fallback Hierarchy (Coastal/Tidal):", fg="magenta", bold=True)
+        click.echo("  1. NOAA VDatum       : High-res regional hydrodynamics (USA Base).")
+        click.echo("  2. FES2014 / Global  : Satellite altimetry proxy for offshore/international.")
+        click.echo("  3. Tide Station RBF  : Live CO-OPS splines (Activated via --use-stations).")
+        click.echo("  4. Constant Offset   : Safety fallback for sparse coverage (< 3 stations).")
+        click.echo("  5. Inland Decay      : Vector-masked spatial decay for rivers/estuaries going inland.")
 
         click.secho("\n💡 Pro-Tip:", fg="yellow", bold=True, nl=False)
         click.echo(
