@@ -69,11 +69,21 @@ def transformez_cli():
     help="Number of pixels to decay tidal shifts inland.",
 )
 @click.option(
-    "--use-stations", is_flag=True, help="Force RBF interpolation using live tide stations instead of global satellite models."
+    "--use-stations",
+    is_flag=True,
+    help="Force RBF interpolation using live tide stations instead of global satellite models.",
 )
 @click.option("--preview", is_flag=True, help="Preview the transformation output.")
 def transform_run(
-    input_file, region, increment, input_datum, output_datum, out, decay_pixels, use_stations, preview
+    input_file,
+    region,
+    increment,
+    input_datum,
+    output_datum,
+    out,
+    decay_pixels,
+    use_stations,
+    preview,
 ):
     """Transform a raster's vertical datum or generate a standalone shift grid.
 
@@ -167,13 +177,22 @@ def transform_run(
     "--decay-pixels", type=int, default=100, help="Pixels to decay tidal shifts inland."
 )
 @click.option(
-    "--use-stations", is_flag=True, help="Force RBF interpolation using live tide stations instead of global satellite models."
+    "--use-stations",
+    is_flag=True,
+    help="Force RBF interpolation using live tide stations instead of global satellite models.",
 )
 @click.option(
     "--preview", is_flag=True, help="Show matplotlib preview instead of saving."
 )
 def transform_grid(
-    region, increment, input_datum, output_datum, out, decay_pixels, use_stations, preview
+    region,
+    increment,
+    input_datum,
+    output_datum,
+    out,
+    decay_pixels,
+    use_stations,
+    preview,
 ):
     """Generate a standalone vertical shift grid for a specified region."""
 
@@ -236,10 +255,19 @@ def transform_grid(
     "--decay-pixels", type=int, default=100, help="Pixels to decay tidal shifts inland."
 )
 @click.option(
-    "--use-stations", is_flag=True, help="Force RBF interpolation using live tide stations instead of global satellite models."
+    "--use-stations",
+    is_flag=True,
+    help="Force RBF interpolation using live tide stations instead of global satellite models.",
 )
 def transform_raster(
-    input_file, input_datum, output_datum, in_units, out_units, out, decay_pixels, use_stations
+    input_file,
+    input_datum,
+    output_datum,
+    in_units,
+    out_units,
+    out,
+    decay_pixels,
+    use_stations,
 ):
     """Apply a vertical datum shift (and optional unit conversion) to an existing DEM."""
 
@@ -293,12 +321,24 @@ def transform_list():
         click.echo(f"  {', '.join(Datums.GEOIDS.keys())}")
 
         # ---> HIERARCHY DOCUMENTATION <---
-        click.secho("\n🔄 Dynamic Fallback Hierarchy (Coastal/Tidal):", fg="magenta", bold=True)
-        click.echo("  1. NOAA VDatum       : High-res regional hydrodynamics (USA Base).")
-        click.echo("  2. FES2014 / Global  : Satellite altimetry proxy for offshore/international.")
-        click.echo("  3. Tide Station RBF  : Live CO-OPS splines (Activated via --use-stations).")
-        click.echo("  4. Constant Offset   : Safety fallback for sparse coverage (< 3 stations).")
-        click.echo("  5. Inland Decay      : Vector-masked spatial decay for rivers/estuaries going inland.")
+        click.secho(
+            "\n🔄 Dynamic Fallback Hierarchy (Coastal/Tidal):", fg="magenta", bold=True
+        )
+        click.echo(
+            "  1. NOAA VDatum       : High-res regional hydrodynamics (USA Base)."
+        )
+        click.echo(
+            "  2. FES2014 / Global  : Satellite altimetry proxy for offshore/international."
+        )
+        click.echo(
+            "  3. Tide Station RBF  : Live CO-OPS splines (Activated via --use-stations)."
+        )
+        click.echo(
+            "  4. Constant Offset   : Safety fallback for sparse coverage (< 3 stations)."
+        )
+        click.echo(
+            "  5. Inland Decay      : Vector-masked spatial decay for rivers/estuaries going inland."
+        )
 
         click.secho("\n💡 Pro-Tip:", fg="yellow", bold=True, nl=False)
         click.echo(

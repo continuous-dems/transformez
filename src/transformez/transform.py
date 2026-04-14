@@ -394,13 +394,17 @@ class VerticalTransform:
         # Fallback to Global GSHHG
         if not shapefiles:
             if self.verbose:
-                logger.info("    [Coastline] CUSP unavailable. Falling back to Global GSHHG (High Res)...")
+                logger.info(
+                    "    [Coastline] CUSP unavailable. Falling back to Global GSHHG (High Res)..."
+                )
 
             try:
                 gshhg_mod = fetchez.registry.ModuleRegistry.load_module("gshhg")
                 if gshhg_mod:
                     # Request the 'h' (high) resolution
-                    fetcher = gshhg_mod(src_region=self.region, outdir=self.cache_dir, resolution='h')
+                    fetcher = gshhg_mod(
+                        src_region=self.region, outdir=self.cache_dir, resolution="h"
+                    )
                     fetcher.run()
                     if fetcher.results:
                         fetchez.core.run_fetchez([fetcher], threads=2)
@@ -410,14 +414,18 @@ class VerticalTransform:
                         if os.path.exists(fn) and fn.endswith(".zip"):
                             shp_exts = [".shp", ".shx", ".dbf"]
                             fns = [f"{r['data_type']}{x}" for x in shp_exts]
-                            extracted = fetchez.utils.p_f_unzip(fn, fns=fns, outdir=self.cache_dir)
+                            extracted = fetchez.utils.p_f_unzip(
+                                fn, fns=fns, outdir=self.cache_dir
+                            )
                             shps = [f for f in extracted if f.endswith(".shp")]
                             shapefiles.extend(shps)
             except Exception as e:
                 logger.error(f"GSHHG fetch failed: {e}")
 
         if shapefiles and self.verbose:
-            logger.info(f"    [Coastline] Secured {len(shapefiles)} vector tiles for inland masking.")
+            logger.info(
+                f"    [Coastline] Secured {len(shapefiles)} vector tiles for inland masking."
+            )
 
         return shapefiles
 
@@ -463,24 +471,38 @@ class VerticalTransform:
             if self.use_stations:
                 logger.info("    [Override] Forcing Tide Station RBF interpolation...")
                 rbf_grid = GridGen.from_stations(
-                    self.region, self.nx, self.ny, datum_in=datum_name, datum_out="navd88", shapefiles=coast_shapefiles
+                    self.region,
+                    self.nx,
+                    self.ny,
+                    datum_in=datum_name,
+                    datum_out="navd88",
+                    shapefiles=coast_shapefiles,
                 )
                 if rbf_grid is not None:
-                     vdatum_empty = np.isnan(hydro_shift)
-                     hydro_shift[vdatum_empty] = rbf_grid[vdatum_empty]
-                     land_mask = GridEngine.create_land_mask(self.region, self.nx, self.ny, coast_shapefiles)
-                     hydro_shift = GridEngine.fill_nans(
-                         hydro_shift,
-                         decay_pixels=self.decay_pixels,
-                         buffer_pixels=10,
-                         land_mask=land_mask
-                     )
-                     desc.append("Station RBF + Inland Decay")
-                else:
-                    logger.warning("    [Override] Tide Station RBF failed. Falling back to inland decay.")
-                    land_mask = GridEngine.create_land_mask(self.region, self.nx, self.ny, coast_shapefiles)
+                    vdatum_empty = np.isnan(hydro_shift)
+                    hydro_shift[vdatum_empty] = rbf_grid[vdatum_empty]
+                    land_mask = GridEngine.create_land_mask(
+                        self.region, self.nx, self.ny, coast_shapefiles
+                    )
                     hydro_shift = GridEngine.fill_nans(
-                        hydro_shift, decay_pixels=self.decay_pixels, buffer_pixels=10, land_mask=land_mask,
+                        hydro_shift,
+                        decay_pixels=self.decay_pixels,
+                        buffer_pixels=10,
+                        land_mask=land_mask,
+                    )
+                    desc.append("Station RBF + Inland Decay")
+                else:
+                    logger.warning(
+                        "    [Override] Tide Station RBF failed. Falling back to inland decay."
+                    )
+                    land_mask = GridEngine.create_land_mask(
+                        self.region, self.nx, self.ny, coast_shapefiles
+                    )
+                    hydro_shift = GridEngine.fill_nans(
+                        hydro_shift,
+                        decay_pixels=self.decay_pixels,
+                        buffer_pixels=10,
+                        land_mask=land_mask,
                     )
                     desc.append("Inland Hydro Decay")
 
@@ -513,12 +535,22 @@ class VerticalTransform:
                     desc.append(f"Blended w/ Global({proxy_name.upper()})")
                 else:
                     hydro_shift = GridEngine.fill_nans(
-                        hydro_shift, decay_pixels=self.decay_pixels, buffer_pixels=10, land_mask=GridEngine.create_land_mask(self.region, self.nx, self.ny, coast_shapefiles)
+                        hydro_shift,
+                        decay_pixels=self.decay_pixels,
+                        buffer_pixels=10,
+                        land_mask=GridEngine.create_land_mask(
+                            self.region, self.nx, self.ny, coast_shapefiles
+                        ),
                     )
                     desc.append("Inland Hydro Decay")
             else:
                 hydro_shift = GridEngine.fill_nans(
-                    hydro_shift, decay_pixels=self.decay_pixels, buffer_pixels=10, land_mask=GridEngine.create_land_mask(self.region, self.nx, self.ny, coast_shapefiles)
+                    hydro_shift,
+                    decay_pixels=self.decay_pixels,
+                    buffer_pixels=10,
+                    land_mask=GridEngine.create_land_mask(
+                        self.region, self.nx, self.ny, coast_shapefiles
+                    ),
                 )
                 desc.append("Inland Hydro Decay")
 
@@ -668,7 +700,7 @@ class VerticalTransform:
                         s, d = self._get_global_chain(proxy_name, model="fes2014")
                         if s is not None:
                             total_out -= s
-                            #desc_parts.append(f"GlobalProxy({proxy_name})")
+                            # desc_parts.append(f"GlobalProxy({proxy_name})")
                             desc_parts.append(d)
                         else:
                             return np.zeros(
@@ -678,7 +710,7 @@ class VerticalTransform:
                         return np.zeros((self.ny, self.nx)), "FAILED Output Chain"
                 else:
                     total_out -= s
-                    #desc_parts.append(f"Native -> VDatum({datum_name})")
+                    # desc_parts.append(f"Native -> VDatum({datum_name})")
                     desc_parts.append(d)
 
             elif region_tag == "global":

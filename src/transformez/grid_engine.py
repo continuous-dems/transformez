@@ -81,10 +81,14 @@ class GridEngine:
             from rasterio.features import rasterize
 
         except ImportError:
-            logger.warning("fiona and rasterio are required for vector coastline masking.")
+            logger.warning(
+                "fiona and rasterio are required for vector coastline masking."
+            )
             return None
 
-        transform = from_bounds(region.xmin, region.ymin, region.xmax, region.ymax, nx, ny)
+        transform = from_bounds(
+            region.xmin, region.ymin, region.xmax, region.ymax, nx, ny
+        )
 
         geoms = []
         for shp in shapefiles:
@@ -109,7 +113,7 @@ class GridEngine:
             default_value=0,
             fill=1,
             dtype=np.uint8,
-            all_touched=True
+            all_touched=True,
         )
 
         return mask.astype(bool)
@@ -247,7 +251,10 @@ class GridEngine:
         if is_inland.any():
             source_for_decay = vdatum_grid if is_vdatum.any() else final_grid
             decayed_inland = GridEngine.fill_nans(
-                source_for_decay, decay_pixels=decay_pixels, buffer_pixels=buffer_pixels, land_mask=land_mask
+                source_for_decay,
+                decay_pixels=decay_pixels,
+                buffer_pixels=buffer_pixels,
+                land_mask=land_mask,
             )
             final_grid[is_inland] = decayed_inland[is_inland]
 
@@ -394,7 +401,7 @@ class GridGen:
             logger.error(f"GeoJSON file not found: {geojson_path}")
             return None
 
-        with open(geojson_path, 'r') as f:
+        with open(geojson_path, "r") as f:
             data = json.load(f)
 
         features = data.get("features", [])
@@ -432,15 +439,19 @@ class GridGen:
             return None
 
         if len(z) < 3:
-            logger.warning(f"Only {len(z)} station(s) found. Applying a constant average offset instead of RBF.")
+            logger.warning(
+                f"Only {len(z)} station(s) found. Applying a constant average offset instead of RBF."
+            )
             # Average the offsets (works for 1 or 2 stations)
             constant_shift = sum(z) / len(z)
             # Create a flat sheet
             rbf_grid = np.full((ny, nx), constant_shift, dtype=np.float32)
 
         else:
-            logger.info(f"Interpolating surface using {len(z)} coastal tide stations...")
-            rbf = Rbf(x, y, z, function='thin_plate')
+            logger.info(
+                f"Interpolating surface using {len(z)} coastal tide stations..."
+            )
+            rbf = Rbf(x, y, z, function="thin_plate")
             xi = np.linspace(region.xmin, region.xmax, nx)
             yi = np.linspace(region.ymax, region.ymin, ny)
             XI, YI = np.meshgrid(xi, yi)
