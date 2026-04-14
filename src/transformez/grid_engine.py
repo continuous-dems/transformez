@@ -261,11 +261,10 @@ class GridEngine:
         return final_grid
 
     @staticmethod
-    def fill_nans(data, decay_pixels=100, buffer_pixels=50, land_mask=None):
-        """Extrapolates nearest valid value for 'buffer_pixels',
-        then decays to zero over 'decay_pixels'.
-
-        If land_mask is provided, prevents decay from covering land areas.
+    def fill_nans(data, decay_pixels=0, buffer_pixels=10, land_mask=None):
+        """Fills NaNs by extrapolating nearest valid coastal values.
+        If decay_pixels > 0, it will smoothly ramp the values to 0.0 inland.
+        If decay_pixels == 0, it extrapolates the coastal values infinitely inland.
         """
 
         mask = np.isnan(data)
@@ -276,18 +275,20 @@ class GridEngine:
             mask, return_distances=True, return_indices=True
         )
         coast_values = data[tuple(indices)]
-
-        # Subtract the buffer from the distance. Anything <= 0 is in the buffer zone.
-        effective_dist = np.clip(dist - buffer_pixels, 0, None)
-        decay_factor = np.clip((decay_pixels - effective_dist) / decay_pixels, 0, 1)
-
         out_data = data.copy()
-        out_data[mask] = coast_values[mask] * decay_factor[mask]
 
-        if land_mask is not None:
-            # We only mask out areas that were originally nan.
-            # If VDatum contained valid data over "land", we keep it!
-            out_data[mask & land_mask] = 0.0
+        if decay_pixels and decay_pixels > 0:
+            # --- Inland Decay ---
+            effective_dist = np.clip(dist - buffer_pixels, 0, None)
+            decay_factor = np.clip((decay_pixels - effective_dist) / decay_pixels, 0, 1)
+            out_data[mask] = coast_values[mask] * decay_factor[mask]
+
+            if land_mask is not None:
+                # Force areas deep inland (and covered by the land mask) to exactly 0.0
+                out_data[mask & ~land_mask] = 0.0
+        else:
+            # --- Infinite Nearest-Neighbor Extrapolation (Default) ---
+            out_data[mask] = coast_values[mask]
 
         return out_data
 
@@ -378,11 +379,14 @@ class GridWriter:
 
 class GridGen:
     @staticmethod
-    def from_stations(region, nx, ny, datum_in, datum_out, shapefiles=None):
-        """Generates a tidal shift grid (datum_in -> datum_out)
-        using live NOAA CO-OPS tide station data and RBF interpolation.
+    def from_stations(
+        region, nx, ny, datum_in, datum_out, shapefiles=None, baseline_grid=None
+    ):
+        """Dynamically generates a tidal shift grid using live tide stations.
+        If a station lacks the target datum, it falls back to MSL and uses the
+        baseline_grid (FES) to bridge the gap to the geodetic frame.
         """
-
+        import os
         import json
         from fetchez.modules.tides import Tides
         import fetchez
@@ -413,23 +417,50 @@ class GridGen:
         d_in = datum_in.lower()
         d_out = datum_out.lower()
 
+        # Calculate pixel resolution for baseline grid sampling
+        res_x = (region.xmax - region.xmin) / nx
+        res_y = (region.ymax - region.ymin) / ny
+
         for feat in features:
             props = feat.get("properties", {})
             geom = feat.get("geometry", {})
 
-            if d_in in props and d_out in props:
-                val_in = props.get(d_in)
-                val_out = props.get(d_out)
+            val_in = props.get(d_in)
+            if val_in is None or val_in < -90000:
+                continue
 
-                if val_in is None or val_out is None:
-                    continue
+            val_out = props.get(d_out)
+            shift = None
+            units = props.get("units", "meters").lower()
 
+            # --- Perfect Data (Station has NAVD88) ---
+            if val_out is not None and val_out > -90000:
                 shift = val_in - val_out
-
-                units = props.get("units", "meters").lower()
                 if units == "feet":
                     shift *= 0.3048
 
+            # --- Floating Station (Lacks NAVD88, but has MSL) ---
+            elif baseline_grid is not None and "msl" in props:
+                val_msl = props.get("msl")
+                if val_msl is not None and val_msl > -90000:
+                    lon = geom["coordinates"][0]
+                    lat = geom["coordinates"][1]
+
+                    x_idx = int((lon - region.xmin) / res_x)
+                    y_idx = int((region.ymax - lat) / res_y)
+
+                    if 0 <= x_idx < nx and 0 <= y_idx < ny:
+                        fes_offset = baseline_grid[y_idx, x_idx]
+                        if not np.isnan(fes_offset):
+                            # Get the local tidal envelope to MSL
+                            shift_to_msl = val_in - val_msl
+                            if units == "feet":
+                                shift_to_msl *= 0.3048
+
+                            # Add the FES baseline offset to mathematically tie it to NAVD88
+                            shift = shift_to_msl + fes_offset
+
+            if shift is not None:
                 x.append(geom["coordinates"][0])
                 y.append(geom["coordinates"][1])
                 z.append(shift)
@@ -442,23 +473,22 @@ class GridGen:
             logger.warning(
                 f"Only {len(z)} station(s) found. Applying a constant average offset instead of RBF."
             )
-            # Average the offsets (works for 1 or 2 stations)
             constant_shift = sum(z) / len(z)
-            # Create a flat sheet
             rbf_grid = np.full((ny, nx), constant_shift, dtype=np.float32)
 
         else:
             logger.info(
                 f"Interpolating surface using {len(z)} coastal tide stations..."
             )
-            rbf = Rbf(x, y, z, function="thin_plate")
+            rbf = Rbf(x, y, z, function="linear")
             xi = np.linspace(region.xmin, region.xmax, nx)
             yi = np.linspace(region.ymax, region.ymin, ny)
             XI, YI = np.meshgrid(xi, yi)
             rbf_grid = rbf(XI, YI).astype(np.float32)
+            rbf_grid = np.clip(rbf_grid, min(z), max(z))
 
         if shapefiles:
-            logger.info("Applying vector coastline mask to RBF surface...")
+            logger.info("Applying vector coastline mask to station surface...")
             land_mask = GridEngine.create_land_mask(region, nx, ny, shapefiles)
             if land_mask is not None:
                 rbf_grid[~land_mask] = np.nan
