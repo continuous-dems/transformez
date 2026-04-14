@@ -210,26 +210,12 @@ class GridEngine:
         shapefiles=None,
         decay_pixels=100,
         buffer_pixels=10,
-        max_discontinuity=0.5,
     ):
         """Handles inland decay vs. offshore blending, while
         filtering out low-resolution global artifacts.
         """
 
         final_grid = vdatum_grid.copy()
-        vdatum_mask = np.isnan(vdatum_grid)
-        if not vdatum_mask.all():
-            nearest_idx = ndimage.distance_transform_edt(
-                vdatum_mask, return_distances=False, return_indices=True
-            )
-            nearest_vdatum_vals = vdatum_grid[tuple(nearest_idx)]
-
-            fes_anomaly_mask = (
-                np.abs(global_grid - nearest_vdatum_vals) > max_discontinuity
-            )
-
-            global_grid[fes_anomaly_mask] = np.nan
-
         land_mask = None
         if shapefiles:
             land_mask = GridEngine.create_land_mask(region, nx, ny, shapefiles)
