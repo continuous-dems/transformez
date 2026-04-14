@@ -563,7 +563,6 @@ class VerticalTransform:
                         shapefiles=coast_shapefiles,
                         decay_pixels=self.decay_pixels,
                         buffer_pixels=10,
-                        max_discontinuity=5,
                     )
                     desc.append(f"Blended w/ Global({proxy_name.upper()})")
                 else:
