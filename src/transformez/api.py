@@ -190,7 +190,7 @@ def transform_raster(
     input_raster: str,
     datum_in: str,
     datum_out: str,
-    decay_pixels: int = 100,
+    decay_pixels: int = 0,
     output_raster: Optional[str] = None,
     cache_dir: Optional[str] = None,
     z_unit_in: Optional[str] = "auto",
