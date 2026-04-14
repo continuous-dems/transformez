@@ -20,6 +20,7 @@ import rasterio
 from rasterio.warp import reproject, Resampling
 from rasterio.transform import from_bounds
 from scipy import ndimage
+from scipy.interpolate import Rbf
 
 logger = logging.getLogger(__name__)
 
@@ -69,6 +70,54 @@ def plot_grid(grid_array, region, title="Vertical Shift Preview"):
 
 
 class GridEngine:
+    @staticmethod
+    def create_land_mask(region, nx, ny, shapefiles):
+        """Reads a list of vector shapefiles and rasterizes them into a boolean land mask.
+        Returns a numpy boolean array where True = Land, False = Ocean.
+        """
+
+        try:
+            import fiona
+            from rasterio.features import rasterize
+
+        except ImportError:
+            logger.warning(
+                "fiona and rasterio are required for vector coastline masking."
+            )
+            return None
+
+        transform = from_bounds(
+            region.xmin, region.ymin, region.xmax, region.ymax, nx, ny
+        )
+
+        geoms = []
+        for shp in shapefiles:
+            try:
+                # Use bbox filtering in Fiona to dramatically speed up reading massive global shapefiles
+                bbox = (region.xmin, region.ymin, region.xmax, region.ymax)
+                with fiona.open(shp, bbox=bbox) as src:
+                    for feature in src:
+                        if feature.get("geometry") is not None:
+                            geoms.append(feature["geometry"])
+            except Exception as e:
+                logger.warning(f"Failed reading coastline shapefile {shp}: {e}")
+
+        if not geoms:
+            return None
+
+        # Rasterize: Fill background with 0 (Ocean), draw shapes as 1 (Land)
+        mask = rasterize(
+            geoms,
+            out_shape=(ny, nx),
+            transform=transform,
+            default_value=0,
+            fill=1,
+            dtype=np.uint8,
+            all_touched=True,
+        )
+
+        return mask.astype(bool)
+
     @staticmethod
     def load_and_interpolate(source_files, target_region, nx, ny, decay_pixels=100):
         """Composites grids using GDAL Warper."""
@@ -155,6 +204,10 @@ class GridEngine:
     def coastal_aware_composite(
         vdatum_grid,
         global_grid,
+        region,
+        nx,
+        ny,
+        shapefiles=None,
         decay_pixels=100,
         buffer_pixels=10,
         max_discontinuity=0.5,
@@ -177,6 +230,12 @@ class GridEngine:
 
             global_grid[fes_anomaly_mask] = np.nan
 
+        land_mask = None
+        if shapefiles:
+            land_mask = GridEngine.create_land_mask(region, nx, ny, shapefiles)
+            if land_mask is not None:
+                global_grid[~land_mask] = np.nan
+
         is_vdatum = ~np.isnan(vdatum_grid)
         is_ocean = ~np.isnan(global_grid)
 
@@ -190,17 +249,23 @@ class GridEngine:
             final_grid[is_offshore] = blended_ocean[is_offshore]
 
         if is_inland.any():
+            source_for_decay = vdatum_grid if is_vdatum.any() else final_grid
             decayed_inland = GridEngine.fill_nans(
-                vdatum_grid, decay_pixels=decay_pixels, buffer_pixels=buffer_pixels
+                source_for_decay,
+                decay_pixels=decay_pixels,
+                buffer_pixels=buffer_pixels,
+                land_mask=land_mask,
             )
             final_grid[is_inland] = decayed_inland[is_inland]
 
         return final_grid
 
     @staticmethod
-    def fill_nans(data, decay_pixels=100, buffer_pixels=50):
+    def fill_nans(data, decay_pixels=100, buffer_pixels=50, land_mask=None):
         """Extrapolates nearest valid value for 'buffer_pixels',
         then decays to zero over 'decay_pixels'.
+
+        If land_mask is provided, prevents decay from covering land areas.
         """
 
         mask = np.isnan(data)
@@ -218,6 +283,11 @@ class GridEngine:
 
         out_data = data.copy()
         out_data[mask] = coast_values[mask] * decay_factor[mask]
+
+        if land_mask is not None:
+            # We only mask out areas that were originally nan.
+            # If VDatum contained valid data over "land", we keep it!
+            out_data[mask & land_mask] = 0.0
 
         return out_data
 
@@ -304,3 +374,93 @@ class GridWriter:
         ) as dst:
             dst.write(data.astype("float32"), 1)
         return filename
+
+
+class GridGen:
+    @staticmethod
+    def from_stations(region, nx, ny, datum_in, datum_out, shapefiles=None):
+        """Generates a tidal shift grid (datum_in -> datum_out)
+        using live NOAA CO-OPS tide station data and RBF interpolation.
+        """
+
+        import json
+        from fetchez.modules.tides import Tides
+        import fetchez
+
+        tides_fetcher = Tides(src_region=region.to_list(), mode="search")
+        tides_fetcher.run()
+
+        if not tides_fetcher.results:
+            logger.error("Failed to fetch tide stations GeoJSON.")
+            return None
+
+        fetchez.core.run_fetchez([tides_fetcher], threads=1)
+
+        geojson_path = tides_fetcher.results[0]["dst_fn"]
+        if not os.path.exists(geojson_path):
+            logger.error(f"GeoJSON file not found: {geojson_path}")
+            return None
+
+        with open(geojson_path, "r") as f:
+            data = json.load(f)
+
+        features = data.get("features", [])
+        if not features:
+            logger.error("No valid tide stations found in this region.")
+            return None
+
+        x, y, z = [], [], []
+        d_in = datum_in.lower()
+        d_out = datum_out.lower()
+
+        for feat in features:
+            props = feat.get("properties", {})
+            geom = feat.get("geometry", {})
+
+            if d_in in props and d_out in props:
+                val_in = props.get(d_in)
+                val_out = props.get(d_out)
+
+                if val_in is None or val_out is None:
+                    continue
+
+                shift = val_in - val_out
+
+                units = props.get("units", "meters").lower()
+                if units == "feet":
+                    shift *= 0.3048
+
+                x.append(geom["coordinates"][0])
+                y.append(geom["coordinates"][1])
+                z.append(shift)
+
+        if len(z) == 0:
+            logger.error("No stations with matching datums found in the GeoJSON.")
+            return None
+
+        if len(z) < 3:
+            logger.warning(
+                f"Only {len(z)} station(s) found. Applying a constant average offset instead of RBF."
+            )
+            # Average the offsets (works for 1 or 2 stations)
+            constant_shift = sum(z) / len(z)
+            # Create a flat sheet
+            rbf_grid = np.full((ny, nx), constant_shift, dtype=np.float32)
+
+        else:
+            logger.info(
+                f"Interpolating surface using {len(z)} coastal tide stations..."
+            )
+            rbf = Rbf(x, y, z, function="thin_plate")
+            xi = np.linspace(region.xmin, region.xmax, nx)
+            yi = np.linspace(region.ymax, region.ymin, ny)
+            XI, YI = np.meshgrid(xi, yi)
+            rbf_grid = rbf(XI, YI).astype(np.float32)
+
+        if shapefiles:
+            logger.info("Applying vector coastline mask to RBF surface...")
+            land_mask = GridEngine.create_land_mask(region, nx, ny, shapefiles)
+            if land_mask is not None:
+                rbf_grid[~land_mask] = np.nan
+
+        return rbf_grid

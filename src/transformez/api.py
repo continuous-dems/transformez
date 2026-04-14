@@ -116,6 +116,7 @@ def generate_grid(
     decay_pixels: int = 100,
     out_fn: Optional[str] = None,
     cache_dir: Optional[str] = None,
+    use_stations: bool = False,
     verbose: bool = False,
 ) -> Optional[np.ndarray]:
     """Generate a vertical shift grid for a specific region.
@@ -168,6 +169,7 @@ def generate_grid(
         geoid_out=geoid_out,
         decay_pixels=decay_pixels,
         cache_dir=cache_dir,
+        use_stations=use_stations,
         verbose=verbose,
     )
 
@@ -193,6 +195,7 @@ def transform_raster(
     cache_dir: Optional[str] = None,
     z_unit_in: Optional[str] = "auto",
     z_unit_out: Optional[str] = "auto",
+    use_stations: bool = False,
     verbose: bool = False,
 ) -> Optional[str]:
     """Apply a vertical datum transformation directly to an existing raster file.
@@ -253,6 +256,7 @@ def transform_raster(
         geoid_out=geoid_out,
         decay_pixels=decay_pixels,
         cache_dir=cache_dir,
+        use_stations=use_stations,
         verbose=verbose,
     )
 
