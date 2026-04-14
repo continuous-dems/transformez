@@ -379,7 +379,9 @@ class GridWriter:
 
 class GridGen:
     @staticmethod
-    def from_stations(region, nx, ny, datum_in, datum_out, shapefiles=None, baseline_grid=None):
+    def from_stations(
+        region, nx, ny, datum_in, datum_out, shapefiles=None, baseline_grid=None
+    ):
         """Dynamically generates a tidal shift grid using live tide stations.
         If a station lacks the target datum, it falls back to MSL and uses the
         baseline_grid (FES) to bridge the gap to the geodetic frame.
@@ -403,7 +405,7 @@ class GridGen:
             logger.error(f"GeoJSON file not found: {geojson_path}")
             return None
 
-        with open(geojson_path, 'r') as f:
+        with open(geojson_path, "r") as f:
             data = json.load(f)
 
         features = data.get("features", [])
@@ -468,13 +470,17 @@ class GridGen:
             return None
 
         if len(z) < 3:
-            logger.warning(f"Only {len(z)} station(s) found. Applying a constant average offset instead of RBF.")
+            logger.warning(
+                f"Only {len(z)} station(s) found. Applying a constant average offset instead of RBF."
+            )
             constant_shift = sum(z) / len(z)
             rbf_grid = np.full((ny, nx), constant_shift, dtype=np.float32)
 
         else:
-            logger.info(f"Interpolating surface using {len(z)} coastal tide stations...")
-            rbf = Rbf(x, y, z, function='linear')
+            logger.info(
+                f"Interpolating surface using {len(z)} coastal tide stations..."
+            )
+            rbf = Rbf(x, y, z, function="linear")
             xi = np.linspace(region.xmin, region.xmax, nx)
             yi = np.linspace(region.ymax, region.ymin, ny)
             XI, YI = np.meshgrid(xi, yi)
