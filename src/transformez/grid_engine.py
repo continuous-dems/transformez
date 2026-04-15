@@ -255,16 +255,20 @@ class GridEngine:
         """Fills NaNs by extrapolating nearest valid coastal values.
         Melted Voronoi ridges ensure C1 continuity deep inland.
         """
+        out_data = data.copy()
 
-        mask = np.isnan(data)
+        if land_mask is not None:
+            out_data[~land_mask] = np.nan
+
+        mask = np.isnan(out_data)
         if not mask.any() or mask.all():
-            return data
+            return out_data
 
         dist, indices = ndimage.distance_transform_edt(
             mask, return_distances=True, return_indices=True
         )
 
-        raw_extrapolation = data[tuple(indices)]
+        raw_extrapolation = out_data[tuple(indices)]
         # Blur the "Voronoi Ridges" deep inland
         blurred_extrapolation = ndimage.gaussian_filter(raw_extrapolation, sigma=25)
         # Crossfade! Beach = Raw Data, Inland = Blurred Data
@@ -272,8 +276,6 @@ class GridEngine:
         coast_values = (raw_extrapolation * (1.0 - blur_blend)) + (
             blurred_extrapolation * blur_blend
         )
-
-        out_data = data.copy()
 
         if decay_pixels and decay_pixels > 0:
             # --- Inland Decay ---

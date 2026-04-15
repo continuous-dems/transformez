@@ -402,11 +402,13 @@ class Datums:
             "name": "EGM2008 height",
             "vdatum_id": "egm2008:m:height",
             "default_geoid": "egm2008",
+            "ellipsoid": 4979,
         },
         5773: {
             "name": "EGM96 height",
             "vdatum_id": "egm96:m:height",
             "default_geoid": "egm96",
+            "ellipsoid": 4979,
         },
         # # Ellipsoidal (Hubs) - No Geoid needed
         # 6319: {'name': 'NAD83(2011)', 'vdatum_id': 'nad83_2011:m:height'},

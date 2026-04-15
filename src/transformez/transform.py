@@ -594,12 +594,13 @@ class VerticalTransform:
     def _get_global_chain(self, datum_name, model="fes2014"):
         """Builds shift: Global Tidal -> WGS84 Native."""
 
-        total_shift = np.zeros((self.ny, self.nx))
+        tidal_shift = np.zeros((self.ny, self.nx))
+        mss_shift = np.zeros((self.ny, self.nx))
         desc = []
 
         model_def = Datums.MODELS.get(model)
         if not model_def:
-            return total_shift, "Error"
+            return tidal_shift, "Error"
 
         provider = model_def["provider"]
 
@@ -608,26 +609,18 @@ class VerticalTransform:
             grid_name = model_def["grids"].get("lat")
             if grid_name:
                 grid = self._get_grid(provider, grid_name)
-                # Sign Correction (LAT should be negative relative to MSS)
                 if np.nanmean(grid) > 0:
                     grid *= -1.0
-
-                total_shift += grid
+                tidal_shift += grid
                 desc.append("LAT->MSS")
 
         elif datum_name == "hat":
             lat_name = model_def["grids"].get("lat")
             if lat_name:
-                logger.info("HAT requested. Computing FES deep-water symmetry...")
                 grid = self._get_grid(provider, lat_name)
-
                 if np.nanmean(grid) > 0:
                     grid *= -1.0
-
-                # Symmetry Math: HAT offset is the exact inverse of LAT offset
-                hat_grid = grid * -1.0
-
-                total_shift += hat_grid
+                tidal_shift += (grid * -1.0)
                 desc.append("HAT->MSS(Symmetry)")
 
         # MSS -> WGS84
@@ -640,23 +633,36 @@ class VerticalTransform:
             else:
                 desc.append("MSS->Ellipsoid")
 
-            total_shift += mss_grid
+            # --- MDT ---
+            # Isolate the Mean Dynamic Topography (MDT) by subtracting EGM2008
+            egm_grid, _ = self._fetch_geoid_with_fallback("egm2008")
+            mdt_grid = mss_grid - egm_grid
+            desc.append("MDT Decay -> EGM2008")
 
-        if np.isnan(total_shift).any():
-            coast_shapefiles = self._fetch_coastline_shapefiles()
-            land_mask = None
-            if coast_shapefiles:
-                land_mask = GridEngine.create_land_mask(
-                    self.region, self.nx, self.ny, coast_shapefiles
-                )
+        coast_shapefiles = self._fetch_coastline_shapefiles()
+        land_mask = None
+        if coast_shapefiles:
+            land_mask = GridEngine.create_land_mask(
+                self.region, self.nx, self.ny, coast_shapefiles
+            )
 
-            total_shift = GridEngine.fill_nans(
-                total_shift,
+        if mss_name:
+            mdt_decayed = GridEngine.fill_nans(
+                mdt_grid,
                 decay_pixels=self.decay_pixels,
                 buffer_pixels=10,
                 land_mask=land_mask,
             )
+            mss_shift = mdt_decayed + egm_grid
 
+        tidal_shift = GridEngine.fill_nans(
+            tidal_shift,
+            decay_pixels=self.decay_pixels,
+            buffer_pixels=10,
+            land_mask=land_mask,
+        )
+
+        total_shift = tidal_shift + mss_shift
         if not desc:
             return total_shift, "Global Chain (Empty)"
 
@@ -764,7 +770,8 @@ class VerticalTransform:
                 s, d = self._get_global_chain(datum_name)
                 if s is not None:
                     total_out -= s
-                    desc_parts.append(f"Native -> Global({datum_name})")
+                    #desc_parts.append(f"Native -> Global({datum_name})")
+                    desc_parts.append(d)
 
         elif ref_type == "cdn":
             target_geoid = geoid if geoid else "g2018"
