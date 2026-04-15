@@ -620,7 +620,7 @@ class VerticalTransform:
                 grid = self._get_grid(provider, lat_name)
                 if np.nanmean(grid) > 0:
                     grid *= -1.0
-                tidal_shift += (grid * -1.0)
+                tidal_shift += grid * -1.0
                 desc.append("HAT->MSS(Symmetry)")
 
         # MSS -> WGS84
@@ -770,7 +770,7 @@ class VerticalTransform:
                 s, d = self._get_global_chain(datum_name)
                 if s is not None:
                     total_out -= s
-                    #desc_parts.append(f"Native -> Global({datum_name})")
+                    # desc_parts.append(f"Native -> Global({datum_name})")
                     desc_parts.append(d)
 
         elif ref_type == "cdn":
