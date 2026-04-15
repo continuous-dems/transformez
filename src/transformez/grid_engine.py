@@ -251,10 +251,11 @@ class GridEngine:
         return final_grid
 
     @staticmethod
-    def fill_nans(data, decay_pixels=0, buffer_pixels=10, land_mask=None):
+    def fill_nans(data, decay_pixels=100, buffer_pixels=10, land_mask=None):
         """Fills NaNs by extrapolating nearest valid coastal values.
         Melted Voronoi ridges ensure C1 continuity deep inland.
         """
+
         out_data = data.copy()
 
         if land_mask is not None:

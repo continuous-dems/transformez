@@ -174,7 +174,7 @@ def transform_run(
 )
 @click.option("--out", "-o", help="Output filename (default: auto-named).")
 @click.option(
-    "--decay-pixels", type=int, default=0, help="Pixels to decay tidal shifts inland."
+    "--decay-pixels", type=int, default=100, help="Pixels to decay tidal shifts inland."
 )
 @click.option(
     "--use-stations",
@@ -252,7 +252,7 @@ def transform_grid(
 )
 @click.option("--out", "-o", help="Output filename (default: auto-named).")
 @click.option(
-    "--decay-pixels", type=int, default=0, help="Pixels to decay tidal shifts inland."
+    "--decay-pixels", type=int, default=100, help="Pixels to decay tidal shifts inland."
 )
 @click.option(
     "--use-stations",
