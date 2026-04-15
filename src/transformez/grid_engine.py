@@ -211,7 +211,8 @@ class GridEngine:
         region,
         nx,
         ny,
-        shapefiles=None,
+        shapefiles=None,  # Deprecated
+        land_mask=None,
         decay_pixels=100,
         buffer_pixels=10,
         blend_pixels=50,
@@ -221,11 +222,16 @@ class GridEngine:
         """
 
         final_grid = vdatum_grid.copy()
-        land_mask = None
-        if shapefiles:
+
+        # Fallback just in case shapefiles are passed directly
+        if shapefiles and land_mask is None:
             land_mask = GridEngine.create_land_mask(region, nx, ny, shapefiles)
             if land_mask is not None:
-                global_grid[~land_mask] = np.nan
+                # Carve out the VDatum rivers!
+                land_mask[~np.isnan(vdatum_grid)] = False
+
+        if land_mask is not None:
+            global_grid[~land_mask] = np.nan
 
         is_vdatum = ~np.isnan(vdatum_grid)
         is_ocean = ~np.isnan(global_grid)

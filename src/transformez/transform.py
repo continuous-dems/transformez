@@ -468,11 +468,17 @@ class VerticalTransform:
             coast_shapefiles = self._fetch_coastline_shapefiles()
             proxy_name = Datums.get_global_proxy(datum_name)
 
-            # ---> CHECK FLAG FIRST <---
+            land_mask = None
+            if coast_shapefiles:
+                land_mask = GridEngine.create_land_mask(
+                    self.region, self.nx, self.ny, coast_shapefiles
+                )
+                if land_mask is not None:
+                    valid_vdatum = ~np.isnan(hydro_shift)
+                    land_mask[valid_vdatum] = True
+
             if self.use_stations:
                 logger.info("    [Override] Forcing Tide Station RBF interpolation...")
-
-                # Ask the RBF to solve the local tidal envelope (to MSL instead of NAVD88)
                 rbf_grid = GridGen.from_stations(
                     self.region,
                     self.nx,
@@ -483,7 +489,6 @@ class VerticalTransform:
                 )
 
                 if rbf_grid is not None:
-                    # Fetch the global FES MSS baseline to tie the envelope to the Ellipsoid
                     global_shift, d_global = self._get_global_chain(
                         "mss", model="fes2014"
                     )
@@ -494,16 +499,11 @@ class VerticalTransform:
                         )
                         fes_nad83 = global_shift + htdp_wgs_to_nad
                         fes_navd88 = fes_nad83 - geoid_grid
-
-                        # Stack the local tide on top of the global surface!
                         combined_shift = rbf_grid + fes_navd88
 
                         vdatum_empty = np.isnan(hydro_shift)
                         hydro_shift[vdatum_empty] = combined_shift[vdatum_empty]
 
-                        land_mask = GridEngine.create_land_mask(
-                            self.region, self.nx, self.ny, coast_shapefiles
-                        )
                         hydro_shift = GridEngine.fill_nans(
                             hydro_shift,
                             decay_pixels=self.decay_pixels,
@@ -512,12 +512,7 @@ class VerticalTransform:
                         )
                         desc.append("Station RBF (Tidal) + FES (MSS) + Inland Decay")
                     else:
-                        logger.warning(
-                            "    [Override] FES baseline missing. Cannot tie RBF to Ellipsoid."
-                        )
-                        land_mask = GridEngine.create_land_mask(
-                            self.region, self.nx, self.ny, coast_shapefiles
-                        )
+                        logger.warning("    [Override] FES baseline missing.")
                         hydro_shift = GridEngine.fill_nans(
                             hydro_shift,
                             decay_pixels=self.decay_pixels,
@@ -526,16 +521,12 @@ class VerticalTransform:
                         )
                         desc.append("Inland Hydro Decay")
                 else:
-                    logger.warning(
-                        "    [Override] Tide Station RBF failed. Falling back to inland decay."
-                    )
+                    logger.warning("    [Override] Tide Station RBF failed.")
                     hydro_shift = GridEngine.fill_nans(
                         hydro_shift,
                         decay_pixels=self.decay_pixels,
                         buffer_pixels=10,
-                        land_mask=GridEngine.create_land_mask(
-                            self.region, self.nx, self.ny, coast_shapefiles
-                        ),
+                        land_mask=land_mask,
                     )
                     desc.append("Inland Hydro Decay")
 
@@ -548,7 +539,6 @@ class VerticalTransform:
                 )
 
                 if global_shift is not None and np.any(global_shift):
-                    # FES is Proxy -> WGS84. We convert to NAD83.
                     htdp_wgs_to_nad = self._get_htdp_shift(
                         WGS84_EPSG, NAD83_EPSG, self.epoch_in, 2010.0
                     )
@@ -560,7 +550,7 @@ class VerticalTransform:
                         region=self.region,
                         nx=self.nx,
                         ny=self.ny,
-                        shapefiles=coast_shapefiles,
+                        land_mask=land_mask,
                         decay_pixels=self.decay_pixels,
                         buffer_pixels=10,
                     )
@@ -570,9 +560,7 @@ class VerticalTransform:
                         hydro_shift,
                         decay_pixels=self.decay_pixels,
                         buffer_pixels=10,
-                        land_mask=GridEngine.create_land_mask(
-                            self.region, self.nx, self.ny, coast_shapefiles
-                        ),
+                        land_mask=land_mask,
                     )
                     desc.append("Inland Hydro Decay")
             else:
@@ -580,9 +568,7 @@ class VerticalTransform:
                     hydro_shift,
                     decay_pixels=self.decay_pixels,
                     buffer_pixels=10,
-                    land_mask=GridEngine.create_land_mask(
-                        self.region, self.nx, self.ny, coast_shapefiles
-                    ),
+                    land_mask=land_mask,
                 )
                 desc.append("Inland Hydro Decay")
 
