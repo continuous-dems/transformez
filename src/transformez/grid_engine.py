@@ -269,7 +269,9 @@ class GridEngine:
         blurred_extrapolation = ndimage.gaussian_filter(raw_extrapolation, sigma=25)
         # Crossfade! Beach = Raw Data, Inland = Blurred Data
         blur_blend = np.clip(dist / 50.0, 0, 1)
-        coast_values = (raw_extrapolation * (1.0 - blur_blend)) + (blurred_extrapolation * blur_blend)
+        coast_values = (raw_extrapolation * (1.0 - blur_blend)) + (
+            blurred_extrapolation * blur_blend
+        )
 
         out_data = data.copy()
 
