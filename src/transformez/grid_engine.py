@@ -253,8 +253,7 @@ class GridEngine:
     @staticmethod
     def fill_nans(data, decay_pixels=0, buffer_pixels=10, land_mask=None):
         """Fills NaNs by extrapolating nearest valid coastal values.
-        If decay_pixels > 0, it will smoothly ramp the values to 0.0 inland.
-        If decay_pixels == 0, it extrapolates the coastal values infinitely inland.
+        Melted Voronoi ridges ensure C1 continuity deep inland.
         """
 
         mask = np.isnan(data)
@@ -264,20 +263,32 @@ class GridEngine:
         dist, indices = ndimage.distance_transform_edt(
             mask, return_distances=True, return_indices=True
         )
-        coast_values = data[tuple(indices)]
+
+        raw_extrapolation = data[tuple(indices)]
+        # Blur the "Voronoi Ridges" deep inland
+        blurred_extrapolation = ndimage.gaussian_filter(raw_extrapolation, sigma=25)
+        # Crossfade! Beach = Raw Data, Inland = Blurred Data
+        blur_blend = np.clip(dist / 50.0, 0, 1)
+        coast_values = (raw_extrapolation * (1.0 - blur_blend)) + (
+            blurred_extrapolation * blur_blend
+        )
+
         out_data = data.copy()
 
         if decay_pixels and decay_pixels > 0:
             # --- Inland Decay ---
             effective_dist = np.clip(dist - buffer_pixels, 0, None)
-            decay_factor = np.clip((decay_pixels - effective_dist) / decay_pixels, 0, 1)
+
+            # Calculate the linear decay (1.0 down to 0.0)
+            linear_decay = np.clip((decay_pixels - effective_dist) / decay_pixels, 0, 1)
+
+            # Apply Smoothstep (Hermite) easing to create the S-curve!
+            decay_factor = linear_decay * linear_decay * (3.0 - 2.0 * linear_decay)
+
             out_data[mask] = coast_values[mask] * decay_factor[mask]
 
-            if land_mask is not None:
-                # Force areas deep inland (and covered by the land mask) to exactly 0.0
-                out_data[mask & ~land_mask] = 0.0
         else:
-            # --- Infinite Nearest-Neighbor Extrapolation (Default) ---
+            # --- Infinite Extrapolation (Default) ---
             out_data[mask] = coast_values[mask]
 
         return out_data
