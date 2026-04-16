@@ -58,8 +58,18 @@ class SRSParser:
         return parts[0], (parts[1] if len(parts) > 1 else None)
 
     def _extract_vertical(self, srs_str):
-        parts = str(srs_str).split("+")
-        return parts[0], (parts[1] if len(parts) > 1 else None)
+        # parts = str(srs_str).split("+")
+        # return parts[0], (parts[1] if len(parts) > 1 else None)
+        if "+" in srs_str:
+            horz_str, vert_str = srs_str.rsplit("+", 1)
+            try:
+                if "EPSG" in vert_str.upper():
+                    vert_str = vert_str.split(":")[-1]
+                return horz_str, int(vert_str)
+            except Exception as e:
+                logger.debug(f"Failed to build compound CRS from '{srs_str}': {e}")
+                return srs_str, None
+        return srs_str, None
 
     def _get_epsg_int(self, crs):
         """Extract EPSG integer from a CRS."""
@@ -108,8 +118,12 @@ class SRSParser:
             self.tc["dst_vert_epsg"] = self._get_epsg_int(self.tc["dst_crs"])
 
         if self.tc["src_vert_epsg"] is None:
+            if vert_epsg_src is None:
+                _, vert_epsg_src = self._extract_vertical(self.src_srs_input)
             self.tc["src_vert_epsg"] = vert_epsg_src
         if self.tc["dst_vert_epsg"] is None:
+            if vert_epsg_dst is None:
+                _, vert_epsg_dst = self._extract_vertical(self.dst_srs_input)
             self.tc["dst_vert_epsg"] = vert_epsg_dst
 
         # Lookup default geoids
