@@ -58,13 +58,13 @@ class SRSParser:
         return parts[0], (parts[1] if len(parts) > 1 else None)
 
     def _extract_vertical(self, srs_str):
-        #parts = str(srs_str).split("+")
-        #return parts[0], (parts[1] if len(parts) > 1 else None)
+        # parts = str(srs_str).split("+")
+        # return parts[0], (parts[1] if len(parts) > 1 else None)
         if "+" in srs_str:
             horz_str, vert_str = srs_str.rsplit("+", 1)
             try:
-                if 'EPSG' in vert_str.upper():
-                    vert_str = vert_str.split(':')[-1]
+                if "EPSG" in vert_str.upper():
+                    vert_str = vert_str.split(":")[-1]
                 return horz_str, int(vert_str)
             except Exception as e:
                 logger.debug(f"Failed to build compound CRS from '{srs_str}': {e}")
