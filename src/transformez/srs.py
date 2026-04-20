@@ -186,6 +186,7 @@ class SRSParser:
                 epsg_out=d_ident,
                 geoid_in=self.tc["src_geoid"],
                 geoid_out=self.tc["dst_geoid"],
+                cache_dir=self.cache_dir,
             )
             shift_arr, _ = vt._vertical_transform(vt.epsg_in, vt.epsg_out)
             GridWriter.write(self.tc["trans_fn"], shift_arr, proc_region)
