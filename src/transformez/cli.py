@@ -13,20 +13,21 @@ The command-line interface for Transformez.
 
 import sys
 import click
-import logging
+
+from fetchez.utils import FetchezMainGroup, FetchezMainCommand
+from fetchez.cli import setup_logging
+
 from transformez import api
 
-# logger = logging.getLogger(__name__)
 
-
-class AliasedGroup(click.Group):
+class TransformezMainGroup(FetchezMainGroup):
     """A custom Click Group that handles deprecated aliases."""
 
     def get_command(self, ctx, cmd_name):
         if cmd_name == "run":
             click.secho(
                 " DEPRECATION WARNING: 'transformez run' is deprecated and will be removed in a future release.\n"
-                "Please use 'transformez grid' to generate shift grids instead.",
+                "Please use 'transformez grid' to generate shift grids or 'transformez raster' to shift a raster.",
                 fg="yellow",
                 err=True,
             )
@@ -34,17 +35,53 @@ class AliasedGroup(click.Group):
 
         return click.Group.get_command(self, ctx, cmd_name)
 
+    # def format_commands(self, ctx, formatter):
+    #     commands = []
+    #     for subcommand in self.list_commands(ctx):
+    #         cmd = self.get_command(ctx, subcommand)
+    #         if cmd is None or cmd.hidden:
+    #             continue
+    #         commands.append((subcommand, cmd))
 
-@click.group(name="transform", cls=AliasedGroup)
+    #     if not commands:
+    #         return
+
+    #     categories = {
+    #         f"{colorize('Execution', YELLOW)}": ["run", "grid", "raster"],
+    #         f"{colorize('Discovery & Management', YELLOW)}": [
+    #             "list",
+    #             "htdp",
+    #             "vdatum",
+    #         ],
+    #     }
+
+    #     for cat_name, cmd_names in categories.items():
+    #         with formatter.section(cat_name):
+    #             cat_cmds = [
+    #                 (f"{colorize(name, BOLD):<17}", cmd.get_short_help_str(limit=80))
+    #                 for name, cmd in commands
+    #                 if name in cmd_names
+    #             ]
+    #             formatter.write_dl(cat_cmds)
+
+
+@click.group(
+    name="transform",
+    cls=TransformezMainGroup,
+    fetchez_commands=["run", "grid", "raster", "list", "htdp", "vdatum"],
+)
 @click.version_option(package_name="transformez")
-def transformez_cli():
+@click.option("--verbose", is_flag=True, help="Enable verbose debug logging.")
+@click.option("--quiet", is_flag=True, help="Suppress non-error output.")
+def transformez_cli(verbose, quiet):
     """Apply vertical datum transformations and generate shift grids."""
 
-    logging.basicConfig(level=logging.INFO, format="[%(levelname)s] %(message)s")
+    setup_logging(name="transformez", quiet=quiet, verbose=verbose)
+    # logging.basicConfig(level=logging.INFO, format="[%(levelname)s] %(message)s")
     pass
 
 
-@transformez_cli.command("run")
+@transformez_cli.command("run", cls=FetchezMainCommand)
 @click.argument("input_file", required=False)
 @click.option(
     "-R", "--region", help="Bounding box or location string (if no input file)."
@@ -160,7 +197,7 @@ def transform_run(
 # =====================================================================
 # GENERATE SHIFT GRID
 # =====================================================================
-@transformez_cli.command("grid")
+@transformez_cli.command("grid", cls=FetchezMainCommand)
 @click.option("-R", "--region", required=True, help="Bounding box or location string.")
 @click.option("-E", "--increment", required=True, help="Resolution (e.g., 1s, 30m).")
 @click.option(
@@ -232,7 +269,7 @@ def transform_grid(
 # =====================================================================
 # TRANSFORM EXISTING RASTER (DEM)
 # =====================================================================
-@transformez_cli.command("raster")
+@transformez_cli.command("raster", cls=FetchezMainCommand)
 @click.argument("input_file", type=click.Path(exists=True))
 @click.option("-I", "--input-datum", required=True, help="Source Datum (e.g., 'mllw').")
 @click.option(
@@ -269,7 +306,7 @@ def transform_raster(
     decay_pixels,
     use_stations,
 ):
-    """Apply a vertical datum shift (and optional unit conversion) to an existing DEM."""
+    """Apply a vertical datum shift to an existing DEM."""
 
     click.secho(f"Transforming raster: {input_file}", fg="cyan", bold=True)
     click.echo(f"   Shift: {input_datum} ➔ {output_datum}")
@@ -294,7 +331,7 @@ def transform_raster(
 
 
 # --- LIST DATUMS, ETC. ---
-@transformez_cli.command("list")
+@transformez_cli.command("list", cls=FetchezMainCommand)
 def transform_list():
     """List all supported vertical datums, EPSG codes, and geoids."""
     try:
@@ -350,14 +387,14 @@ def transform_list():
 
 
 # --- HTDP CLI GROUP ---
-@transformez_cli.group("htdp")
+@transformez_cli.group(cls=FetchezMainGroup, name="htdp", fetchez_commands=["install"])
 def htdp_group():
     """Manage and run NGS HTDP (Horizontal Time-Dependent Positioning)."""
 
     pass
 
 
-@htdp_group.command("install")
+@htdp_group.command("install", cls=FetchezMainCommand)
 def install_htdp():
     """Downloads and compiles the HTDP executable."""
 
@@ -367,7 +404,9 @@ def install_htdp():
 
 
 # --- VDATUM CLI GROUP ---
-@transformez_cli.group("vdatum")
+@transformez_cli.group(
+    cls=FetchezMainGroup, name="vdatum", fetchez_commands=["install", "run"]
+)
 def vdatum_group():
     """Manage and run the NOAA VDatum Java engine."""
 
@@ -383,7 +422,7 @@ def install_vdatum():
     install_vdatum_jar()
 
 
-@vdatum_group.command("run")
+@vdatum_group.command("run", cls=FetchezMainCommand)
 @click.argument("input_file", type=click.Path(exists=True))
 @click.argument("output_file", type=click.Path())
 @click.option(
@@ -412,7 +451,7 @@ def run_vdatum_cli(
     ).run_vdatum(input_file)
 
 
-@vdatum_group.command("list")
+@vdatum_group.command("list", cls=FetchezMainCommand)
 def vdatum_list():
     """List the supported vdatum grids"""
 
