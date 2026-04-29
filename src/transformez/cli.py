@@ -25,6 +25,7 @@ TRANSFORMEZ_COMMANDS = {
     "External": ["htdp", "vdatum"],
 }
 
+
 class TransformezMainGroup(FetchezMainGroup):
     """A custom Click Group that handles deprecated aliases."""
 
