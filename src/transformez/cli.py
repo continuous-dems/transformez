@@ -19,6 +19,12 @@ from fetchez.cli import setup_logging
 
 from transformez import api
 
+TRANSFORMEZ_COMMANDS = {
+    "Execution": ["run", "grid", "raster"],
+    "Discovery": ["list"],
+    "External": ["htdp", "vdatum"],
+}
+
 
 class TransformezMainGroup(FetchezMainGroup):
     """A custom Click Group that handles deprecated aliases."""
@@ -68,7 +74,7 @@ class TransformezMainGroup(FetchezMainGroup):
 @click.group(
     name="transform",
     cls=TransformezMainGroup,
-    fetchez_commands=["run", "grid", "raster", "list", "htdp", "vdatum"],
+    fetchez_commands=TRANSFORMEZ_COMMANDS,
 )
 @click.version_option(package_name="transformez")
 @click.option("--verbose", is_flag=True, help="Enable verbose debug logging.")
