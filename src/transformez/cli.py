@@ -401,12 +401,17 @@ def htdp_group():
 
 
 @htdp_group.command("install", cls=FetchezMainCommand)
-def install_htdp():
-    """Downloads and compiles the HTDP executable."""
+@click.option(
+    "--version",
+    default="3.5.0",
+    help="HTDP version to install (e.g., 3.3.0, 3.5.0, 3.6.0)",
+)
+def install_htdp(version):
+    """Downloads and compiles the HTDP executable from github."""
 
     from transformez.htdp import install_htdp_binary
 
-    install_htdp_binary()
+    install_htdp_binary(version=version)
 
 
 # --- VDATUM CLI GROUP ---

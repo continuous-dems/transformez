@@ -110,6 +110,7 @@ class VerticalTransform:
             region=self.region.to_list(),
             outdir=self.cache_dir,
             threads=2,
+            check_size=True,
             **kwargs,
         )
 
@@ -317,7 +318,7 @@ class VerticalTransform:
 
         try:
             logger.info(f"    [HTDP] Frame Shift: EPSG:{epsg_from} -> EPSG:{epsg_to}")
-            tool = htdp.HTDP(verbose=False)
+            tool = htdp.HTDP(version="3.5.0", verbose=False)
             grid = tool.run_grid(
                 self.region, self.nx, self.ny, epsg_from, epsg_to, epoch_from, epoch_to
             )
