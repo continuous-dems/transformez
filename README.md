@@ -78,4 +78,5 @@ Would you like to know more? Check out our [Official Documentation](https://tran
 ## ⚖ License
 
 This project is licensed under the MIT License - see the [LICENSE](https://github.com/ciresdem/transformez/blob/main/LICENSE) file for details.
+
 Copyright (c) 2010-2026 Regents of the University of Colorado
