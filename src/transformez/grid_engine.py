@@ -22,6 +22,8 @@ from rasterio.transform import from_bounds
 from scipy import ndimage
 from scipy.interpolate import Rbf
 
+os.environ["HDF5_USE_FILE_LOCKING"] = "FALSE"
+
 logger = logging.getLogger(__name__)
 
 
@@ -139,6 +141,7 @@ class GridEngine:
 
             try:
                 with rasterio.open(fn) as src:
+                    # logger.info(f"{fn}: {src}")
                     src_data = src.read(1).astype(np.float32)
                     src_nodata = src.nodata
 
@@ -165,8 +168,29 @@ class GridEngine:
                     valid_mask = ~np.isnan(temp_buffer)
                     mosaic[valid_mask] = temp_buffer[valid_mask]
 
+            # except Exception as e:
+            #     error_msg = str(e)
+
+            #     if "-101" in error_msg or "HDF error" in error_msg:
+            #         logger.error(f" CRITICAL: Corrupted NetCDF chunk detected in {fn}!")
+
+            #         # Extract the real file path from the GDAL netcdf string
+            #         real_path = fn.split(":")[1] if fn.startswith("netcdf:") else fn
+
+            #         if os.path.exists(real_path):
+            #             logger.warning(f"Auto-deleting corrupted cache file: {real_path}")
+            #             os.remove(real_path)
+
+            #         raise RuntimeError(
+            #             f"Transformation aborted to prevent math corruption. "
+            #             f"The corrupted file has been deleted. Please re-run your command to fetch a fresh copy!"
+            #         )
+
+            #     # For all other normal errors, log and continue as usual
+            #     logger.exception(f"Failed to reproject {fn}: {e}")
+            #     continue
             except Exception as e:
-                logger.warning(f"Failed to reproject {fn}: {e}")
+                logger.exception(f"Failed to reproject {fn}: {e}")
                 continue
 
         # Fill inland areas (decaying to 0) before we clear the remaining NaNs

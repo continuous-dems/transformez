@@ -16,6 +16,7 @@ import sys
 import os
 import subprocess
 import tempfile
+import shutil
 import logging
 import urllib.request
 import zipfile
@@ -40,11 +41,16 @@ HAS_HTDP = utils.cmd_check(f"htdp{ae}", htdp_cmd)
 class HTDP:
     """Wrapper for the NGS HTDP software."""
 
-    def __init__(self, htdp_bin: str = "htdp", verbose: bool = True):
+    def __init__(
+        self, htdp_bin: str = "htdp", version: str = "3.5.0", verbose: bool = True
+    ):
         self.htdp_bin = htdp_bin
+        self.version = version
         self.verbose = verbose
         if not HAS_HTDP:
-            logger.error("HTDP is not installed or not in PATH.")
+            logger.error(
+                f"HTDP {self.version} is not installed or not in PATH. Run 'transformez htdp install --version {self.version}"
+            )
 
     def run_grid(self, region, nx, ny, epsg_in, epsg_out, epoch_in, epoch_out):
         """Main entry point called by transform.py.
@@ -244,7 +250,61 @@ def download_htdp(target_dir=None):
             logger.error(f"Failed to download or extract HTDP source: {e}")
 
 
-def install_htdp_binary():
+def install_htdp_binary(version="3.5.0"):
+    """Downloads and automatically compiles a specific HTDP version from GitHub."""
+
+    cache_dir = os.path.join(os.getcwd(), "transformez_cache", "bin")
+    os.makedirs(cache_dir, exist_ok=True)
+
+    # Format the GitHub Tag (e.g., "v3.5.0")
+    v_tag = f"v{version}" if not version.startswith("v") else version
+    clean_version = v_tag.replace("v", "")
+
+    if sys.platform == "win32":
+        logger.info(f"Downloading Windows HTDP executable ({v_tag})...")
+        url = f"https://github.com/noaa-ngs/HTDP/releases/download/{v_tag}/htdp.exe"
+        exe_path = os.path.join(cache_dir, f"htdp_{clean_version}.exe")
+
+        try:
+            urllib.request.urlretrieve(url, exe_path)
+            logger.info(f"HTDP {clean_version} installed successfully to: {exe_path}")
+        except Exception as e:
+            logger.error(f"Failed to download {v_tag} from GitHub: {e}")
+
+    else:
+        logger.info(f"Downloading Unix HTDP source code ({v_tag})...")
+        url = f"https://github.com/noaa-ngs/HTDP/archive/refs/tags/{v_tag}.zip"
+        zip_path = os.path.join(cache_dir, f"htdp_{clean_version}.zip")
+
+        try:
+            urllib.request.urlretrieve(url, zip_path)
+
+            extract_dir = os.path.join(cache_dir, f"htdp_src_{clean_version}")
+            with zipfile.ZipFile(zip_path, "r") as z:
+                z.extractall(extract_dir)
+            os.remove(zip_path)
+
+            # GitHub extracts to a folder named Repository-Tag (e.g., HTDP-3.5.0)
+            source_folder = os.path.join(extract_dir, f"HTDP-{clean_version}")
+            fortran_file = os.path.join(source_folder, "htdp.f")
+            out_bin = os.path.join(cache_dir, f"htdp_{clean_version}")
+
+            logger.info(f"Compiling HTDP {clean_version} with gfortran...")
+            subprocess.run(
+                ["gfortran", "-o", out_bin, fortran_file],
+                check=True,
+                capture_output=True,
+            )
+            logger.info(f"HTDP compiled successfully to: {out_bin}")
+
+            # Clean up the raw source files
+            shutil.rmtree(extract_dir)
+
+        except Exception as e:
+            logger.error(f"Failed to install HTDP {clean_version}: {e}")
+
+
+def _install_htdp_binary():
     """Downloads and automatically compiles HTDP."""
 
     cache_dir = os.path.join(os.getcwd(), "transformez_cache", "bin")
