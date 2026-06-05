@@ -172,7 +172,7 @@ class GridEngine:
             #     error_msg = str(e)
 
             #     if "-101" in error_msg or "HDF error" in error_msg:
-            #         logger.error(f"🔥 CRITICAL: Corrupted NetCDF chunk detected in {fn}!")
+            #         logger.error(f" CRITICAL: Corrupted NetCDF chunk detected in {fn}!")
 
             #         # Extract the real file path from the GDAL netcdf string
             #         real_path = fn.split(":")[1] if fn.startswith("netcdf:") else fn
