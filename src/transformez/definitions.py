@@ -151,11 +151,11 @@ class Datums:
             "epoch": 1997.0,
         },
         4979: {
-            "name": "WGS_84(original)",
+            "name": "WGS_84(G2139)",
             "description": "(NAD_83(2011) used)",
-            "htdp_id": 4,
+            "htdp_id": 10,
             "uncertainty": 0,
-            "epoch": 1997.0,
+            "epoch": 2020.0,
         },
         7815: {
             "name": "WGS_84(original)",
