@@ -104,7 +104,9 @@ class HTDP:
                         else:
                             # Eastern Hemisphere (e.g., 139.0 E -> 221.0 W)
                             htdp_lon = 360.0 - lon
-                        f.write(f'{lat:.9f} {htdp_lon:.9f} 0.000 "PNT_{x_idx}_{y_idx}"\n')
+                        f.write(
+                            f'{lat:.9f} {htdp_lon:.9f} 0.000 "PNT_{x_idx}_{y_idx}"\n'
+                        )
 
             # Write Control File
             self._write_control(

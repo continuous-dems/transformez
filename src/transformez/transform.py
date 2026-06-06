@@ -328,18 +328,30 @@ class VerticalTransform:
 
             # --- FALLBACK ---
             if not np.any(grid):
-                logger.warning(f"    [HTDP WARNING] Cross-epoch shift failed (likely outside modeled velocity region for {epoch_from} -> {epoch_to}).")
-                logger.warning(f"    [HTDP WARNING] Falling back to static datum shift at Output Epoch {epoch_to}.")
+                logger.warning(
+                    f"    [HTDP WARNING] Cross-epoch shift failed (likely outside modeled velocity region for {epoch_from} -> {epoch_to})."
+                )
+                logger.warning(
+                    f"    [HTDP WARNING] Falling back to static datum shift at Output Epoch {epoch_to}."
+                )
 
                 # Attempt 2: Static Shift (Datum Shift Only)
                 grid = tool.run_grid(
-                    self.region, self.nx, self.ny, epsg_from, epsg_to, epoch_to, epoch_to
+                    self.region,
+                    self.nx,
+                    self.ny,
+                    epsg_from,
+                    epsg_to,
+                    epoch_to,
+                    epoch_to,
                 )
 
             if np.any(grid):
                 logger.info(f"    [HTDP] Component Shift (Mean: {np.mean(grid):.3f}m)")
             else:
-                logger.error("    [HTDP FATAL] Both dynamic and static shifts failed returning zeros.")
+                logger.error(
+                    "    [HTDP FATAL] Both dynamic and static shifts failed returning zeros."
+                )
 
             return grid
 
