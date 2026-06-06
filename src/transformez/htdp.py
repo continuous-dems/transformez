@@ -120,9 +120,6 @@ class HTDP:
                 return np.zeros((ny, nx))
 
             grid = self._read_grid(out_fn, (ny, nx))
-            import shutil
-            shutil.copyfile(in_fn, "htdp_in.txt")
-            shutil.copyfile(out_fn, "htdp_out.txt")
             return grid
 
     def _read_grid(self, filename: str, shape: Tuple[int, int]) -> np.ndarray:
