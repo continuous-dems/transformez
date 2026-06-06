@@ -309,7 +309,7 @@ class VerticalTransform:
         )
 
     def _get_htdp_shift(self, epsg_from, epsg_to, epoch_from, epoch_to):
-        """Calculate Frame Shift via HTDP."""
+        """Calculate Frame Shift via HTDP with Graceful Fallback."""
 
         if epsg_from == epsg_to and epoch_from == epoch_to:
             return np.zeros((self.ny, self.nx))
@@ -319,11 +319,28 @@ class VerticalTransform:
         try:
             logger.info(f"    [HTDP] Frame Shift: EPSG:{epsg_from} -> EPSG:{epsg_to}")
             tool = htdp.HTDP(version="3.5.0", verbose=False)
+
+            # Attempt 1: Full Cross-Epoch Shift (Datum Shift + Crustal Velocity)
+            # This seems to fail more often than not!
             grid = tool.run_grid(
                 self.region, self.nx, self.ny, epsg_from, epsg_to, epoch_from, epoch_to
             )
+
+            # --- FALLBACK ---
+            if not np.any(grid):
+                logger.warning(f"    [HTDP WARNING] Cross-epoch shift failed (likely outside modeled velocity region for {epoch_from} -> {epoch_to}).")
+                logger.warning(f"    [HTDP WARNING] Falling back to static datum shift at Output Epoch {epoch_to}.")
+
+                # Attempt 2: Static Shift (Datum Shift Only)
+                grid = tool.run_grid(
+                    self.region, self.nx, self.ny, epsg_from, epsg_to, epoch_to, epoch_to
+                )
+
             if np.any(grid):
                 logger.info(f"    [HTDP] Component Shift (Mean: {np.mean(grid):.3f}m)")
+            else:
+                logger.error("    [HTDP FATAL] Both dynamic and static shifts failed returning zeros.")
+
             return grid
 
         except Exception as e:

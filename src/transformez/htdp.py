@@ -96,8 +96,15 @@ class HTDP:
                 for y_idx, lat in enumerate(lats):
                     for x_idx, lon in enumerate(lons):
                         # "Lat Lon Height TextID"
-                        # We use PNT_x_y tags to robustly map output back to grid
-                        f.write(f'{lat:.9f} {lon:.9f} 0.000 "PNT_{x_idx}_{y_idx}"\n')
+                        # We use PNT_x_y tags to map output back to grid
+                        # htdp_lon = lon * -1.0
+                        if lon < 0:
+                            # Western Hemisphere (e.g., -124.5 -> 124.5 W)
+                            htdp_lon = abs(lon)
+                        else:
+                            # Eastern Hemisphere (e.g., 139.0 E -> 221.0 W)
+                            htdp_lon = 360.0 - lon
+                        f.write(f'{lat:.9f} {htdp_lon:.9f} 0.000 "PNT_{x_idx}_{y_idx}"\n')
 
             # Write Control File
             self._write_control(
@@ -113,7 +120,9 @@ class HTDP:
                 return np.zeros((ny, nx))
 
             grid = self._read_grid(out_fn, (ny, nx))
-
+            import shutil
+            shutil.copyfile(in_fn, "htdp_in.txt")
+            shutil.copyfile(out_fn, "htdp_out.txt")
             return grid
 
     def _read_grid(self, filename: str, shape: Tuple[int, int]) -> np.ndarray:
