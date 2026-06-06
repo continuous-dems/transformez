@@ -309,7 +309,7 @@ class VerticalTransform:
         )
 
     def _get_htdp_shift(self, epsg_from, epsg_to, epoch_from, epoch_to):
-        """Calculate Frame Shift via HTDP with Graceful Fallback."""
+        """Calculate Frame Shift via HTDP with Fallback."""
 
         if epsg_from == epsg_to and epoch_from == epoch_to:
             return np.zeros((self.ny, self.nx))
