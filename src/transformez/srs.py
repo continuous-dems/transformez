@@ -16,6 +16,10 @@ import os
 import logging
 from pyproj import CRS, Transformer
 
+import numpy as np
+from rasterio.warp import transform_bounds, reproject, Resampling
+from rasterio.transform import from_bounds
+
 from fetchez.spatial import Region
 from .definitions import Datums
 from .transform import VerticalTransform
@@ -145,7 +149,7 @@ class SRSParser:
         self.tc["want_vertical"] = has_src_vert or has_dst_vert
 
     def set_vertical_transform(self):
-        """Generates the vertical shift grid using VerticalTransform."""
+        """Generates the vertical shift grid using VerticalTransform, aligned to src_crs."""
 
         if not self.region or not self.tc["want_vertical"]:
             return
@@ -162,7 +166,6 @@ class SRSParser:
 
         if not s_ident and self.tc["src_geoid"]:
             s_ident = 6319
-
         if not d_ident and self.tc["dst_geoid"]:
             d_ident = 6319
 
@@ -178,10 +181,32 @@ class SRSParser:
             logger.info(
                 f"Generating vertical grid: {s_ident} -> {d_ident} : {self.tc['trans_fn']} :"
             )
+
+            # Determine Native WGS84 Region for Transformez
+            src_is_projected = self.tc["src_crs"].is_projected
+            if src_is_projected:
+                # Transform the native bounding box to WGS84 to query the shift models
+                w, s, e, n = transform_bounds(
+                    self.tc["src_crs"],
+                    "EPSG:4326",
+                    proc_region.xmin,
+                    proc_region.ymin,
+                    proc_region.xmax,
+                    proc_region.ymax,
+                )
+                vt_region = Region(w, e, s, n)
+            else:
+                vt_region = proc_region
+
+            # Generate grid resolution based on WGS84 bounds (approx 3 arc-seconds)
+            inc_deg = 3.0 / 3600.0
+            vt_nx = max(10, int(vt_region.width / inc_deg))
+            vt_ny = max(10, int(vt_region.height / inc_deg))
+
             vt = VerticalTransform(
-                proc_region,
-                nx=max(10, int(proc_region.width / 0.0008333)),
-                ny=max(10, int(proc_region.height / 0.0008333)),
+                vt_region,
+                nx=vt_nx,
+                ny=vt_ny,
                 epsg_in=s_ident,
                 epsg_out=d_ident,
                 geoid_in=self.tc["src_geoid"],
@@ -189,27 +214,65 @@ class SRSParser:
                 cache_dir=self.cache_dir,
             )
             shift_arr, _ = vt._vertical_transform(vt.epsg_in, vt.epsg_out)
+
+            # Warp the Grid Back to the Source CRS
+            if src_is_projected:
+                logger.info(
+                    f"Warping shift grid to native input CRS ({self.tc['src_crs'].name})..."
+                )
+                wgs_transform = from_bounds(
+                    vt_region.xmin,
+                    vt_region.ymin,
+                    vt_region.xmax,
+                    vt_region.ymax,
+                    vt_nx,
+                    vt_ny,
+                )
+
+                # Output grid dimensions for the native projection
+                out_nx = max(10, int(proc_region.width / (proc_region.width / vt_nx)))
+                out_ny = max(10, int(proc_region.height / (proc_region.height / vt_ny)))
+                native_transform = from_bounds(
+                    proc_region.xmin,
+                    proc_region.ymin,
+                    proc_region.xmax,
+                    proc_region.ymax,
+                    out_nx,
+                    out_ny,
+                )
+
+                native_shift_array = np.zeros((out_ny, out_nx), dtype=np.float32)
+
+                reproject(
+                    source=shift_arr,
+                    destination=native_shift_array,
+                    src_transform=wgs_transform,
+                    src_crs="EPSG:4326",
+                    dst_transform=native_transform,
+                    dst_crs=self.tc["src_crs"],
+                    resampling=Resampling.bilinear,
+                )
+                shift_arr = native_shift_array
+
+                # We artificially inject the native transform into proc_region to satisfy GridWriter
+                proc_region.transform = native_transform
+
+            # Write the natively-aligned grid to disk!
             GridWriter.write(self.tc["trans_fn"], shift_arr, proc_region)
 
         self.manual_vert_grid = self.tc["trans_fn"]
 
     def get_components(self):
         """Returns the components:
-
-        - Transformer: Source -> Hub (NAD83 2D)
-        - Transformer: Hub -> Dest (2D)
-        - Grid Path (str) or None
+        - Transformer: Source -> Dest (Single Pass Horizontal)
+        - Grid Path (str) or None (Aligned to Source)
         """
 
         if self.tc["want_vertical"] and not self.manual_vert_grid:
             self.set_vertical_transform()
 
-        # Define Hub: NAD83(2011) 2D - maybe this should be wgs(transit)
-        hub_crs = CRS.from_epsg(4269)
+        horz_transformer = Transformer.from_crs(
+            self.tc["src_crs"], self.tc["dst_crs"], always_xy=True
+        )
 
-        # only build 2D transformer (for proj). We'll apply the vertical grid ourselves,
-        # as pyproj seems finicky when it comes to this.
-        t_to_hub = Transformer.from_crs(self.tc["src_crs"], hub_crs, always_xy=True)
-        t_from_hub = Transformer.from_crs(hub_crs, self.tc["dst_crs"], always_xy=True)
-
-        return t_to_hub, t_from_hub, self.manual_vert_grid
+        return horz_transformer, self.manual_vert_grid
