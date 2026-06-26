@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.4] - 2026-06-25
+
+### Added
+- support for projected input rasters in the raster command
+- add 'save_shift' to transform_raster api/cli
+
+### CHANGED
+- rety failed downloads, such as FES
+
 ## [0.4.3] - 2026-05-04
 
 ### Added

@@ -113,6 +113,8 @@ def generate_grid(
     increment: Union[str, float],
     datum_in: str,
     datum_out: str,
+    epoch_in: str = "2010.0",
+    epoch_out: str = "2010.0",
     decay_pixels: int = 100,
     out_fn: Optional[str] = None,
     cache_dir: Optional[str] = None,
@@ -126,6 +128,8 @@ def generate_grid(
         increment: Resolution (e.g., '3s' or 0.0008333).
         datum_in: Source datum (e.g., 'mllw', '5703').
         datum_out: Target datum (e.g., '4979', '6319').
+        epoch_in: Source epoch (e.g., '2010.0')
+        epoch_out: Target epoch (e.g., '2010.0')
         decay_pixels: Set the pixel decay in case extrapolation is required.
         out_fn: If provided, saves the grid to this file (.tif or .gtx).
         cache_dir: Path to store downloaded grids.
@@ -167,6 +171,8 @@ def generate_grid(
         epsg_out=epsg_out,
         geoid_in=geoid_in,
         geoid_out=geoid_out,
+        epoch_in=epoch_in,
+        epoch_out=epoch_out,
         decay_pixels=decay_pixels,
         cache_dir=cache_dir,
         use_stations=use_stations,
@@ -196,6 +202,7 @@ def transform_raster(
     z_unit_in: Optional[str] = "auto",
     z_unit_out: Optional[str] = "auto",
     use_stations: bool = False,
+    save_shift: bool = False,
     verbose: bool = False,
 ) -> Optional[str]:
     """Apply a vertical datum transformation directly to an existing raster file.
@@ -209,6 +216,8 @@ def transform_raster(
         cache_dir: Path to store downloaded grids.
         z_unit_in: Input DEM z units.
         z_unit_out: Output DEM z units.
+        use_stations: Generate the shift grid from available tide stations,
+        safe_shift: Save the generated shift raster to disk.
         verbose: Enable debug logging.
 
     Returns:
@@ -216,15 +225,47 @@ def transform_raster(
     """
 
     import rasterio
+    from rasterio.warp import transform_bounds, reproject, Resampling
+    from rasterio.transform import from_bounds
+    from fetchez.spatial import Region
 
     if not os.path.exists(input_raster):
         logger.error(f"Input raster not found: {input_raster}")
         return None
 
     with rasterio.open(input_raster) as src:
-        bounds = src.bounds
-        region_obj = Region(bounds.left, bounds.right, bounds.bottom, bounds.top)
+        native_crs = src.crs
+        native_bounds = src.bounds
+        native_transform = src.transform
         nx, ny = src.width, src.height
+
+    is_projected = native_crs.is_projected if native_crs else False
+    if is_projected:
+        logger.info(
+            f"Projected CRS detected ({native_crs}). Extracting WGS84 envelope..."
+        )
+        w, s, e, n = transform_bounds(native_crs, "EPSG:4326", *native_bounds)
+
+        buffer = 0.05
+        region_obj = Region(w - buffer, e + buffer, s - buffer, n + buffer)
+        logger.info(f"Using WGS84 region: {region_obj}")
+
+        inc_deg = 3.0 / 3600.0
+        vt_nx = int((region_obj.xmax - region_obj.xmin) / inc_deg)
+        vt_ny = int((region_obj.ymax - region_obj.ymin) / inc_deg)
+    else:
+        region_obj = Region(
+            native_bounds.left,
+            native_bounds.right,
+            native_bounds.bottom,
+            native_bounds.top,
+        )
+        vt_nx, vt_ny = nx, ny
+
+    # with rasterio.open(input_raster) as src:
+    #     bounds = src.bounds
+    #     region_obj = Region(bounds.left, bounds.right, bounds.bottom, bounds.top)
+    #     nx, ny = src.width, src.height
 
     epsg_in, geoid_in = _parse_datum(datum_in)
     epsg_out, geoid_out = _parse_datum(datum_out)
@@ -265,6 +306,47 @@ def transform_raster(
     if shift_array is None:
         logger.error("Failed to generate shift array for the raster bounds.")
         return None
+
+    if is_projected:
+        logger.info("Warping shift grid back to native raster projection...")
+        wgs_transform = from_bounds(
+            region_obj.xmin,
+            region_obj.ymin,
+            region_obj.xmax,
+            region_obj.ymax,
+            vt_nx,
+            vt_ny,
+        )
+        native_shift_array = np.zeros((ny, nx), dtype=np.float32)
+
+        reproject(
+            source=shift_array,
+            destination=native_shift_array,
+            src_transform=wgs_transform,
+            src_crs="EPSG:4326",
+            dst_transform=native_transform,
+            dst_crs=native_crs,
+            resampling=Resampling.bilinear,
+        )
+
+        shift_array = native_shift_array
+
+    if save_shift:
+        shift_fn = f"{os.path.splitext(output_raster)[0]}_shiftgrid.tif"
+        logger.info(f"Saving aligned shift grid to {shift_fn}...")
+        with rasterio.open(
+            shift_fn,
+            "w",
+            driver="GTiff",
+            height=ny,
+            width=nx,
+            count=1,
+            dtype=shift_array.dtype,
+            crs=native_crs,
+            transform=native_transform,
+            nodata=-9999.0,
+        ) as dst:
+            dst.write(shift_array, 1)
 
     success = GridEngine.apply_vertical_shift(
         input_raster,

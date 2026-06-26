@@ -16,6 +16,7 @@ import subprocess
 import logging
 import numpy as np
 import rasterio
+import shutil
 
 logger = logging.getLogger(__name__)
 
@@ -95,3 +96,41 @@ class RasterQuery:
             results[valid] = self.data[rows[valid], cols[valid]]
 
         return results
+
+
+def export_cache(cache_dir=None, output_name="transformez_offline_cache"):
+    """Packs the local transformez cache into a ZIP file for offline use."""
+
+    if cache_dir is None:
+        cache_dir = os.path.join(os.getcwd(), "transformez_cache")
+
+    if not os.path.exists(cache_dir):
+        logger.error(f"[EXPORT FATAL] Cache directory not found at: {cache_dir}")
+        logger.error("Run a transformation to populate the cache before exporting.")
+        return None
+
+    # Determine output path
+    out_path = os.path.abspath(output_name)
+
+    logger.info("-" * 60)
+    logger.info(f"Packing offline cache bundle from: {cache_dir}")
+    logger.info(
+        "This may take a minute depending on the size of your downloaded grids..."
+    )
+
+    try:
+        # shutil.make_archive(base_name, format, root_dir)
+        zip_path = shutil.make_archive(out_path, "zip", cache_dir)
+
+        # Get human-readable file size
+        size_mb = os.path.getsize(zip_path) / (1024 * 1024)
+
+        logger.info(
+            f"Successfully exported offline cache bundle: {zip_path} ({size_mb:.1f} MB)"
+        )
+        logger.info("-" * 60)
+        return zip_path
+
+    except Exception as e:
+        logger.error(f"[EXPORT FATAL] Failed to export cache: {e}")
+        return None

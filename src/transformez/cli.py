@@ -302,6 +302,11 @@ def transform_grid(
     is_flag=True,
     help="Force RBF interpolation using live tide stations instead of global satellite models.",
 )
+@click.option(
+    "--save-shift",
+    is_flag=True,
+    help="Save the aligned vertical shift grid to disk alongside the output DEM.",
+)
 def transform_raster(
     input_file,
     input_datum,
@@ -311,6 +316,7 @@ def transform_raster(
     out,
     decay_pixels,
     use_stations,
+    save_shift,
 ):
     """Apply a vertical datum shift to an existing DEM."""
 
@@ -326,6 +332,7 @@ def transform_raster(
         z_unit_in=in_units,
         z_unit_out=out_units,
         use_stations=use_stations,
+        save_shift=save_shift,
         verbose=True,
     )
 

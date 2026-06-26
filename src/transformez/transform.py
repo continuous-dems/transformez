@@ -207,7 +207,9 @@ class VerticalTransform:
 
         return valid
 
-    def _get_grid(self, provider, name):
+    def _get_grid(self, provider, name, max_retries=3):
+
+        from .grid_engine import GridCorruptionError
 
         if not name:
             return np.zeros((self.ny, self.nx))
@@ -218,95 +220,116 @@ class VerticalTransform:
         if "geoid=" in name:
             name = name.split("=")[1]
 
-        files = self.fetch_grid(provider, datatype=name, query=name)
-        if provider == "vdatum":
-            import rasterio
-            from datetime import datetime
+        for attempt in range(max_retries):
+            files = self.fetch_grid(provider, datatype=name, query=name)
+            if provider == "vdatum":
+                import rasterio
+                from datetime import datetime
 
-            def get_vdatum_date(gtx_path):
-                """Finds and parses the release date from VDatum metadata files."""
+                def get_vdatum_date(gtx_path):
+                    """Finds and parses the release date from VDatum metadata files."""
 
-                dir_name = os.path.dirname(gtx_path)
-                meta_files = [
-                    f for f in os.listdir(dir_name) if f.endswith((".met", ".inf"))
-                ]
+                    dir_name = os.path.dirname(gtx_path)
+                    meta_files = [
+                        f for f in os.listdir(dir_name) if f.endswith((".met", ".inf"))
+                    ]
 
-                if not meta_files:
-                    return datetime(1970, 1, 1)
-
-                meta_path = os.path.join(dir_name, meta_files[0])
-                try:
-                    with open(meta_path, "r") as f:
-                        content = f.read().splitlines()
-
-                    if not content:
+                    if not meta_files:
                         return datetime(1970, 1, 1)
 
-                    first_line = content[0]
+                    meta_path = os.path.join(dir_name, meta_files[0])
+                    try:
+                        with open(meta_path, "r") as f:
+                            content = f.read().splitlines()
 
-                    # Parse the first line "#Mon Jul 08 10:27:07 EDT 2019"
-                    if first_line.startswith("#"):
-                        parts = first_line.replace("#", "").split()
-                        if len(parts) >= 6:
-                            year = int(parts[-1])
-                            day = int(parts[2])
-                            month_map = {
-                                "Jan": 1,
-                                "Feb": 2,
-                                "Mar": 3,
-                                "Apr": 4,
-                                "May": 5,
-                                "Jun": 6,
-                                "Jul": 7,
-                                "Aug": 8,
-                                "Sep": 9,
-                                "Oct": 10,
-                                "Nov": 11,
-                                "Dec": 12,
-                            }
-                            month = month_map.get(parts[1][:3].title(), 1)
-                            return datetime(year, month, day)
+                        if not content:
+                            return datetime(1970, 1, 1)
 
-                    # Fallback to scanning for "released_date="
-                    for line in content:
-                        if "released_date=" in line:
-                            date_str = line.split("=")[1].strip()
-                            m, d, y = map(int, date_str.split("/"))
-                            return datetime(y, m, d)
+                        first_line = content[0]
 
-                except Exception as e:
-                    logger.debug(f"Failed to parse date from {meta_path}: {e}")
+                        # Parse the first line "#Mon Jul 08 10:27:07 EDT 2019"
+                        if first_line.startswith("#"):
+                            parts = first_line.replace("#", "").split()
+                            if len(parts) >= 6:
+                                year = int(parts[-1])
+                                day = int(parts[2])
+                                month_map = {
+                                    "Jan": 1,
+                                    "Feb": 2,
+                                    "Mar": 3,
+                                    "Apr": 4,
+                                    "May": 5,
+                                    "Jun": 6,
+                                    "Jul": 7,
+                                    "Aug": 8,
+                                    "Sep": 9,
+                                    "Oct": 10,
+                                    "Nov": 11,
+                                    "Dec": 12,
+                                }
+                                month = month_map.get(parts[1][:3].title(), 1)
+                                return datetime(year, month, day)
 
-                return datetime(1970, 1, 1)
+                        # Fallback to scanning for "released_date="
+                        for line in content:
+                            if "released_date=" in line:
+                                date_str = line.split("=")[1].strip()
+                                m, d, y = map(int, date_str.split("/"))
+                                return datetime(y, m, d)
 
-            def sort_key(filepath):
-                # Time Sorting (Oldest -> Newest)
-                date_val = get_vdatum_date(filepath)
+                    except Exception as e:
+                        logger.debug(f"Failed to parse date from {meta_path}: {e}")
 
-                try:
-                    with rasterio.open(filepath) as src:
-                        b = src.bounds
-                        area = (b.right - b.left) * (b.top - b.bottom)
-                except Exception:
-                    area = float("inf")
+                    return datetime(1970, 1, 1)
 
-                return (date_val.timestamp(), -area)
+                def sort_key(filepath):
+                    # Time Sorting (Oldest -> Newest)
+                    date_val = get_vdatum_date(filepath)
 
-            files.sort(key=sort_key, reverse=True)
+                    try:
+                        with rasterio.open(filepath) as src:
+                            b = src.bounds
+                            area = (b.right - b.left) * (b.top - b.bottom)
+                    except Exception:
+                        area = float("inf")
 
-        if not files:
-            return np.zeros((self.ny, self.nx))
+                    return (date_val.timestamp(), -area)
 
-        if provider == "seanoe" or provider == "fes":
-            var_name = "lat_elevation" if "lat" in name.lower() else "msl_elevation"
-            nc_path = f"netcdf:{files[0]}:{var_name}"
-            return GridEngine.load_and_interpolate(
-                [nc_path], self.region, self.nx, self.ny, decay_pixels=self.decay_pixels
-            )
+                files.sort(key=sort_key, reverse=True)
 
-        return GridEngine.load_and_interpolate(
-            files, self.region, self.nx, self.ny, decay_pixels=self.decay_pixels
-        )
+            if not files:
+                return np.zeros((self.ny, self.nx))
+
+            try:
+                if provider == "seanoe" or provider == "fes":
+                    var_name = (
+                        "lat_elevation" if "lat" in name.lower() else "msl_elevation"
+                    )
+                    nc_path = f"netcdf:{files[0]}:{var_name}"
+                    return GridEngine.load_and_interpolate(
+                        [nc_path],
+                        self.region,
+                        self.nx,
+                        self.ny,
+                        decay_pixels=self.decay_pixels,
+                    )
+
+                return GridEngine.load_and_interpolate(
+                    files, self.region, self.nx, self.ny, decay_pixels=self.decay_pixels
+                )
+            except GridCorruptionError:
+                if attempt < max_retries - 1:
+                    logger.warning(
+                        f"Download corruption detected. Retrying fetch (Attempt {attempt + 2}/{max_retries})..."
+                    )
+                    continue
+                else:
+                    logger.error(
+                        "Max retries reached. Could not secure an uncorrupted grid."
+                    )
+                    return np.zeros((self.ny, self.nx))
+
+        return np.zeros((self.ny, self.nx))
 
     def _get_htdp_shift(self, epsg_from, epsg_to, epoch_from, epoch_to):
         """Calculate Frame Shift via HTDP with Fallback."""
