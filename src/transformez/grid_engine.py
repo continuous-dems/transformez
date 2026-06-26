@@ -27,6 +27,12 @@ os.environ["HDF5_USE_FILE_LOCKING"] = "FALSE"
 logger = logging.getLogger(__name__)
 
 
+class GridCorruptionError(Exception):
+    """Raised when a fetched grid is corrupted and needs re-downloading."""
+
+    pass
+
+
 def plot_grid(grid_array, region, title="Vertical Shift Preview"):
     """Plot the transformation grid using Matplotlib."""
 
@@ -168,6 +174,34 @@ class GridEngine:
                     valid_mask = ~np.isnan(temp_buffer)
                     mosaic[valid_mask] = temp_buffer[valid_mask]
 
+            except Exception as e:
+                error_msg = str(e)
+
+                if any(
+                    err in error_msg
+                    for err in [
+                        "-101",
+                        "HDF error",
+                        "not recognized as a supported file format",
+                        "RasterioIOError",
+                    ]
+                ):
+                    logger.error(f" CRITICAL: Corrupted grid chunk detected in {fn}!")
+
+                    real_path = fn.split(":")[1] if fn.startswith("netcdf:") else fn
+                    if os.path.exists(real_path):
+                        logger.warning(
+                            f"Auto-deleting corrupted cache file to force re-fetch: {real_path}"
+                        )
+                        try:
+                            os.remove(real_path)
+                        except OSError:
+                            pass
+
+                    raise GridCorruptionError(f"Corrupted file deleted: {real_path}")
+
+                logger.exception(f"Failed to reproject {fn}: {e}")
+                continue
             # except Exception as e:
             #     error_msg = str(e)
 
@@ -189,9 +223,9 @@ class GridEngine:
             #     # For all other normal errors, log and continue as usual
             #     logger.exception(f"Failed to reproject {fn}: {e}")
             #     continue
-            except Exception as e:
-                logger.exception(f"Failed to reproject {fn}: {e}")
-                continue
+            # except Exception as e:
+            #     logger.exception(f"Failed to reproject {fn}: {e}")
+            #     continue
 
         # Fill inland areas (decaying to 0) before we clear the remaining NaNs
         # mosaic = GridEngine.fill_nans(mosaic, decay_pixels=decay_pixels)
