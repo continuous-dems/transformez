@@ -7,10 +7,11 @@
 <p align="center"><strong>Global vertical datum transformations, simplified.</strong></p>
 
 <p align="center">
-  <a href="https://github.com/continuous-dems/transformez"><img src="https://img.shields.io/badge/version-0.5.0-blue.svg" alt="Version"></a>
+  <a href="https://github.com/continuous-dems/transformez"><img src="https://img.shields.io/badge/version-0.5.1-blue.svg" alt="Version"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green.svg" alt="License"></a>
   <a href="https://www.python.org/"><img src="https://img.shields.io/badge/python-3.12+-yellow.svg" alt="Python"></a>
   <a href="https://badge.fury.io/py/transformez"><img src="https://badge.fury.io/py/transformez.svg" alt="PyPI version"></a>
+  <a href="https://anaconda.org/conda-forge/transformez"><img src="https://img.shields.io/conda/vn/conda-forge/transformez.svg" alt="Conda Version"></a>
   <a href="https://cudem.zulip.org"><img src="https://img.shields.io/badge/zulip-join_chat-brightgreen.svg" alt="Project Chat"></a>
 </p>
 
