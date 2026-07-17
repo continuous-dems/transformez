@@ -70,6 +70,19 @@ transformez raster my_dem.tif -I mllw -O 5703
 fetchez gebco ... --hook transformez:datum_in=5773,datum_out=4979
 ```
 
+### Hydrodynamic & Tsunami Modeling
+
+By default, Transformez applies a 100-pixel decay to tidal transformations to smoothly transition coastal datums (like `mhw` or `mllw`) back to the terrestrial geodetic frame (like `5703`) inland.
+
+If you are modeling tsunamis, storm surge, or sea-level rise, you often need your "water level zero" to remain mathematically constant infinitely inland to accurately calculate runup over high terrain.
+
+To disable the inland decay and force continuous extrapolation of the coastal shift, set `--decay-pixels 0`:
+
+```bash
+# Transform a high-res coastal DEM for Tsunami runup modeling (infinite inland extrapolation)
+transformez raster my_coastal_dem.tif -I 5703 -O mhw --decay-pixels 0
+```
+
 ## Python API
 
 Transformez provides a high-level API for embedding transformations directly into your Python scripts, Jupyter Notebooks, or automated pipelines.
@@ -100,6 +113,7 @@ out_file = transformez.transform_raster(
     input_raster="my_dem_mllw.tif",
     datum_in="mllw",
     datum_out="5703:g2012b",  # NAVD88 using specific GEOID12B
+    decay_pixels=0,           # Set to 0 for infinite inland extrapolation (Modeling)
     output_raster="my_dem_navd88.tif"
 )
 ```
