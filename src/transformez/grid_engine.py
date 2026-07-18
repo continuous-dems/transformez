@@ -106,7 +106,6 @@ class GridEngine:
                 bbox = (region.xmin, region.ymin, region.xmax, region.ymax)
 
                 # pyogrio raw read returns a tuple: (meta, geometry_wkb, field_data)
-                test = read(vec_path, bbox=bbox)
                 meta, fids, geometry_wkb, fields = read(vec_path, bbox=bbox)
 
                 if len(geometry_wkb) > 0:
