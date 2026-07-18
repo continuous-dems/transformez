@@ -1,10 +1,10 @@
-# Supported Datums & Vertical Reference Primer
+# 🗺️ Supported Datums & Vertical Reference
 It can be tempting to make the assumption that vertical datums are simple, flat offsets. In reality, the earth is bumpy, gravity is inconsistent, and the ocean is in constant motion.
 
 To achieve survey-grade accuracy, `transformez` categorizes elevations into three distinct physical models. Understanding the difference between these is critical for accurate geospatial modeling.
 
 ## 🌊 Tidal Datums (The Dynamic Ocean)
-Tidal datums are defined by observing water levels at coastal tide gauges over a 19-year National Tidal Datum Epoch (NTDE). *The ocean is not flat.* Due to coastal funneling, bathymetric friction, and Coriolis effects, a tidal surface like Mean Lower Low Water (MLLW) curves and changes drastically as you move from the open ocean into a shallow estuary. Therefore, tidal datums are inherently spatial and cannot be represented by a single, constant conversion number, especially over wide areas.
+Tidal datums are defined by observing water levels at coastal tide gauges over a 19-year National Tidal Datum Epoch (NTDE). Since **the ocean is not flat**, due to coastal funneling, bathymetric friction, Coriolis effects, etc., a tidal surface like Mean Lower Low Water (MLLW) curves and changes drastically as you move from the open ocean into a shallow estuary. Therefore, tidal datums are inherently spatial and should not be represented by a single, constant conversion number, especially over wide areas.
 
 **Supported Tidal Surfaces:**
 
@@ -36,7 +36,7 @@ Ellipsoidal heights represent distance from a perfectly smooth, mathematical ova
 |  6319         | NAD83 | North American Datum 1983 |
 
 ## 🏔️ Orthometric Datums (The Gravity Field)
-Orthometric heights are what we commonly think of as "Height Above Sea Level," but they are actually tied to a *Geoid* (a complex, bumpy mathematical model representing global gravity anomalies). Because the Earth's density varies (mountains are dense, deep ocean trenches are not), gravity pulls harder in some places than others, meaning a "level" surface is not a perfect geometric shape.
+Orthometric heights are what we commonly think of as **"Height Above Sea Level,"** but they are actually tied to a **Geoid** (a complex, bumpy mathematical model representing global gravity anomalies). Because the Earth's density varies (mountains are dense, deep ocean trenches are not), gravity pulls harder in some places than others, meaning a "level" surface is not a perfect geometric shape.
 
 **Supported Orthometric / Geoid-Based Datums:**
 
@@ -51,6 +51,6 @@ Orthometric heights are what we commonly think of as "Height Above Sea Level," b
 |  3855         | EGM2008 height           |      (Default Geoid: egm2008)|
 |  5773         | EGM96 height             |      (Default Geoid: egm96)|
 
-## 🌍 **Available Geoids**:
+### 🌍 Available Geoids:
 
   g2018, g2012b, geoid09, xgeoid20b, xgeoid19b, egm2008, egm96, CGG2013

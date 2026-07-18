@@ -1,7 +1,7 @@
-# 🏛️ Transformez Philosophies
+# 🏛️ Transformez Philosophez
 
 ## The Inland Decay Philosophy
-Tidal datums (like Mean Higher High Water) physically cease to exist where the ocean meets the land. If a standard GIS user transforms a county-wide DEM to MLLW, they do not want a 2-meter vertical shift mathematically applied 50 miles inland to the top of a mountain.
+Tidal datums (like Mean Higher High Water) physically cease to exist where the ocean meets the land. If a standard GIS user transforms a county-wide DEM to MLLW, they do not want a 2-meter vertical shift applied 50 miles inland on the top of a mountain.
 
 To protect inland topography, transformez uses a default decay_pixels=100 safety buffer. Using Nearest-Neighbor distance transforms and Hermite smoothing, the engine seamlessly ramps the tidal shift down to zero as it moves inland, successfully anchoring the deep inland terrain back to the geodetic frame (e.g., NAVD88).
 
@@ -10,10 +10,10 @@ Hydrodynamic modelers (Tsunami, Storm Surge, Sea Level Rise) are the exception t
 
 
 ## The "Constant Conversion" Fallacy (Flat vs. Spatial Shifts)
-It can be tempting to make the assumption that vertical datums are simple, flat offsets. Many software tools and engineers prefer to query a single, local tide gauge, find the offset (e.g., "MLLW is exactly -1.2 meters below NAVD88"), and apply that flat, constant conversion across their entire dataset.
+It can be tempting to make the assumption that vertical datums are simple, flat offsets. Many GIS software and users sometimes prefer to query a single, local tide gauge, find the offset (e.g., "MLLW is exactly -1.2 meters below NAVD88"), and apply that flat, constant value across their entire dataset.
 
-While applying a flat shift is perfectly acceptable for surveying a single, 100-foot construction pad, it introduces significant vertical errors when applied to modern geospatial data like a 50-mile coastal DEM or a hydrodynamic model.
+While applying a flat shift is perfectly acceptable for certain circumstances, especially very local uses (such as surveying a single, 100-foot construction pad), it introduces significant vertical errors when applied to modern geospatial data like a 50-mile coastal DEM or a hydrodynamic model.
 
-* **The Physical Reality:** Water piles up. As tides push into shallow bays and narrow estuaries, friction and funneling effects cause the tidal amplitude to stretch. MLLW at the mouth of an estuary might be -1.2 meters, but ten miles up the river, MLLW might be -0.8 meters.
+* **The Physical Reality:** Water piles up and moves around. As tides push into shallow bays and narrow estuaries, friction and funneling effects can cause the tidal amplitude to stretch. MLLW at the mouth of an estuary might be -1.2 meters, but ten miles up the river, MLLW might be -0.8 meters and 10 miles inland it might be 0.
 
 * **The Transformez Solution:** Tidal conversions must be spatially varying to reflect the physical laws of the ocean. Instead of forcing you to guess which single tide gauge to trust, `transformez` generates high-resolution, spatially varying shift grids. This ensures you get the same mathematical rigor of official tools (like NOAA's VDatum) without having to manually composite the spatial math yourself.

@@ -1,6 +1,6 @@
-# Validation & Accuracy
+# 🎯 Validation & Accuracy
 
-Geodetic transformations require extreme precision. To ensure `transformez` is mathematically safe and sound for production pipelines, we continuously run it through a gauntlet of validation tests.
+Geodetic transformations require extreme precision. To ensure `transformez` is mathematically safe and sound for production pipelines, we continuously run it through a gauntlet of validation tests. *Feel free to contribute new validation tests, or make sume suggestions!*
 
 We test against real-world tide gauges (ground truth), geodetic software (engine-to-engine comparison), and global satellite models.
 
@@ -50,7 +50,7 @@ In this test we tested `transformez` directly against the **NOAA VDatum Java CLI
 ![VDatum Error Histogram](../_static/validation_vdatum_hist_astoria.png)
 ![VDatum Error Histogram](../_static/validation_vdatum_hist_tampa.png)
 
-As the histogram shows, the difference between `transformez` and the VDatum Java executable is effectively zero. The only minor deviations (in the millimeter range) are due to our use of modern bilinear interpolation near grid boundaries and floating point error.
+As the histograms show, the difference between `transformez` and the VDatum Java executable is effectively zero. The only minor deviations (in the millimeter range) are due to our use of modern bilinear interpolation near grid boundaries and floating point error.
 
 ## Test 3: Global Reach (FES2014 Altimetry)
 
