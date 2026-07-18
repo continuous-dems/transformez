@@ -29,17 +29,18 @@ TRANSFORMEZ_COMMANDS = {
 class TransformezMainGroup(FetchezMainGroup):
     """A custom Click Group that handles deprecated aliases."""
 
-    def get_command(self, ctx, cmd_name):
-        if cmd_name == "run":
-            click.secho(
-                " DEPRECATION WARNING: 'transformez run' is deprecated and will be removed in a future release.\n"
-                "Please use 'transformez grid' to generate shift grids or 'transformez raster' to shift a raster.",
-                fg="yellow",
-                err=True,
-            )
-            return click.Group.get_command(self, ctx, "run")
+    pass
+    # def get_command(self, ctx, cmd_name):
+    #     if cmd_name == "run":
+    #         click.secho(
+    #             " DEPRECATION WARNING: 'transformez run' is deprecated and will be removed in a future release.\n"
+    #             "Please use 'transformez grid' to generate shift grids or 'transformez raster' to shift a raster.",
+    #             fg="yellow",
+    #             err=True,
+    #         )
+    #         return click.Group.get_command(self, ctx, "run")
 
-        return click.Group.get_command(self, ctx, cmd_name)
+    #     return click.Group.get_command(self, ctx, cmd_name)
 
     # def format_commands(self, ctx, formatter):
     #     commands = []

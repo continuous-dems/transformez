@@ -79,18 +79,19 @@ def plot_grid(grid_array, region, title="Vertical Shift Preview"):
 
 class GridEngine:
     @staticmethod
-    def create_land_mask(region, nx, ny, shapefiles):
-        """Reads a list of vector shapefiles and rasterizes them into a boolean land mask.
+    def create_land_mask(region, nx, ny, vector_files):
+        """Reads a list of vector files and rasterizes them into a boolean land mask.
         Returns a numpy boolean array where True = Land, False = Ocean.
         """
 
         try:
-            import fiona
+            from pyogrio.raw import read
+            import shapely
             from rasterio.features import rasterize
 
         except ImportError:
             logger.warning(
-                "fiona and rasterio are required for vector coastline masking."
+                "pyogrio and shapely are required for vector coastline masking."
             )
             return None
 
@@ -99,16 +100,25 @@ class GridEngine:
         )
 
         geoms = []
-        for shp in shapefiles:
+        for vec_path in vector_files:
             try:
-                # Use bbox filtering in Fiona to dramatically speed up reading massive global shapefiles
+                # Use bbox filtering in pyogrio to speed up reading vectors
                 bbox = (region.xmin, region.ymin, region.xmax, region.ymax)
-                with fiona.open(shp, bbox=bbox) as src:
-                    for feature in src:
-                        if feature.get("geometry") is not None:
-                            geoms.append(feature["geometry"])
+
+                # pyogrio raw read returns a tuple: (meta, geometry_wkb, field_data)
+                test = read(vec_path, bbox=bbox)
+                meta, fids, geometry_wkb, fields = read(vec_path, bbox=bbox)
+
+                if len(geometry_wkb) > 0:
+                    # Convert WKB directly to shapely geometries
+                    # We also filter out any None/Null geometries
+                    valid_geoms = [
+                        g for g in shapely.from_wkb(geometry_wkb) if g is not None
+                    ]
+                    geoms.extend(valid_geoms)
+
             except Exception as e:
-                logger.warning(f"Failed reading coastline shapefile {shp}: {e}")
+                logger.warning(f"Failed reading coastline vector {vec_path}: {e}")
 
         if not geoms:
             return None
