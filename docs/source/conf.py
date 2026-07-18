@@ -35,7 +35,6 @@ extensions = [
     # "sphinx_argparse_cli",  # argparse
     "sphinx_click",
     "myst_parser",  # Parse Markdown files
-    "module_table",  # Generate module catalog table
 ]
 
 sphinx_click_mock_imports = []
