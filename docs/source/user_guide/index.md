@@ -6,6 +6,9 @@ Welcome to the Transformez user guide! Here you will find everything you need to
 :maxdepth: 2
 
 installation
-validation
+usage
+methodology
 philosophy
+supported_datums
+validation
 ```
