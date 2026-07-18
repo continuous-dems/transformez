@@ -7,6 +7,7 @@ Welcome to the Transformez user guide! Here you will find everything you need to
 
 installation
 usage
+cli_usage
 methodology
 philosophy
 supported_datums
