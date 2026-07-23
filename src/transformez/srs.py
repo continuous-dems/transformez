@@ -17,7 +17,7 @@ import logging
 from pyproj import CRS, Transformer
 
 import numpy as np
-from rasterio.warp import transform_bounds, reproject, Resampling
+from rasterio.warp import reproject, Resampling
 from rasterio.transform import from_bounds
 
 from fetchez.spatial import Region
