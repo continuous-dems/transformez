@@ -401,7 +401,9 @@ def transform_list():
 
 
 # --- HTDP CLI GROUP ---
-@transformez_cli.group(cls=FetchezMainGroup, name="htdp", fetchez_commands=["install", "run"])
+@transformez_cli.group(
+    cls=FetchezMainGroup, name="htdp", fetchez_commands=["install", "run"]
+)
 def htdp_group():
     """Manage and run NGS HTDP (Horizontal Time-Dependent Positioning)."""
 
@@ -423,16 +425,14 @@ def install_htdp(version):
 
 
 @htdp_group.command("run", cls=FetchezMainCommand)
-@click.option(
-    "--control",
-    help="input control file, if omitted, run interactively"
-)
+@click.option("--control", help="input control file, if omitted, run interactively")
 def run_htpd(control):
     """Run HTDP from transformez"""
 
     from transformez.htdp import HTDP
 
     HTDP.run_cmd(control)
+
 
 # --- VDATUM CLI GROUP ---
 @transformez_cli.group(
