@@ -7,7 +7,7 @@
 <p align="center"><strong>Global vertical datum transformations, simplified.</strong></p>
 
 <p align="center">
-  <a href="https://github.com/continuous-dems/transformez"><img src="https://img.shields.io/badge/version-0.5.1-blue.svg" alt="Version"></a>
+  <a href="https://github.com/continuous-dems/transformez"><img src="https://img.shields.io/badge/version-0.5.3-blue.svg" alt="Version"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green.svg" alt="License"></a>
   <a href="https://www.python.org/"><img src="https://img.shields.io/badge/python-3.12+-yellow.svg" alt="Python"></a>
   <a href="https://badge.fury.io/py/transformez"><img src="https://badge.fury.io/py/transformez.svg" alt="PyPI version"></a>
@@ -18,14 +18,6 @@
 **Transformez** is a standalone Python engine for converting geospatial data between vertical datums (e.g., `MLLW` ↔ `NAVD88` ↔ `Ellipsoid`).
 
 Originally developed as the core transformation engine for the [CUDEM](https://github.com/continuous-dems/cudem) project, Transformez has evolved into a standalone datum transformation suite.
-
----
-
-## ❓ Why Transformez?
-
-Vertical Datum transformations can cause a lot of confusion and headache when trying to process heterogeneous data from around the world into a single unified vertial reference.
-
-**Transformez simplifies this process!**
 
 ---
 
