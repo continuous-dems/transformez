@@ -401,7 +401,7 @@ def transform_list():
 
 
 # --- HTDP CLI GROUP ---
-@transformez_cli.group(cls=FetchezMainGroup, name="htdp", fetchez_commands=["install"])
+@transformez_cli.group(cls=FetchezMainGroup, name="htdp", fetchez_commands=["install", "run"])
 def htdp_group():
     """Manage and run NGS HTDP (Horizontal Time-Dependent Positioning)."""
 
@@ -422,9 +422,21 @@ def install_htdp(version):
     install_htdp_binary(version=version)
 
 
+@htdp_group.command("run", cls=FetchezMainCommand)
+@click.option(
+    "--control",
+    help="input control file, if omitted, run interactively"
+)
+def run_htpd(control):
+    """Run HTDP from transformez"""
+
+    from transformez.htdp import HTDP
+
+    HTDP.run_cmd(control)
+
 # --- VDATUM CLI GROUP ---
 @transformez_cli.group(
-    cls=FetchezMainGroup, name="vdatum", fetchez_commands=["install", "run"]
+    cls=FetchezMainGroup, name="vdatum", fetchez_commands=["install"]
 )
 def vdatum_group():
     """Manage and run the NOAA VDatum Java engine."""
@@ -480,9 +492,7 @@ def vdatum_list():
     click.echo(vd)
 
 
-# =====================================================================
-# PREFETCH REFERENCE DATA FOR OFFLINE USE
-# =====================================================================
+# --- PREFETCH CLI GROUP ---
 @transformez_cli.command("prefetch", cls=FetchezMainCommand)
 @click.option("-R", "--region", required=True, help="Bounding box or location string.")
 @click.option(

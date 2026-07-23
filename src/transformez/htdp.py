@@ -214,6 +214,7 @@ class HTDP:
         with open(control_fn, "w") as f:
             f.write(content)
 
+    @staticmethod
     def run_cmd(self, control_fn):
         """Executes the binary."""
         try:
