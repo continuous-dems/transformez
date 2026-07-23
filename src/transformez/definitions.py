@@ -12,6 +12,7 @@ and definitions.
 :license: MIT, see LICENSE for more details.
 """
 
+from typing import Any, Dict
 import logging
 
 logger = logging.getLogger(__name__)
@@ -42,7 +43,7 @@ class Datums:
     # =========================================================================
     # Vertical Datum References
     # =========================================================================
-    SURFACES = {
+    SURFACES: Dict[int, Dict[str, Any]] = {
         # --- Tidal Datums ---
         1089: {"name": "mllw", "description": "Mean Lower Low Water", "region": "usa"},
         5866: {"name": "mllw", "description": "Mean Lower Low Water", "region": "usa"},
@@ -104,7 +105,7 @@ class Datums:
         9003: {"name": "mss", "description": "Mean Sea Surface", "region": "global"},
     }
 
-    GLOBAL_ALIASES = {
+    GLOBAL_ALIASES: Dict[str, Any] = {
         "mllw": "lat",  # Mean Lower Low Water -> Lowest Astronomical Tide
         "mlw": "lat",  # Mean Low Water       -> LAT (Conservative)
         "mhhw": "hat",  # Mean Higher High Water -> Highest Astronomical Tide
@@ -114,7 +115,7 @@ class Datums:
         "dtl": "mss",  # Diurnal Tide Level     -> MSS
     }
 
-    HTDP = {
+    HTDP: Dict[int, Dict[str, Any]] = {
         4269: {
             "name": "NAD_83(2011/CORS96/2007)",
             "description": "(North American plate fixed)",
@@ -362,7 +363,7 @@ class Datums:
         },
     }
 
-    CDN = {
+    CDN: Dict[int, Dict[str, Any]] = {
         # CONUS / Alaska / Hawaii / PR / VI
         5703: {
             "name": "NAVD88 height",
@@ -415,7 +416,7 @@ class Datums:
         # 4979: {'name': 'WGS84', 'vdatum_id': 'wgs84:m:height'},
     }
 
-    GEOIDS = {
+    GEOIDS: Dict[str, Dict[str, Any]] = {
         # Standard PROJ-CDN Geoids (Default provider is 'proj')
         "g2018": {"name": "geoid 2018", "uncertainty": 0.0127, "provider": "proj"},
         "g2012b": {"name": "geoid 2012b", "uncertainty": 0.017, "provider": "proj"},
@@ -428,7 +429,7 @@ class Datums:
         "CGG2013": {"name": "CGG2013", "uncertainty": 0.01, "provider": "proj"},
     }
 
-    MODELS = {
+    MODELS: Dict[str, Dict[str, Any]] = {
         "fes2014": {"provider": "seanoe", "grids": {"lat": "LAT", "mss": "MSL"}},
         "dtu10": {"provider": "dtu", "grids": {"mss": "mss", "mdt": "mdt"}},
         "egm2008": {"provider": "proj", "grid": "egm2008"},
