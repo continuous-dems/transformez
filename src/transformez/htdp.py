@@ -23,7 +23,7 @@ import zipfile
 import numpy as np
 from typing import Tuple
 
-from . import utils
+# from . import utils
 from .definitions import Datums  # Required for ID lookups
 
 logger = logging.getLogger(__name__)
@@ -45,12 +45,15 @@ def resolve_htdp_path(version="3.5.0"):
     ae = ".exe" if sys.platform == "win32" else ""
 
     # Check local transformez_cache/bin/
-    cache_bin = os.path.join(os.getcwd(), "transformez_cache", "bin", f"htdp_{clean_version}{ae}")
+    cache_bin = os.path.join(
+        os.getcwd(), "transformez_cache", "bin", f"htdp_{clean_version}{ae}"
+    )
     if os.path.exists(cache_bin):
         return cache_bin
 
     # Check system PATH
     import shutil
+
     if shutil.which(f"htdp{ae}"):
         return f"htdp{ae}"
 
@@ -299,13 +302,14 @@ def install_htdp_binary(version="3.5.0"):
         urllib.request.urlretrieve(url, zip_path)
 
         if sys.platform == "win32":
-            exe_name = next(name for name in z.namelist() if name.endswith(".exe"))
-            extracted_path = z.extract(exe_name, cache_dir)
-            exe_path = os.path.join(cache_dir, f"htdp_{clean_version}.exe")
+            with zipfile.ZipFile(zip_path, "r") as z:
+                exe_name = next(name for name in z.namelist() if name.endswith(".exe"))
+                extracted_path = z.extract(exe_name, cache_dir)
+                exe_path = os.path.join(cache_dir, f"htdp_{clean_version}.exe")
 
-            if os.path.exists(exe_path):
-                os.remove(exe_path)
-            shutil.move(extracted_path, exe_path)
+                if os.path.exists(exe_path):
+                    os.remove(exe_path)
+                shutil.move(extracted_path, exe_path)
         else:
             extract_dir = os.path.join(cache_dir, f"htdp_src_{clean_version}")
             with zipfile.ZipFile(zip_path, "r") as z:

@@ -158,8 +158,8 @@ class SRSParser:
             proc_region = self.region.copy()
             proc_region.buffer(pct=5)
         except AttributeError:
-           proc_region = Region.from_list(self.region)
-           proc_region.buffer(pct=5)
+            proc_region = Region.from_list(self.region)
+            proc_region.buffer(pct=5)
 
         s_ident = self.tc["src_vert_epsg"]
         d_ident = self.tc["dst_vert_epsg"]
@@ -185,7 +185,7 @@ class SRSParser:
             # Determine Native WGS84 Region for Transformez
             src_is_projected = self.tc["src_crs"].is_projected
             if not proc_region.srs:
-                proc_region.srs = self.tc["src_crs"],
+                proc_region.srs = (self.tc["src_crs"],)
 
             if src_is_projected:
                 # Transform the native bounding box to WGS84 to query the shift models

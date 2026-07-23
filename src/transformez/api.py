@@ -399,7 +399,9 @@ def prefetch_region(
 
     try:
         if fetch_all or (not datum_in and not datum_out):
-            logger.info("Mode: FULL PREFETCH. Downloading all geoids, VDatum grids, and coastlines...")
+            logger.info(
+                "Mode: FULL PREFETCH. Downloading all geoids, VDatum grids, and coastlines..."
+            )
 
             # Instantiate base engine to leverage internal fetchers
             vt = VerticalTransform(
@@ -407,7 +409,7 @@ def prefetch_region(
                 nx=vt_nx,
                 ny=vt_ny,
                 epsg_in=4979,  # Base WGS84
-                epsg_out=6319, # Base NAD83
+                epsg_out=6319,  # Base NAD83
                 cache_dir=cache_dir,
                 verbose=verbose,
             )
@@ -457,7 +459,9 @@ def prefetch_region(
             epsg_in, geoid_in = _parse_datum(datum_in) if datum_in else (4979, None)
             epsg_out, geoid_out = _parse_datum(datum_out) if datum_out else (6319, None)
 
-            logger.info(f"Mode: TARGETED PREFETCH for chain ({datum_in or 'WGS84'} ➔ {datum_out or 'NAD83'})...")
+            logger.info(
+                f"Mode: TARGETED PREFETCH for chain ({datum_in or 'WGS84'} ➔ {datum_out or 'NAD83'})..."
+            )
 
             vt = VerticalTransform(
                 region=region_obj,

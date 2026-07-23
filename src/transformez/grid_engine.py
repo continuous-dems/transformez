@@ -466,8 +466,8 @@ def calculate_psmsl_msl(csv_path: str) -> float:
     valid_measurements = []
 
     try:
-        with open(csv_path, 'r', encoding='utf-8') as f:
-            reader = csv.reader(f, delimiter=';')
+        with open(csv_path, "r", encoding="utf-8") as f:
+            reader = csv.reader(f, delimiter=";")
             for row in reader:
                 if len(row) < 4:
                     continue
@@ -490,12 +490,15 @@ def calculate_psmsl_msl(csv_path: str) -> float:
         mean_mm = sum(valid_measurements) / len(valid_measurements)
         mean_meters = mean_mm / 1000.0
 
-        logger.info(f"Processed {len(valid_measurements)} months of data. MSL: {mean_meters:.3f} m")
+        logger.info(
+            f"Processed {len(valid_measurements)} months of data. MSL: {mean_meters:.3f} m"
+        )
         return mean_meters
 
     except Exception as e:
         logger.error(f"Failed to process PSMSL file {csv_path}: {e}")
         return np.nan
+
 
 class GridGen:
     @staticmethod

@@ -34,6 +34,7 @@ class MissingGridError(Exception):
 
     pass
 
+
 class VerticalTransform:
     """Generate a vertical transformation grid using Transformez."""
 
@@ -306,19 +307,28 @@ class VerticalTransform:
             if not files:
                 # return np.zeros((self.ny, self.nx))
                 if attempt < max_retries - 1:
-                    logger.warning(f"Grid '{name}' not found. Wiping cache for '{provider}' and retrying (Attempt {attempt + 2}/{max_retries})...")
+                    logger.warning(
+                        f"Grid '{name}' not found. Wiping cache for '{provider}' and retrying (Attempt {attempt + 2}/{max_retries})..."
+                    )
 
                     if os.path.exists(self.cache_dir):
                         for f in os.listdir(self.cache_dir):
-                            if name.lower() in f.lower() or provider.lower() in f.lower():
+                            if (
+                                name.lower() in f.lower()
+                                or provider.lower() in f.lower()
+                            ):
                                 try:
                                     os.remove(os.path.join(self.cache_dir, f))
                                 except OSError:
                                     pass
                     continue
                 else:
-                    logger.error(f"FATAL: Max retries exhausted. Could not locate grid '{name}' from '{provider}'.")
-                    raise MissingGridError(f"Required shift grid '{name}' is missing or unavailable.")
+                    logger.error(
+                        f"FATAL: Max retries exhausted. Could not locate grid '{name}' from '{provider}'."
+                    )
+                    raise MissingGridError(
+                        f"Required shift grid '{name}' is missing or unavailable."
+                    )
 
             try:
                 if provider == "seanoe" or provider == "fes":
@@ -351,7 +361,9 @@ class VerticalTransform:
                     raise MissingGridError(f"Grid '{name}' is persistently corrupted.")
 
         # return np.zeros((self.ny, self.nx))
-        raise MissingGridError(f"Failed to fetch grid '{name}' due to an unknown error.")
+        raise MissingGridError(
+            f"Failed to fetch grid '{name}' due to an unknown error."
+        )
 
     def _get_htdp_shift(self, epsg_from, epsg_to, epoch_from, epoch_to):
         """Calculate Frame Shift via HTDP with Fallback."""
