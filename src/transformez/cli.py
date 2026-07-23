@@ -21,7 +21,7 @@ from transformez import api
 
 TRANSFORMEZ_COMMANDS = {
     "Execution": ["run", "grid", "raster"],
-    "Discovery": ["list"],
+    "Discovery": ["list", "prefetch"],
     "External": ["htdp", "vdatum"],
 }
 
@@ -478,6 +478,50 @@ def vdatum_list():
 
     vd = Vdatum().vdatum_help()
     click.echo(vd)
+
+
+# =====================================================================
+# PREFETCH REFERENCE DATA FOR OFFLINE USE
+# =====================================================================
+@transformez_cli.command("prefetch", cls=FetchezMainCommand)
+@click.option("-R", "--region", required=True, help="Bounding box or location string.")
+@click.option(
+    "-I", "--input-datum", help="Source Datum (Optional: limits fetch to specific chain)."
+)
+@click.option(
+    "-O", "--output-datum", help="Target Datum (Optional: limits fetch to specific chain)."
+)
+@click.option(
+    "--all", "fetch_all", is_flag=True, help="Fetch ALL available geoids, tidal models, and coastlines for this region."
+)
+def transform_prefetch(region, input_datum, output_datum, fetch_all):
+    """Pre-download transformation grids and reference data for offline field use.
+
+    Examples:\n
+      Prefetch a specific conversion : transformez prefetch -R loc:"Newport, OR" -I mllw -O 5703
+      Prefetch EVERYTHING for a region: transformez prefetch -R loc:"Miami, FL" --all
+      Prefetch the entire planet      : transformez prefetch -R -180/180/-90/90 --all
+    """
+
+    click.secho(f"Populating offline cache for region: {region}...", fg="cyan", bold=True)
+
+    result = api.prefetch_region(
+        region=region,
+        datum_in=input_datum,
+        datum_out=output_datum,
+        fetch_all=fetch_all,
+        verbose=True,
+    )
+
+    if result:
+        click.secho(
+            f"Successfully pre-cached all assets for {region}. Ready for offline use!",
+            fg="green",
+            bold=True,
+        )
+    else:
+        click.secho("Prefetch encountered errors. Check logs for details.", fg="red")
+        sys.exit(1)
 
 
 if __name__ == "__main__":

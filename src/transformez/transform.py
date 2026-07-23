@@ -29,6 +29,11 @@ WGS84_EPSG = 4979
 NAD83_EPSG = 6319
 
 
+class MissingGridError(Exception):
+    """Raised when a required shift grid cannot be fetched, is missing, or is persistently corrupted."""
+
+    pass
+
 class VerticalTransform:
     """Generate a vertical transformation grid using Transformez."""
 
@@ -107,7 +112,7 @@ class VerticalTransform:
 
         files = fetchez.get(
             module=module_name,
-            region=self.region.to_list(),
+            region=self.region,
             outdir=self.cache_dir,
             threads=2,
             check_size=True,
@@ -212,7 +217,8 @@ class VerticalTransform:
         from .grid_engine import GridCorruptionError
 
         if not name:
-            return np.zeros((self.ny, self.nx))
+            # return np.zeros((self.ny, self.nx))
+            raise MissingGridError("A valid grid name must be provided to the fetcher.")
 
         if not provider:
             provider = "proj"
@@ -298,7 +304,21 @@ class VerticalTransform:
                 files.sort(key=sort_key, reverse=True)
 
             if not files:
-                return np.zeros((self.ny, self.nx))
+                # return np.zeros((self.ny, self.nx))
+                if attempt < max_retries - 1:
+                    logger.warning(f"Grid '{name}' not found. Wiping cache for '{provider}' and retrying (Attempt {attempt + 2}/{max_retries})...")
+
+                    if os.path.exists(self.cache_dir):
+                        for f in os.listdir(self.cache_dir):
+                            if name.lower() in f.lower() or provider.lower() in f.lower():
+                                try:
+                                    os.remove(os.path.join(self.cache_dir, f))
+                                except OSError:
+                                    pass
+                    continue
+                else:
+                    logger.error(f"FATAL: Max retries exhausted. Could not locate grid '{name}' from '{provider}'.")
+                    raise MissingGridError(f"Required shift grid '{name}' is missing or unavailable.")
 
             try:
                 if provider == "seanoe" or provider == "fes":
@@ -327,9 +347,11 @@ class VerticalTransform:
                     logger.error(
                         "Max retries reached. Could not secure an uncorrupted grid."
                     )
-                    return np.zeros((self.ny, self.nx))
+                    # return np.zeros((self.ny, self.nx))
+                    raise MissingGridError(f"Grid '{name}' is persistently corrupted.")
 
-        return np.zeros((self.ny, self.nx))
+        # return np.zeros((self.ny, self.nx))
+        raise MissingGridError(f"Failed to fetch grid '{name}' due to an unknown error.")
 
     def _get_htdp_shift(self, epsg_from, epsg_to, epoch_from, epoch_to):
         """Calculate Frame Shift via HTDP with Fallback."""

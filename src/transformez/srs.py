@@ -158,8 +158,8 @@ class SRSParser:
             proc_region = self.region.copy()
             proc_region.buffer(pct=5)
         except AttributeError:
-            proc_region = Region.from_list(self.region)
-            proc_region.buffer(pct=5)
+           proc_region = Region.from_list(self.region)
+           proc_region.buffer(pct=5)
 
         s_ident = self.tc["src_vert_epsg"]
         d_ident = self.tc["dst_vert_epsg"]
@@ -184,19 +184,15 @@ class SRSParser:
 
             # Determine Native WGS84 Region for Transformez
             src_is_projected = self.tc["src_crs"].is_projected
+            if not proc_region.srs:
+                proc_region.srs = self.tc["src_crs"],
+
             if src_is_projected:
                 # Transform the native bounding box to WGS84 to query the shift models
-                w, s, e, n = transform_bounds(
-                    self.tc["src_crs"],
-                    "EPSG:4326",
-                    proc_region.xmin,
-                    proc_region.ymin,
-                    proc_region.xmax,
-                    proc_region.ymax,
-                )
-                vt_region = Region(w, e, s, n)
+                vt_region = proc_region.copy()
+                vt_region.warp("EPSG:4326")
             else:
-                vt_region = proc_region
+                vt_region = proc_region.copy()
 
             # Generate grid resolution based on WGS84 bounds (approx 3 arc-seconds)
             inc_deg = 3.0 / 3600.0

@@ -359,3 +359,123 @@ def transform_raster(
     if success:
         return output_raster
     return None
+
+
+def prefetch_region(
+    region: Union[List[float], str, Region],
+    datum_in: Optional[str] = None,
+    datum_out: Optional[str] = None,
+    fetch_all: bool = False,
+    cache_dir: Optional[str] = None,
+    verbose: bool = True,
+) -> bool:
+    """Pre-download transformation grids and reference datasets for offline field use.
+
+    Args:
+        region: Bounds as [W, E, S, N], a 'loc:' string, or a Region object.
+        datum_in: Source datum string (e.g. 'mllw') to limit fetching to a specific chain.
+        datum_out: Target datum string (e.g. '5703') to limit fetching to a specific chain.
+        fetch_all: If True, fetches ALL available geoids, tidal surfaces, and coastlines for the region.
+        cache_dir: Directory where downloaded assets will be cached.
+        verbose: Enable detailed logging.
+
+    Returns:
+        bool: True if prefetching succeeded, False otherwise.
+    """
+
+    if isinstance(region, Region):
+        region_obj = region
+    else:
+        regions = parse_region(region)
+        if not regions:
+            logger.error(f"Could not parse region: {region}")
+            return False
+        region_obj = regions[0]
+
+    logger.info(f"Initiating offline prefetch for region: {region_obj}")
+
+    # Minimal dimensions (10x10) to avoid allocating memory for large arrays
+    vt_nx, vt_ny = 10, 10
+
+    try:
+        if fetch_all or (not datum_in and not datum_out):
+            logger.info("Mode: FULL PREFETCH. Downloading all geoids, VDatum grids, and coastlines...")
+
+            # Instantiate base engine to leverage internal fetchers
+            vt = VerticalTransform(
+                region=region_obj,
+                nx=vt_nx,
+                ny=vt_ny,
+                epsg_in=4979,  # Base WGS84
+                epsg_out=6319, # Base NAD83
+                cache_dir=cache_dir,
+                verbose=verbose,
+            )
+
+            # Vector Coastline Tiles (GSHHG / CUSP)
+            logger.info(" -> [1/5] Fetching coastline vector tiles...")
+            vt._fetch_coastline_shapefiles()
+
+            # All Registered Geoids
+            logger.info(" -> [2/5] Fetching Geoid grids...")
+            for g_name, g_def in Datums.GEOIDS.items():
+                provider = g_def.get("provider", "proj")
+                logger.info(f"    - Fetching Geoid: {g_name} ({provider})")
+                try:
+                    vt.fetch_grid(provider, datatype=g_name, query=g_name)
+                except Exception as e:
+                    logger.warning(f"    - Skipping '{g_name}': {e}")
+
+            # USA VDatum Tidal Grids
+            logger.info(" -> [3/5] Fetching VDatum regional grids...")
+            for s_key, s_def in Datums.SURFACES.items():
+                s_name = s_def.get("name", s_key)
+                if s_def.get("region") == "usa":
+                    logger.info(f"    - Fetching VDatum Surface: {s_name}")
+                    try:
+                        vt.fetch_grid("vdatum", datatype=s_name, query=s_name)
+                    except Exception as e:
+                        logger.warning(f"    - Skipping VDatum '{s_name}': {e}")
+
+            # Topography of the Sea Surface (TSS)
+            logger.info(" -> [4/5] Fetching VDatum TSS grid...")
+            try:
+                vt.fetch_grid("vdatum", datatype="tss", query="tss")
+            except Exception as e:
+                logger.warning(f"    - Skipping TSS: {e}")
+
+            # Global Satellite Models (FES / SEANOE)
+            logger.info(" -> [5/5] Fetching Global FES / MSS proxy grids...")
+            for proxy_name in ["lat", "msl", "mss"]:
+                logger.info(f"    - Fetching Global Proxy: {proxy_name}")
+                try:
+                    vt.fetch_grid("fes", datatype=proxy_name, query=proxy_name)
+                except Exception as e:
+                    logger.warning(f"    - Skipping Global '{proxy_name}': {e}")
+
+        else:
+            epsg_in, geoid_in = _parse_datum(datum_in) if datum_in else (4979, None)
+            epsg_out, geoid_out = _parse_datum(datum_out) if datum_out else (6319, None)
+
+            logger.info(f"Mode: TARGETED PREFETCH for chain ({datum_in or 'WGS84'} ➔ {datum_out or 'NAD83'})...")
+
+            vt = VerticalTransform(
+                region=region_obj,
+                nx=vt_nx,
+                ny=vt_ny,
+                epsg_in=epsg_in or 4979,
+                epsg_out=epsg_out or 6319,
+                geoid_in=geoid_in,
+                geoid_out=geoid_out,
+                cache_dir=cache_dir,
+                verbose=verbose,
+            )
+
+            vt._vertical_transform(vt.epsg_in, vt.epsg_out)
+
+        logger.info("Successfully populated offline cache!")
+        return True
+
+    except Exception as e:
+        logger.error(f"Prefetch failed: {e}")
+        return False
