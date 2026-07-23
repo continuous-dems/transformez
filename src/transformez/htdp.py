@@ -23,19 +23,41 @@ import zipfile
 import numpy as np
 from typing import Tuple
 
-from . import utils
+# from . import utils
 from .definitions import Datums  # Required for ID lookups
 
 logger = logging.getLogger(__name__)
 
-ae = ".exe" if sys.platform == "win32" else ""
-# Validating HTDP existence
-htdp_cmd = (
-    "echo 0 | htdp 2>&1"
-    if sys.platform == "win32"
-    else "echo 0 | htdp 2>&1 | grep SOFTWARE | awk '{print $3}'"
-)
-HAS_HTDP = utils.cmd_check(f"htdp{ae}", htdp_cmd)
+# ae = ".exe" if sys.platform == "win32" else ""
+# # Validating HTDP existence
+# htdp_cmd = (
+#     "echo 0 | htdp 2>&1"
+#     if sys.platform == "win32"
+#     else "echo 0 | htdp 2>&1 | grep SOFTWARE | awk '{print $3}'"
+# )
+# HAS_HTDP = utils.cmd_check(f"htdp{ae}", htdp_cmd)
+
+
+def resolve_htdp_path(version="3.5.0"):
+    """Finds the HTDP executable, prioritizing the local cache over system PATH."""
+
+    clean_version = version.replace("v", "")
+    ae = ".exe" if sys.platform == "win32" else ""
+
+    # Check local transformez_cache/bin/
+    cache_bin = os.path.join(
+        os.getcwd(), "transformez_cache", "bin", f"htdp_{clean_version}{ae}"
+    )
+    if os.path.exists(cache_bin):
+        return cache_bin
+
+    # Check system PATH
+    import shutil
+
+    if shutil.which(f"htdp{ae}"):
+        return f"htdp{ae}"
+
+    return None
 
 
 class HTDP:
@@ -47,7 +69,11 @@ class HTDP:
         self.htdp_bin = htdp_bin
         self.version = version
         self.verbose = verbose
-        if not HAS_HTDP:
+
+        self.htdp_bin = htdp_bin or resolve_htdp_path(self.version)
+        self.has_htdp = self.htdp_bin is not None
+
+        if not self.has_htdp:
             logger.error(
                 f"HTDP {self.version} is not installed or not in PATH. Run 'transformez htdp install --version {self.version}"
             )
@@ -57,7 +83,7 @@ class HTDP:
         Generates a shift grid between two frames.
         """
 
-        if not HAS_HTDP:
+        if not self.has_htdp:
             logger.warning("HTDP missing. Returning zero shift.")
             return np.zeros((ny, nx))
 
@@ -268,29 +294,26 @@ def install_htdp_binary(version="3.5.0"):
     v_tag = f"v{version}" if not version.startswith("v") else version
     clean_version = v_tag.replace("v", "")
 
-    if sys.platform == "win32":
-        logger.info(f"Downloading Windows HTDP executable ({v_tag})...")
-        url = f"https://github.com/noaa-ngs/HTDP/releases/download/{v_tag}/htdp.exe"
-        exe_path = os.path.join(cache_dir, f"htdp_{clean_version}.exe")
+    logger.info(f"Downloading HTDP reposity ({v_tag})...")
+    url = f"https://github.com/noaa-ngs/HTDP/archive/refs/tags/{v_tag}.zip"
+    zip_path = os.path.join(cache_dir, f"htdp_{clean_version}.zip")
 
-        try:
-            urllib.request.urlretrieve(url, exe_path)
-            logger.info(f"HTDP {clean_version} installed successfully to: {exe_path}")
-        except Exception as e:
-            logger.error(f"Failed to download {v_tag} from GitHub: {e}")
+    try:
+        urllib.request.urlretrieve(url, zip_path)
 
-    else:
-        logger.info(f"Downloading Unix HTDP source code ({v_tag})...")
-        url = f"https://github.com/noaa-ngs/HTDP/archive/refs/tags/{v_tag}.zip"
-        zip_path = os.path.join(cache_dir, f"htdp_{clean_version}.zip")
+        if sys.platform == "win32":
+            with zipfile.ZipFile(zip_path, "r") as z:
+                exe_name = next(name for name in z.namelist() if name.endswith(".exe"))
+                extracted_path = z.extract(exe_name, cache_dir)
+                exe_path = os.path.join(cache_dir, f"htdp_{clean_version}.exe")
 
-        try:
-            urllib.request.urlretrieve(url, zip_path)
-
+                if os.path.exists(exe_path):
+                    os.remove(exe_path)
+                shutil.move(extracted_path, exe_path)
+        else:
             extract_dir = os.path.join(cache_dir, f"htdp_src_{clean_version}")
             with zipfile.ZipFile(zip_path, "r") as z:
                 z.extractall(extract_dir)
-            os.remove(zip_path)
 
             # GitHub extracts to a folder named Repository-Tag (e.g., HTDP-3.5.0)
             source_folder = os.path.join(extract_dir, f"HTDP-{clean_version}")
@@ -308,8 +331,10 @@ def install_htdp_binary(version="3.5.0"):
             # Clean up the raw source files
             shutil.rmtree(extract_dir)
 
-        except Exception as e:
-            logger.error(f"Failed to install HTDP {clean_version}: {e}")
+        os.remove(zip_path)
+
+    except Exception as e:
+        logger.error(f"Failed to install HTDP {clean_version}: {e}")
 
 
 def _install_htdp_binary():
