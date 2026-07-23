@@ -301,8 +301,8 @@ def install_htdp_binary(version="3.5.0"):
         if sys.platform == "win32":
             exe_name = next(name for name in z.namelist() if name.endswith(".exe"))
             extracted_path = z.extract(exe_name, cache_dir)
+            exe_path = os.path.join(cache_dir, f"htdp_{clean_version}.exe")
 
-            # Rename it to our standardized cache format
             if os.path.exists(exe_path):
                 os.remove(exe_path)
             shutil.move(extracted_path, exe_path)
