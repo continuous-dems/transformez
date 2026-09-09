@@ -13,11 +13,11 @@ transformez.build_shift_grid(...)
 
 A few conventions apply across the API:
 
-* **Inputs are references.** All datum_in / datum_out arguments accept authority CRSs (`EPSG:5703`), namespaced references (`vdatum:mllw`, `global:lat`), or compound forms (`EPSG:4326+5703`). See [Vertical References](/user_guide/references.md).
-* **Shift grids are always added** to elevation data — the sign conventions are handled internally. See [sign conventions](/user_guide/methodology.md#the-datum-shift-sign-conventions) before applying a grid manually.
+* **Inputs are references.** All datum_in / datum_out arguments accept authority CRSs (`EPSG:5703`), namespaced references (`vdatum:mllw`, `global:lat`), or compound forms (`EPSG:4326+5703`). See [Vertical References](../user_guide/references.md).
+* **Shift grids are always added** to elevation data — the sign conventions are handled internally. See [sign conventions](../user_guide/methodology.md#the-datum-shift-sign-conventions) before applying a grid manually.
 * **Coastal decay is on by default.** Pass `extrapolate_inland=True` (or the CLI equivalent) for hydrodynamic workflows needing unrestricted inland extrapolation.
 
-For worked examples of each entry point, see the [Usage guide](/user_guide/usage.md).
+For worked examples of each entry point, see the [Usage guide](../user_guide/usage.md).
 
 
 ```{eval-rst}
