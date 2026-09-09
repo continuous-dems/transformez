@@ -4,6 +4,19 @@ Transformez is validated at several different levels because no single benchmark
 
 These results should therefore be interpreted according to the purpose of each test rather than as interchangeable measures of a single global accuracy value. In particular, the NOAA CO-OPS station comparison includes Transformez's production shoreline, coverage, and inland-decay policy, while the NOAA VDatum comparison intentionally removes those effects to isolate numerical engine equivalence.
 
+## Validation Environment
+
+The versions below record the Python packages and external geodetic engines resolved for this validation run. External-engine paths are included because HTDP and VDatum may be installed in multiple locations, and their software/data generation can materially affect reproducibility.
+
+| Component | Version | Source | Resolved Path |
+| :--- | :--- | :--- | :--- |
+| **Transformez** | 0.6.1.dev36+g16c193763.d20260907 | python environment | — |
+| **Fetchez** | 0.8.7.dev14+g5f4a0dc96 | python environment | — |
+| **HTDP** | 3.6.0 | resolved by Transformez | `/home/ncei/.local/share/transformez/bin/htdp_3.6.0` |
+| **VDatum** | 4.8 | user | `/home/ncei/.local/share/transformez/vdatum/4.8/vdatum.jar` |
+
+> **Reproducibility note:** Transformez and Fetchez versions identify the Python implementation under test. HTDP and VDatum identify the external reference engines used by Tests 2 and 4; their resolved paths are recorded to make it explicit which managed or system installation was selected.
+
 ## Test 1: Production Coastal Surface vs. NOAA CO-OPS Tide Stations
 
 This test generates a 3 arc-second MSL → MLLW shift grid using the normal Transformez coastal policy and samples it at NOAA CO-OPS tide-station locations. The comparison therefore evaluates the complete production surface, not only the underlying VDatum transformation mathematics.
@@ -16,8 +29,8 @@ Small mean bias together with larger RMSE generally indicates local spatial scat
 
 | Region | RMSE | Mean Bias | Stations | Physical Challenge |
 | :--- | :--- | :--- | :--- | :--- |
-| **Chesapeake Bay** | 0.0837 m | -0.0143 m | 104 | Estuary Shoaling |
-| **Astoria OR** | 0.0462 m | 0.0071 m | 21 | River Dynamics |
+| **Chesapeake Bay** | 0.0669 m | -0.0138 m | 104 | Estuary Shoaling |
+| **Astoria OR** | 0.0307 m | 0.0068 m | 21 | River Dynamics |
 | **Tampa Bay FL** | 0.0714 m | -0.0104 m | 60 | Complex Bay Geometry |
 
 > **How to read this test:** These values include Transformez's coastal masking and decay policy. They are expected to be more sensitive in estuaries and geometrically complex bays than in broad, well-resolved waterways. They should not be compared directly with the engine-equivalence RMSE in Test 2.
@@ -26,21 +39,37 @@ Small mean bias together with larger RMSE generally indicates local spatial scat
 ![Astoria OR Validation](../_static/validation_stations_plot_astoria_or.png)
 ![Tampa Bay FL Validation](../_static/validation_stations_plot_tampa_bay_fl.png)
 
-## Test 2: Numerical Engine Equivalence vs. NOAA VDatum
+## Test 2: Numerical Comparison vs. NOAA VDatum
 
 This test compares Transformez directly against the NOAA VDatum Java CLI at random locations for a NAVD88 → MHW transformation. Inland attenuation is deliberately disabled so that coastal decay policy does not contaminate the numerical comparison.
 
-Unlike Test 1, this is intended to answer a narrow question: when Transformez and NOAA VDatum are asked to evaluate the same supported transformation, do they produce the same shift? Sub-millimetric differences here provide strong evidence that the reference planner, sign conventions, provider routing, grid interpolation, and execution chain are reproducing the authoritative VDatum engine correctly.
+The purpose of this test is to verify that Transformez follows the same underlying geodetic transformation logic as NOAA VDatum, not to require bit-for-bit identity with the VDatum application. Where both engines evaluate the same regional package and transformation path, agreement should generally approach interpolation precision. Small residual differences can still arise because Transformez and VDatum do not necessarily use identical backend software versions, regional package-selection rules, or raster-compositing strategies.
 
-| Region | RMSE | Mean Difference | Points |
-| :--- | :--- | :--- | :--- |
-| **Astoria OR** | 0.000118 m | -0.000017 m | 59 |
-| **Tampa Bay FL** | 0.000365 m | -0.000049 m | 94 |
+Modern NOAA VDatum coverages can differ substantially from legacy packages. Older regional packages may express the tidal-to-TSS relationship directly against NAVD88, while newer packages can be tied to IGS realizations and require an xGEOID model plus a frame transformation before they can be compared with NAVD88-based surfaces. Transformez preserves each package as a coherent tidal/TSS unit, completes its package-specific path to the appropriate ellipsoid, applies the required HTDP frame transformation, converts to a common orthometric working surface, and only then mosaics multiple normalized coverages.
 
-> **How to read this test:** This is the primary validation of the transformation engine itself. It intentionally excludes production inland-decay behavior, so differences between Test 1 and Test 2 usually reflect coastal-domain and raster-policy effects rather than a disagreement in the underlying datum mathematics.
+This distinction matters in regions containing mixed generations of VDatum data. Transformez is designed to build one continuous shift surface suitable for DEM transformation, so overlapping legacy NAVD88-based and modern xGEOID-based coverages may both contribute to a single output grid. NOAA VDatum, by contrast, evaluates its own internal regional selection logic for each requested point. Both approaches use valid NOAA transformation resources, but they need not select the same source package in an overlap.
 
+Coverage ordering is therefore an important source of explainable disagreement. Transformez applies a deterministic general priority rule based primarily on release recency and geographic specificity, while NOAA VDatum can use more detailed provider-specific knowledge about adjacent or overlapping regional datasets. In areas such as Chesapeake Bay, neighboring VDatum packages from the same release can overlap substantially and differ locally by several centimeters; selecting a different valid package in that overlap can increase RMSE even when the transformation chain for each individual package is correct.
+
+Backend version differences can also contribute. Transformez resolves and records the HTDP version it uses for frame transformations, while a given VDatum release may embed or depend on a different HTDP generation or transformation implementation. The validation environment table above is therefore part of the numerical result: a small discrepancy between Transformez and VDatum can reflect a reproducible difference between the two software stacks rather than an error in either one.
+
+The Channel Islands case is intentionally included as a mixed-generation coverage-chain stress test. Southern California contains overlapping legacy NAD83/NAVD88-based coverage and newer IGS/xGEOID coverage. Transformez must keep tidal and TSS grids from the same package together, normalize the modern package through xGEOID and HTDP, apply release priority, and then mosaic the normalized surfaces. The island shorelines additionally expose small coverage-mask differences that can otherwise allow isolated lower-priority fringe cells to leak through newer coverage.
+
+The Chesapeake Bay case exercises an even denser overlap environment, with numerous adjacent and overlapping modern and legacy packages. Larger residuals there are therefore interpreted together with the package topology: they may reflect valid but different overlap choices rather than a disagreement in the underlying vertical-datum mathematics.
+
+| Region | VDatum Region | RMSE | Mean Difference | Points | Validation Challenge |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Chesapeake Bay** | 5 | 0.023705 m | 0.008765 m | 84 | Estuary Shoaling |
+| **Astoria OR** | 6 | 0.002611 m | 0.002592 m | 56 | River Dynamics |
+| **Tampa Bay FL** | 4 | 0.000365 m | -0.000049 m | 94 | Complex Bay Geometry |
+| **Channel Islands CA** | 6 | 0.002810 m | 0.002795 m | 191 | Overlapping Legacy and Modern VDatum Coverage Chains |
+
+> **How to read this test:** This is a numerical implementation comparison, not a requirement for one-to-one reproduction of every internal VDatum software decision. Near-zero differences indicate that Transformez and VDatum evaluated effectively the same package and path. Larger localized differences, especially in dense overlap regions, should be interpreted in the context of package selection, mixed xGEOID/NAVD88 mosaicing, backend HTDP versions, grid interpolation, and each engine's overlap policy. The Channel Islands result is a regression check on mixed-generation package pairing and xGEOID/frame normalization; Chesapeake Bay additionally stresses multi-package overlap ordering.
+
+![Chesapeake Bay VDatum Error Histogram](../_static/validation_vdatum_hist_chesapeake_bay.png)
 ![Astoria OR VDatum Error Histogram](../_static/validation_vdatum_hist_astoria_or.png)
 ![Tampa Bay FL VDatum Error Histogram](../_static/validation_vdatum_hist_tampa_bay_fl.png)
+![Channel Islands CA VDatum Error Histogram](../_static/validation_vdatum_hist_channel_islands_ca.png)
 
 ## Test 3: Global Model Agreement at International Tide Gauges
 
@@ -63,7 +92,7 @@ These tests are best understood as integration or regression checks rather than 
 
 | Test Region | Calculated Shift | Challenge | Status |
 | :--- | :--- | :--- | :--- |
-| **Washington (Cross-Epoch)** | -0.2690 m | Crustal Velocity & Datum Offset | PASS |
+| **Washington (Cross-Epoch)** | -0.2610 m | Crustal Velocity & Datum Offset | PASS |
 | **Japan (East Longitude)** | 1.9530 m | Eastern Hemisphere Longitude Parsing | PASS |
 
 > **How to read this test:** PASS indicates that the HTDP integration produced a plausible, finite result through the expected execution path. Detailed verification of HTDP's geophysical model belongs to NGS; these cases primarily protect Transformez against wrapper, frame-ID, epoch, and longitude-regression errors.
@@ -73,10 +102,10 @@ These tests are best understood as integration or regression checks rather than 
 Taken together, the validation suite tests different layers of Transformez rather than reducing accuracy to a single number:
 
 - **NOAA CO-OPS station tests** exercise the complete production coastal surface, including shoreline classification, VDatum coverage, raster resolution, and inland-decay policy.
-- **NOAA VDatum engine comparisons** isolate the transformation mathematics and provider/grid execution path and are the strongest direct check of numerical equivalence.
+- **NOAA VDatum engine comparisons** verify that Transformez follows the same underlying transformation logic while also exposing expected differences caused by mixed-generation mosaicing, overlap selection, backend software versions, and interpolation policy.
 - **International gauge comparisons** test whether the global fallback models produce physically reasonable offsets where local VDatum grids are unavailable.
 - **HTDP checks** verify the external frame/epoch transformation integration and guard against execution regressions.
 
-A larger RMSE in a complex estuary does not by itself indicate a datum-engine error, particularly when the corresponding engine-equivalence test remains near zero bias and sub-millimetric agreement. Coastal validation is intentionally sensitive to the production shoreline model because that behavior is part of the surface Transformez ultimately applies to DEMs.
+A larger RMSE in a complex estuary does not by itself indicate a datum-engine error. In heavily overlapped VDatum regions, Transformez and the VDatum application may legitimately select different valid regional packages, and modern xGEOID-based chains may also traverse different backend software versions than older NAVD88-based paths. The validation results are therefore interpreted spatially and operationally rather than as a requirement that Transformez duplicate every internal VDatum selection decision. Coastal validation remains intentionally sensitive to the production shoreline and compositing model because that behavior is part of the continuous surface Transformez ultimately applies to DEMs.
 
-> **Reproduce these results:** All validation scripts are in [`tests/validation/`](https://github.com/cires-dems/transformez/tree/main/tests/validation)
+> **Reproduce these results:** All validation scripts are in [`tests/validation/`](https://github.com/continuous-dems/transformez/tree/main/tests/validation)
