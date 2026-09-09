@@ -176,7 +176,7 @@ class HTDP:
 
             # The output Z will be the shift.
             lons = np.linspace(region.xmin, region.xmax, coarse_nx)
-            lats = np.linspace(region.ymin, region.ymax, coarse_ny)
+            lats = np.linspace(region.ymax, region.ymin, coarse_ny)
 
             # Write input file
             with in_fn.open("w") as f:

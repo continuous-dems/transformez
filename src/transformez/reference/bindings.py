@@ -349,7 +349,7 @@ OPERATION_BINDINGS = {
 # =========================================================================
 HTDP_FRAME_BINDINGS = {
     "EPSG:6319": HtdpFrameBinding(
-        htdp_id=1, name="NAD_83(2011/CORS96/2007)", reference_epoch=1997.0
+        htdp_id=1, name="NAD_83(2011/CORS96/2007)", reference_epoch=2010.0
     ),
     "EPSG:7663": HtdpFrameBinding(
         htdp_id=8, name="WGS_84(G1674)", reference_epoch=2000.0
@@ -365,12 +365,12 @@ HTDP_FRAME_BINDINGS = {
     "EPSG:7911": HtdpFrameBinding(
         htdp_id=22,
         name="IGS08/IGb08",
-        reference_epoch=2000.0,
+        reference_epoch=2010.0,
     ),
     "EPSG:7912": HtdpFrameBinding(
         htdp_id=23,
         name="IGS14/IGb14/WGS84/ITRF2014 Ellipsoid",
-        reference_epoch=2000.0,
+        reference_epoch=2010.0,
     ),
 }
 
