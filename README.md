@@ -12,12 +12,12 @@
   <a href="https://badge.fury.io/py/transformez"><img src="https://badge.fury.io/py/transformez.svg" alt="PyPI version"></a>
   <a href="https://anaconda.org/conda-forge/transformez"><img src="https://img.shields.io/conda/vn/conda-forge/transformez.svg" alt="Conda Version"></a>
   <a href="https://cudem.zulip.org"><img src="https://img.shields.io/badge/zulip-join_chat-brightgreen.svg" alt="Project Chat"></a>
-  <a href="https://doi.org/10.5281/zenodo.22131424"><img src="https://zenodo.org/badge/DOI/10.5281/zenodo.22131423.svg" alt="DOI"></a>
+  <a href="https://doi.org/10.5281/zenodo.22131424"><img src="https://zenodo.org/badge/DOI/10.5281/zenodo.22131424.svg" alt="DOI"></a>
 </p>
 
 **Transformez** builds and applies vertical transformations across geodetic, tidal, and model-based height references, from local datums to global surfaces.
 
-Transformez resolves your input and output references, computes the optimal geodetic pathway on the fly, and generates **spatially varying shift grids** — where regional models end, the transformation continues seamlessly across open ocean and inland via global proxies, coastal blending, and meter-based inland decay.
+Transformez resolves your input and output references, computes the optimal geodetic pathway on the fly, and generates **spatially varying shift grids** — where regional models end, the transformation continues across open ocean and inland using global proxies, coastal blending, and meter-based inland decay.
 
 Transformez is part of the [Continuous DEMs Project](https://continuous-dems.readthedocs.io/), an ecosystem of tools for modern, continuous digital elevation model generation. Originally incubated within CUDEM, the engine has evolved into a standalone datum transformation suite.
 
@@ -70,13 +70,14 @@ shift_array = transformez.generate_grid(
 
 Would you like to know more? Check out the [Official Documentation](https://transformez.readthedocs.io) to learn about:
 
-* **The Python API:** Build custom, memory-safe transformations directly into your applications.
+* **The Python API:** Build, inspect, reproject, and apply vertical transformations directly in your applications.
 * **Offline Field Ops:** Pre-fetch global FES models, VDatum grids, and NASA coastlines for offline execution (transformez prefetch).
 * **Data Provenance:** Learn how Transformez embeds automated metadata tags into output GeoTIFFs for strict scientific traceability.
 * **Validation & Accuracy:** Measured agreement against NOAA CO-OPS, NOAA VDatum, FES/DTU, and NGS HTDP.
- g
+* **Integrations:** Use Transformez directly from Fetchez workflows or through the QGIS plugin.
+
 ## ⚖ License
 
-This project is licensed under the MIT License - see the [LICENSE](https://github.com/ciresdem/transformez/blob/main/LICENSE) file for details.
+This project is licensed under the MIT License - see the [LICENSE](https://github.com/continuous-dems/transformez/blob/main/LICENSE) file for details.
 
 Copyright (c) 2010-2026 Regents of the University of Colorado
