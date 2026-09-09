@@ -2,7 +2,7 @@
 
 This guide covers everything you need to install, use, and understand Transformez — from your first shift grid to the geodetic reasoning behind it.
 
-Transformez transforms raster elevations between vertical datums — tidal datums, geoids, and ellipsoids — anywhere on Earth. Instead of a fixed lookup table, it resolves your input and output [references](references.md), plans the optimal geodetic pathway, and produces a **spatially varying shift grid** that you can generate from the [CLI](usage.md#command-line-interface), build through the Python API, or apply directly to a raster. Where regional models like NOAA VDatum end, Transformez continues the transformation across open ocean and inland using global proxies, coastal blending, and meter-based inland decay.
+Transformez transforms raster elevations between vertical datums — tidal datums, geoids, and ellipsoids — anywhere on Earth. Instead of a fixed lookup table, it resolves your input and output [references](references.md), plans the optimal geodetic pathway, and produces a **spatially varying shift grid** that you can generate from the [CLI](usage.md#command-line-interface), build through the Python API, or apply directly to a raster.
 
 ## How to read this guide
 
