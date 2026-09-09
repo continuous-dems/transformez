@@ -250,7 +250,7 @@ def system() -> None:
             raise ValueError
     except (ImportError, ValueError):
         vdatum_version = "Not installed."
-        vdatum_jar = ""
+        vdatum_jar = Path()
 
     click.echo(f"\n  Transformez: {__version__}")
 
