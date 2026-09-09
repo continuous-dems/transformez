@@ -1,8 +1,5 @@
 # 📐 Geodetic Methodology & Architecture
-To provide vertical transformations across varied geographic extents, Transformez relies on a dynamic, rigorous architecture.
-The Transformez engine computes optimal geodetic pathways on the fly.
-
-Here is a look under the hood at how Transformez handles dynamic vertical transformations.
+To provide vertical transformations across varied geographic extents, Transformez relies on a dynamic, rigorous architecture. The engine computes optimal geodetic pathways on the fly — here's a look under the hood.
 
 ```mermaid
 flowchart LR
@@ -17,16 +14,17 @@ flowchart LR
     H --> I
 ```
 
+The engine follows a typed reference → resolution → planning → execution pipeline. A user-supplied input is parsed into separate horizontal and vertical components, resolved into its full context, planned as an explicit sequence of grid and frame operations, and only then executed, yielding a [ShiftGrid](usage.md#which-interface-do-i-want) transformation product.
+
+
 ## Reference Resolution
-Before a transformation path is constructed, Transformez resolves user-supplied coordinate-reference inputs into separate horizontal and vertical components.
+Before a transformation path is constructed, Transformez resolves user-supplied reference inputs into separate horizontal and vertical components. Standard CRS definitions are resolved through PROJ, while Transformez-specific tidal and model surfaces use explicit namespaced identifiers such as vdatum:mllw and global:lat. Legacy shorthand names are normalized to these references for backward compatibility.
 
-Standard CRS definitions are resolved through PROJ, while Transformez-specific tidal and model surfaces use explicit namespaced identifiers such as `vdatum:mllw` and `global:lat`. Legacy shorthand names are normalized to these references for backward compatibility.
-
-Reference resolution is separate from transformation execution, where parsing determines what a reference represents and the transformation engine determines how to connect the resolved source and destination through the appropriate geodetic models and hubs.
+Reference resolution is separate from transformation execution: parsing determines what a reference represents, and the transformation engine determines how to connect the resolved source and destination through the appropriate geodetic models and hubs. This separation lets you inspect the full plan — providers, models, hubs, and frame transformations — before any data are fetched.
 
 
 ## The Dynamic Hub-and-Spoke Model
-Transformez routes complex, multi-step vertical conversions (e.g., moving from a local tidal datum directly to a global geoid) by using an autonomous **"Hub-and-Spoke"** system
+Complex, multi-step vertical conversions (e.g., from a local tidal datum directly to a global geoid) are routed through an autonomous "Hub-and-Spoke" system:
 
 ```mermaid
 flowchart TD
@@ -69,100 +67,6 @@ flowchart TD
 For example, if both datums belong to the North American Datum family, the engine routes strictly through the NAD83 ellipsoid hub to avoid introducing unnecessary global transformation errors. If the request crosses international or global boundaries, it scales up to the WGS84 hub.
 
 
-## VDatum coverage chains
-
-NOAA VDatum regional packages are treated by Transformez as coherent transformation units rather than as collections of interchangeable grids.
-
-This distinction is important because different generations of VDatum coverage do not necessarily use the same geodetic reference path. In particular, the meaning of the TSS surface depends on the horizontal reference frame recorded in the coverage metadata.
-
-Older regional VDatum models commonly use an NAD83-based path in which the TSS surface is tied to NAVD88. More recent models may instead use IGS-based reference frames and modern xGEOID surfaces.
-
-As a result, Transformez does not independently mosaic all tidal grids and all TSS grids before combining them. Doing so could mix surfaces from different VDatum generations that have different reference semantics.
-
-Instead, each intersecting VDatum coverage is processed independently.
-
-For a requested tidal datum such as `vdatum:mllw`, Transformez:
-
-1. identifies all VDatum coverage packages that intersect the requested region;
-2. pairs the requested tidal grid with the matching TSS grid from the same coverage package;
-3. reads the coverage metadata to determine the TSS reference path;
-4. completes the transformation chain for that coverage in its native reference system;
-5. normalizes the resulting shift to the common Transformez working reference;
-6. mosaics the normalized coverage with other normalized VDatum coverages according to coverage priority.
-
-Only after this normalization are different VDatum generations allowed to overlap or fill gaps in one another.
-
-### Legacy NAD83 / NAVD88 coverages
-
-For legacy VDatum packages whose metadata reports an NAD83 horizontal frame, the TSS surface is treated as the LMSL-to-NAVD88 relationship.
-
-For a tidal datum such as MLLW, the local hydrographic component is therefore:
-
-```text
-MLLW -> LMSL -> NAVD88
-```
-
-which is evaluated from the paired tidal and TSS grids as:
-
-```text
-tidal_grid - tss_grid
-```
-
-This produces a shift already expressed relative to the common NAVD88-like hydrographic working surface used by the coastal compositor.
-
-### Modern IGS / xGEOID coverages
-
-More recent VDatum packages may use an IGS-based reference frame.
-
-For example, an IGS14 coverage uses xGEOID20B rather than directly tying TSS to NAVD88. The coverage must therefore be completed through its native xGEOID and ellipsoidal frame before it can be compared with older VDatum data.
-
-Conceptually, the chain is:
-
-```text
-Tidal datum
-    -> LMSL / TSS
-    -> xGEOID20B
-    -> IGS14 ellipsoid
-    -> canonical Transformez ellipsoidal frame
-    -> canonical hydrographic working surface
-```
-
-Transformez performs the appropriate HTDP frame transformation as part of this normalization.
-
-The same architecture supports other VDatum roadmaps, such as IGS08 coverages associated with xGEOID17B.
-
-### Coverage mosaicing
-
-Once each coverage has been normalized to the same working reference, Transformez builds a priority mosaic.
-
-Coverage priority is determined from the VDatum release metadata, with newer coverage preferred over older coverage. Lower-priority packages are then used only to extend the spatial coverage where higher-priority data are unavailable.
-
-This allows, for example, a recent regional VDatum model to be preferred in its valid domain while an older regional model can still fill a genuine coverage gap outside that domain.
-
-Very small lower-priority contributions are ignored so that isolated fringe pixels from older models do not appear through minor differences in coverage masks or shoreline boundaries.
-
-This priority behavior is applied only after each coverage has been fully normalized. Raw grids from different VDatum generations are never allowed to compete directly.
-
-### Coastal and global fallback
-
-The completed VDatum mosaic represents the best available NOAA regional transformation surface for the requested area.
-
-Where VDatum coverage remains unavailable, Transformez may continue the transformation using its coastal/global fallback model. The normalized VDatum surface is combined with the configured global proxy using coastline-aware blending, and inland behavior is handled by the normal Transformez decay model.
-
-The overall processing order is therefore:
-
-```text
-VDatum coverage package
-    -> paired tidal + TSS grids
-    -> coverage-specific geodetic normalization
-    -> priority mosaic of normalized coverages
-    -> coastal/global fallback
-    -> final geoid / reference transformation
-```
-
-This preserves the geodetic provenance of each NOAA VDatum generation while still allowing overlapping regional datasets to form a continuous transformation surface.
-
-
 ## The Datum Shift (Sign Conventions)
 A common point of confusion in vertical geodesy is the sign convention of shift grids and what to do with them. It is easy to assume that shifting "up" to a higher surface should result in positive shift values, but physically, the opposite is true.
 
@@ -186,6 +90,14 @@ A common point of confusion in vertical geodesy is the sign convention of shift 
 	# Apply transformation
 	new_dem = dem_mllw.data + shift_grid  # Always ADD
 	```
+
+## Constant Conversion or Spatial Shifts
+It can be tempting to make the assumption that vertical datums are simple, flat offsets. Many GIS software and users sometimes prefer to query a single, local tide gauge, find the offset (e.g., "MLLW is exactly -1.2 meters below NAVD88"), and apply that flat, constant value across their entire dataset.
+
+While applying a flat shift is perfectly acceptable for certain circumstances, especially very local uses (such as surveying a single, 100-foot construction pad), it introduces significant vertical errors when applied to modern geospatial data like a 50-mile coastal DEM or a hydrodynamic model.
+
+Since water piles up and moves around and tides push into shallow bays and narrow estuaries, friction and funneling effects can cause the tidal amplitude to stretch. MLLW at the mouth of an estuary might be -1.2 meters, but ten miles up the river, MLLW might be -0.8 meters and 10 miles inland it might be 0. Because of this, tidal transformations should be spatially varying to reflect the physical laws of the ocean.
+
 
 ## Continuous Coastal Blending
 Official tidal models (like NOAA's VDatum) only provide data close to the coast. However, modern hydrodynamic modeling requires continuous grids that extend far into the deep ocean or miles inland.
@@ -216,17 +128,8 @@ Water levels (and their associated tidal datums) do not physically exist on dry 
 >
 > Hydrodynamic modelers (Tsunami, Storm Surge, Sea Level Rise) are an exception to this rule. Some tsunami, storm-surge, and inundation workflows require a continuous tidal-to-geodetic transformation over terrain that may become wetted during the simulation. For those workflows, users may choose unrestricted inland extrapolation rather than Transformez's default coastal attenuation policy.
 
-
-## Constant Conversion or Spatial Shifts
-It can be tempting to make the assumption that vertical datums are simple, flat offsets. Many GIS software and users sometimes prefer to query a single, local tide gauge, find the offset (e.g., "MLLW is exactly -1.2 meters below NAVD88"), and apply that flat, constant value across their entire dataset.
-
-While applying a flat shift is perfectly acceptable for certain circumstances, especially very local uses (such as surveying a single, 100-foot construction pad), it introduces significant vertical errors when applied to modern geospatial data like a 50-mile coastal DEM or a hydrodynamic model.
-
-Since water piles up and moves around and tides push into shallow bays and narrow estuaries, friction and funneling effects can cause the tidal amplitude to stretch. MLLW at the mouth of an estuary might be -1.2 meters, but ten miles up the river, MLLW might be -0.8 meters and 10 miles inland it might be 0. Because of this, tidal transformations should be spatially varying to reflect the physical laws of the ocean.
-
-
 ## Fallbacks and Failures
-Transformez is designed to survive infrastructure failures automatically:
+Transformez includes explicit fallback and recovery behavior for cases where preferred models, external engines, or cached resources are unavailable.
 
 * **Geoid Fallbacks:** If a requested geoid (like g2018) lacks physical coverage in a remote area (e.g., parts of Alaska), the engine automatically scans its registry and downgrades to the newest compatible model (like g2012b or geoid09) to keep the pipeline alive.
 
@@ -242,4 +145,7 @@ Transformez is designed to survive infrastructure failures automatically:
 | VDatum grid absent        | Use DTU/FES global proxy  |
 |                           |                           |
 
----
+
+> Deeper detail: For a step-by-step walkthrough of how NOAA VDatum regional packages are paired, normalized, and mosaiced across mixed generations of VDatum coverage, see the appendix page [VDatum Coverage Chains](vdatum_chains.md).
+
+> Where to next: see [Validation & Accuracy](validation.md) for measured agreement against NOAA CO-OPS, VDatum, FES/DTU, and NGS HTDP.

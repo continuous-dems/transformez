@@ -18,6 +18,8 @@ author = "Matthew Love"
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
+myst_heading_anchors = 3
+
 nitpicky = True
 nitpick_ignore = [
     ("py:data", "typing.Union"),
