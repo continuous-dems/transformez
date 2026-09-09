@@ -69,37 +69,6 @@ flowchart TD
 For example, if both datums belong to the North American Datum family, the engine routes strictly through the NAD83 ellipsoid hub to avoid introducing unnecessary global transformation errors. If the request crosses international or global boundaries, it scales up to the WGS84 hub.
 
 
-## The Datum Shift (Sign Conventions)
-A common point of confusion in vertical geodesy is the sign convention of shift grids and what to do with them. It is easy to assume that shifting "up" to a higher surface should result in positive shift values, but physically, the opposite is true.
-
-* **The Stick in the Bay:** Imagine standing in the water of a bay holding a measuring stick with a "zero" line marked as Mean Low Water. If you move your "zero" mark to a higher datum (e.g., moving from Mean Low Water up to Mean Higher High Water), the water level on your stick will read as a lower number.
-
-* **The Rule of Addition:** Because of this, shifting to a higher reference surface can require positive *or* negative shift values depending on location. Transformez automatically handles these complex sign inversions internally so you don't have to overthink it. You always simply **ADD** the generated shift grid to your raster (i.e., `New_DEM = Old_DEM + Shift_Grid`). The grid's native positive and negative values automatically ensure the math reflects physical reality.
-
-* **Example:**
-
-	```python
-	# Your DEM is referenced to MLLW
-	dem_mllw = rasterio.open("coast_dem_mllw.tif")
-
-	# Generate shift grid to NAVD88
-	shift_grid = transformez.generate_grid(
-		region=coast_region,
-		datum_in="mllw",
-		datum_out="navd88",
-	)
-
-	# Apply transformation
-	new_dem = dem_mllw.data + shift_grid  # Always ADD
-	```
-
-## Continuous Coastal Blending
-Official tidal models (like NOAA's VDatum) only provide data close to the coast. However, modern hydrodynamic modeling requires continuous grids that extend far into the deep ocean or miles inland.
-
-* **Offshore Extrapolation:** When a requested bounding box extends beyond native VDatum coverage, Transformez automatically fetches global satellite altimetry (like DTU25 or FES2014) as a proxy.
-
-* **Smart Blending:** To prevent harsh steps between the two models, the engine applies a dynamic spatial crossfade. Where NOAA VDatum coverage ends offshore, Transformez uses global DTU/FES-derived surfaces as a fallback and blends between valid regional and global coverage to avoid abrupt model seams. Global proxy coverage never expands the water domain; coastline geometry comes from Dist2Coast, with valid VDatum coverage permitted to extend the effective tidal domain in modeled estuaries and rivers.
-
 ## VDatum coverage chains
 
 NOAA VDatum regional packages are treated by Transformez as coherent transformation units rather than as collections of interchangeable grids.
@@ -193,12 +162,37 @@ VDatum coverage package
 
 This preserves the geodetic provenance of each NOAA VDatum generation while still allowing overlapping regional datasets to form a continuous transformation surface.
 
-## Constant Conversion or Spatial Shifts
-It can be tempting to make the assumption that vertical datums are simple, flat offsets. Many GIS software and users sometimes prefer to query a single, local tide gauge, find the offset (e.g., "MLLW is exactly -1.2 meters below NAVD88"), and apply that flat, constant value across their entire dataset.
 
-While applying a flat shift is perfectly acceptable for certain circumstances, especially very local uses (such as surveying a single, 100-foot construction pad), it introduces significant vertical errors when applied to modern geospatial data like a 50-mile coastal DEM or a hydrodynamic model.
+## The Datum Shift (Sign Conventions)
+A common point of confusion in vertical geodesy is the sign convention of shift grids and what to do with them. It is easy to assume that shifting "up" to a higher surface should result in positive shift values, but physically, the opposite is true.
 
-Since water piles up and moves around and tides push into shallow bays and narrow estuaries, friction and funneling effects can cause the tidal amplitude to stretch. MLLW at the mouth of an estuary might be -1.2 meters, but ten miles up the river, MLLW might be -0.8 meters and 10 miles inland it might be 0. Because of this, tidal transformations should be spatially varying to reflect the physical laws of the ocean.
+* **The Stick in the Bay:** Imagine standing in the water of a bay holding a measuring stick with a "zero" line marked as Mean Low Water. If you move your "zero" mark to a higher datum (e.g., moving from Mean Low Water up to Mean Higher High Water), the water level on your stick will read as a lower number.
+
+* **The Rule of Addition:** Because of this, shifting to a higher reference surface can require positive *or* negative shift values depending on location. Transformez automatically handles these complex sign inversions internally so you don't have to overthink it. You always simply **ADD** the generated shift grid to your raster (i.e., `New_DEM = Old_DEM + Shift_Grid`). The grid's native positive and negative values automatically ensure the math reflects physical reality.
+
+* **Example:**
+
+	```python
+	# Your DEM is referenced to MLLW
+	dem_mllw = rasterio.open("coast_dem_mllw.tif")
+
+	# Generate shift grid to NAVD88
+	shift_grid = transformez.generate_grid(
+		region=coast_region,
+		datum_in="mllw",
+		datum_out="navd88",
+	)
+
+	# Apply transformation
+	new_dem = dem_mllw.data + shift_grid  # Always ADD
+	```
+
+## Continuous Coastal Blending
+Official tidal models (like NOAA's VDatum) only provide data close to the coast. However, modern hydrodynamic modeling requires continuous grids that extend far into the deep ocean or miles inland.
+
+* **Offshore Extrapolation:** When a requested bounding box extends beyond native VDatum coverage, Transformez automatically fetches global satellite altimetry (like DTU25 or FES2014) as a proxy.
+
+* **Smart Blending:** To prevent harsh steps between the two models, the engine applies a dynamic spatial crossfade. Where NOAA VDatum coverage ends offshore, Transformez uses global DTU/FES-derived surfaces as a fallback and blends between valid regional and global coverage to avoid abrupt model seams. Global proxy coverage never expands the water domain; coastline geometry comes from Dist2Coast, with valid VDatum coverage permitted to extend the effective tidal domain in modeled estuaries and rivers.
 
 
 ## Inland Tidal Decay
@@ -222,7 +216,16 @@ Water levels (and their associated tidal datums) do not physically exist on dry 
 >
 > Hydrodynamic modelers (Tsunami, Storm Surge, Sea Level Rise) are an exception to this rule. Some tsunami, storm-surge, and inundation workflows require a continuous tidal-to-geodetic transformation over terrain that may become wetted during the simulation. For those workflows, users may choose unrestricted inland extrapolation rather than Transformez's default coastal attenuation policy.
 
-## Autonomous Self-Healing
+
+## Constant Conversion or Spatial Shifts
+It can be tempting to make the assumption that vertical datums are simple, flat offsets. Many GIS software and users sometimes prefer to query a single, local tide gauge, find the offset (e.g., "MLLW is exactly -1.2 meters below NAVD88"), and apply that flat, constant value across their entire dataset.
+
+While applying a flat shift is perfectly acceptable for certain circumstances, especially very local uses (such as surveying a single, 100-foot construction pad), it introduces significant vertical errors when applied to modern geospatial data like a 50-mile coastal DEM or a hydrodynamic model.
+
+Since water piles up and moves around and tides push into shallow bays and narrow estuaries, friction and funneling effects can cause the tidal amplitude to stretch. MLLW at the mouth of an estuary might be -1.2 meters, but ten miles up the river, MLLW might be -0.8 meters and 10 miles inland it might be 0. Because of this, tidal transformations should be spatially varying to reflect the physical laws of the ocean.
+
+
+## Fallbacks and Failures
 Transformez is designed to survive infrastructure failures automatically:
 
 * **Geoid Fallbacks:** If a requested geoid (like g2018) lacks physical coverage in a remote area (e.g., parts of Alaska), the engine automatically scans its registry and downgrades to the newest compatible model (like g2012b or geoid09) to keep the pipeline alive.
@@ -231,31 +234,12 @@ Transformez is designed to survive infrastructure failures automatically:
 
 * **Failure Mode Examples:**
 
-| Failure                   | Recovery Action           | User Impact                                  |
-|---------------------------|---------------------------|----------------------------------------------|
-| GEOID18 missing in Alaska | Fall back to GEOID12B     | None—automatic                               |
-| HTDP cross-epoch fails    | Use static datum shift    | Slight precision loss                        |
-| NetCDF corruption         | Delete cache, re-download | Automatic retry                              |
-| VDatum grid absent        | Use DTU/FES global proxy  | Lower regional fidelity; continuous fallback |
-|                           |                           |                                              |
+| Failure                   | Recovery Action           |
+|---------------------------|---------------------------|
+| GEOID18 missing in Alaska | Fall back to GEOID12B     |
+| HTDP cross-epoch fails    | Use static datum shift    |
+| NetCDF corruption         | Delete cache, re-download |
+| VDatum grid absent        | Use DTU/FES global proxy  |
+|                           |                           |
 
 ---
-
-## Getting Started
-
-Ready to transform your data?
-
-```bash
-# Install
-pip install transformez
-
-# Generate a shift grid
-transformez run -R loc:"Miami" -E 1s -I mllw -O navd88 -o shift_grid.tif
-
-# Transform a DEM directly
-transformez run my_dem.tif -I mllw -O navd88 -o my_dem_navd88.tif
-
-# Learn more
-transformez --help
-transformez list  # View all supported datums
-```
