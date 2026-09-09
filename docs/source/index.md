@@ -23,7 +23,7 @@ Transformez is part of the [Continuous DEMs Project](https://continuous-dems.rea
 *(Above: A generated vertical shift grid transforming MLLW to NAVD88)*
 
 ```bash
-transformez build -R loc:"new orleans" -E 3s -I mllw -O 5703
+transformez build -R loc:"new orleans" -E 3s -I vdatum:mllw -O epsg:5703
 ```
 
 ## Installation:
@@ -94,8 +94,7 @@ utm_shift.write("mllw_to_navd88_utm.tif")
 out_file = transformez.transform_raster(
     input_raster="my_dem_mllw.tif",
     datum_in="vdatum:mllw",
-    datum_out="5703+geoid:g2012b",  # NAVD88 using specific GEOID12B
-    decay_pixels=0,                 # Set to 0 for infinite inland extrapolation (Modeling)
+    datum_out="epsg:5703",
     output_raster="my_dem_navd88.tif"
 )
 ```
