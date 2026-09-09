@@ -11,9 +11,7 @@ Transformez is part of the [Continuous DEMs Project](https://continuous-dems.rea
 - **Dynamic Hub-and-Spoke routing** — Automatically selects the optimal geodetic pathway (NAD83 or WGS84) for your transformation
 - **Continuous coastal blending** — Seamlessly merges NOAA VDatum with global satellite altimetry (FES2014/DTU25)
 - **Inland tidal decay** — Smart extrapolation with Hermite S-curve smoothing for flood modeling
-- **Autonomous self-healing** — Automatic geoid fallbacks, corruption recovery, and HTDP tectonic fallbacks
 - **Global coverage** — Works anywhere on Earth via dynamic proxy chaining when regional models are unavailable
-- **Memory-safe** — Windowed I/O for transforming massive DEMs without loading them into RAM
 - **CLI + Python API** — Use as a command-line tool or embed in your pipeline
 - **Offline field use** — Pre-download grids with `transformez prefetch` for air-gapped environments
 
@@ -23,7 +21,7 @@ Transformez is part of the [Continuous DEMs Project](https://continuous-dems.rea
 *(Above: A generated vertical shift grid transforming MLLW to NAVD88)*
 
 ```bash
-transformez build -R loc:"new orleans" -E 3s -I mllw -O 5703
+transformez build -R loc:"new orleans" -E 3s -I vdatum:mllw -O epsg:5703
 ```
 
 ## Installation:
@@ -59,7 +57,7 @@ import transformez
 
 # Generate a Shift Grid
 # Returns a 2D numpy array. Optionally saves to a file.
-# Requesting "mllw" in India triggers the Global Fallback (FES2014) automatically.
+# Requesting "mllw" in India triggers the Global Fallback automatically.
 shift_array = transformez.generate_grid(
     region=[80, 85, 10, 15],  # [West, East, South, North]
     increment="3s",           # Grid resolution
@@ -94,15 +92,14 @@ utm_shift.write("mllw_to_navd88_utm.tif")
 out_file = transformez.transform_raster(
     input_raster="my_dem_mllw.tif",
     datum_in="vdatum:mllw",
-    datum_out="5703+geoid:g2012b",  # NAVD88 using specific GEOID12B
-    decay_pixels=0,                 # Set to 0 for infinite inland extrapolation (Modeling)
+    datum_out="epsg:5703",
     output_raster="my_dem_navd88.tif"
 )
 ```
 
 ## Learn More
 
-Interested in how `transformez` routes complex multi-step transformations? Read the [Geodetic Methodology & Architecture](user_guide/methodology.md) guide to learn about the dynamic hub-and-spoke model, sign conventions, coastal blending, and autonomous self-healing.
+Read the [User Guide](user_guide/index.md) to install Transformez, generate your first shift grid, and understand how it works — from reference inputs and the CLI/Python API through the [geodetic methodology](user_guide/methodology.md) behind the dynamic hub-and-spoke routing, sign conventions, and coastal blending.
 
 ```{toctree}
 :maxdepth: 2
