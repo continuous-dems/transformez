@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-transformez.vdatum
+transformez.engines.vdatum
 ~~~~~~~~~~~~~~~~~~
 
 Wrapper and installer for NOAA's VDatum Java transformation engine.
