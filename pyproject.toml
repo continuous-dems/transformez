@@ -124,11 +124,13 @@ extend-select = [  # Extend the default ruleset:
 "src/transformez/htdp.py" = ["T201"]
 "src/transformez/__init__.py" = ["PTH"]
 "tests/**/*.py" = ["T201", "PTH"]
+"src/transformez/integrations/qgis/**/*.py" = ["T201"]
 
 [[tool.mypy.overrides]]
 module = [
     "scipy.*",
     "fetchez.*",
+    "qgis.*",
 ]
 follow_untyped_imports = false
 ignore_missing_imports = true

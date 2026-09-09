@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-transformez.htdp
+transformez.engines.htdp
 ~~~~~~~~~~~~~
 
 Wrapper for the NGS HTDP (Horizontal Time-Dependent Positioning) software.

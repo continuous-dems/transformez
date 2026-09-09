@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-transformez.modules
+transformez.integrations.fetchez.modules.modules
 ~~~~~~~~~~~~~
 
 Some modules for `fetchez`
