@@ -64,7 +64,7 @@ shift_array = transformez.generate_grid(
 )
 ```
 
-> ⚠️ Shift grids are always added to your elevation data — the sign conventions are handled internally. See the methodology guide for the physical intuition.
+> ⚠️ Shift grids are always added to your elevation data — the sign conventions are handled internally. See the [methodology guide](https://transformez.readthedocs.io/en/latest/user_guide/methodology.html#the-datum-shift-sign-conventions) for the physical intuition.
 
 ## 📚 Documentation
 
