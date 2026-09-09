@@ -14,6 +14,9 @@ Transformez transforms raster elevations between vertical datums — tidal datum
 - **Curious how a tidal-to-geoid pathway is actually built?** [Methodology](methodology.md) explains the hub-and-spoke routing, and the [VDatum Coverage Chains](vdatum_chains.md) appendix goes deep on mixed-generation VDatum handling.
 - **Need to trust the numbers?** [Validation & Accuracy](validation.md) shows measured agreement against NOAA CO-OPS, VDatum, FES/DTU, and NGS HTDP.
 
+
+> Using Transformez from another application? Transformez integrates with Fetchez and QGIS; see the [Integrations](usage.md#integrations) section.
+
 ```{toctree}
 :maxdepth: 2
 
@@ -25,3 +28,4 @@ methodology
 vdatum_chains
 providers
 validation
+```

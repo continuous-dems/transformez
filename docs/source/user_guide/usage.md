@@ -1,6 +1,6 @@
 # 🛠️ Usage
 
-Transformez gives you two ways to work: a command-line tool for scripts and shells, and a high-level Python API for scripts, notebooks, and pipelines. Both accept the same [references](references.md) and behave identically.
+Transformez can be used directly from the command line or Python API, or through integrations such as Fetchez and QGIS. All interfaces — CLI, Python API, and integrations such as Fetchez and QGIS — accept the same [references](references.md) and behave identically.
 
 > **🧮 Sign conventions:** vertical datum shifts are not intuitive — shifting to a *higher* surface does not simply mean positive values. Transformez handles all sign conventions internally. The one thing to remember: **always ADD the shift grid** to your elevation data. See the [sign conventions](methodology.md#the-datum-shift-sign-conventions) section of the methodology guide for the physical intuition.
 
@@ -42,7 +42,7 @@ shift_array = transformez.generate_grid(
     region=[80, 85, 10, 15],  # [West, East, South, North]
     increment="3s",           # Grid resolution
     datum_in="vdatum:mllw",   # VDatums mllw realization
-    datum_out="4979",         # WGS84 Ellipsoid
+    datum_out="epsg:4979",    # WGS84 Ellipsoid
     out_fn="india_shift.tif"  # Optional: Save to disk
 )
 
@@ -54,8 +54,8 @@ shift_array = transformez.generate_grid(
 out_file = transformez.transform_raster(
     input_raster="my_dem_lat.tif",
     datum_in="global:lat",
-    datum_out="5703:g2012b",            # NAVD88 using specific GEOID12B
-	extrapolate_inland=False,           # Use normal coastal decay behavior
+    datum_out="epsg:5703",
+    extrapolate_inland=False,
     output_raster="my_dem_navd88.tif"
 )
 ```
@@ -98,7 +98,7 @@ components.horizontal
 components.vertical
 ```
 
-Full signatures for these functions are in the [Developer API](/api/api.md).
+Full signatures for these functions are in the [Developer API](../api/api.md).
 
 ## Inland Decay vs. Unrestricted Extrapolation
 
@@ -113,3 +113,11 @@ transformez shift my_coastal_dem.tif \
 ```
 
 > The sign conventions of the applied shift and the physical intuition behind coastal blending and inland decay are covered in depth in [Methodology](methodology.md); the models being fetched are listed in [Models and Providers](providers.md).
+
+
+## Integrations
+
+Transformez can also be used through integrations with other geospatial tools:
+
+* **Fetchez:** Transformez can operate as a Fetchez plugin, allowing datum transformations and shift-grid generation to be incorporated directly into data-fetching workflows.
+* **QGIS:** The Transformez QGIS plugin generates vertical shift grids for the current map extent from a graphical interface. It installs and manages Transformez in an isolated runtime, wrapping the public Python API.
