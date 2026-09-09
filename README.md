@@ -74,7 +74,7 @@ Would you like to know more? Check out the [Official Documentation](https://tran
 * **Offline Field Ops:** Pre-fetch global FES models, VDatum grids, and NASA coastlines for offline execution (transformez prefetch).
 * **Data Provenance:** Learn how Transformez embeds automated metadata tags into output GeoTIFFs for strict scientific traceability.
 * **Validation & Accuracy:** Measured agreement against NOAA CO-OPS, NOAA VDatum, FES/DTU, and NGS HTDP.
- g
+
 ## ⚖ License
 
 This project is licensed under the MIT License - see the [LICENSE](https://github.com/ciresdem/transformez/blob/main/LICENSE) file for details.
