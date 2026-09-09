@@ -13,7 +13,6 @@ Transformez is part of the [Continuous DEMs Project](https://continuous-dems.rea
 - **Inland tidal decay** — Smart extrapolation with Hermite S-curve smoothing for flood modeling
 - **Autonomous self-healing** — Automatic geoid fallbacks, corruption recovery, and HTDP tectonic fallbacks
 - **Global coverage** — Works anywhere on Earth via dynamic proxy chaining when regional models are unavailable
-- **Memory-safe** — Windowed I/O for transforming massive DEMs without loading them into RAM
 - **CLI + Python API** — Use as a command-line tool or embed in your pipeline
 - **Offline field use** — Pre-download grids with `transformez prefetch` for air-gapped environments
 
@@ -59,7 +58,7 @@ import transformez
 
 # Generate a Shift Grid
 # Returns a 2D numpy array. Optionally saves to a file.
-# Requesting "mllw" in India triggers the Global Fallback (FES2014) automatically.
+# Requesting "mllw" in India triggers the Global Fallback automatically.
 shift_array = transformez.generate_grid(
     region=[80, 85, 10, 15],  # [West, East, South, North]
     increment="3s",           # Grid resolution
