@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-transformez.hooks
+transformez.integrations.fetchez.hooks.hooks
 ~~~~~~~~~~~~~
 
 Some hooks for `fetchez`
