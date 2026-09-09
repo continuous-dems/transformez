@@ -102,7 +102,7 @@ out_file = transformez.transform_raster(
 
 ## Learn More
 
-Interested in how `transformez` routes complex multi-step transformations? Read the [Geodetic Methodology & Architecture](user_guide/methodology.md) guide to learn about the dynamic hub-and-spoke model, sign conventions, coastal blending, and autonomous self-healing.
+Read the [User Guide](user_guide/index.md) to install Transformez, generate your first shift grid, and understand how it works — from reference inputs and the CLI/Python API through the [geodetic methodology](user_guide/methodology.md) behind the dynamic hub-and-spoke routing, sign conventions, and coastal blending.
 
 ```{toctree}
 :maxdepth: 2
