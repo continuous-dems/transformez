@@ -17,60 +17,64 @@
 
 **Transformez** builds and applies vertical transformations across geodetic, tidal, and model-based height references, from local datums to global surfaces.
 
+Rather than applying a fixed, constant offset from a single tide gauge, Transformez resolves your input and output references, computes the optimal geodetic pathway on the fly, and generates **spatially varying shift grids** — where regional models like NOAA VDatum end, the transformation continues seamlessly across open ocean and inland via global proxies, coastal blending, and meter-based inland decay.
+
 Transformez is part of the [Continuous DEMs Project](https://continuous-dems.readthedocs.io/), an ecosystem of tools for modern, continuous digital elevation model generation. Originally incubated within CUDEM, the engine has evolved into a standalone datum transformation suite.
 
 ---
 
 ## 📦 Installation
 
-**Install Transformez**
-Install the transformez python package:
+Install the Transformez Python package:
 
 ```bash
 pip install transformez
-```
 
-**Install HTDP**
-The NGS Horizontal Time-Dependent Positioning (HTDP) software is required to perform highly accurate plate tectonic and frame transformations, you can install it with transformez!:
-
-```bash
+# Install the external geodetic engines through the CLI (HTDP is only needed for dynamic-frame and epoch transformations):
 transformez htdp install
+transformez vdatum install   # optional, for direct VDatum comparison/validation
 ```
 
-## 🐄 Quickstart
+## 🚀 Quickstart
 
-**Generate a vertical shift grid for anywhere on Earth.**
-
-```bash
-# Transform MLLW to WGS84 Ellipsoid in Norton Sound, AK
-
-transformez build -R -166/-164/63/64 -E 1s -I mllw -O 4979
-```
-
-**Transform a raster directly.** Transformez reads the bounds/resolution from the file.
+Generate a vertical shift grid anywhere on Earth.
 
 ```bash
-transformez shift my_dem.tif -I mllw -O 5703
-```
+# Transform MLLW to WGS84 ellipsoidal height in Norton Sound, AK
+transformez build -R -166/-164/63/64 -E 1s -I vdatum:mllw -O epsg:4979
 
-**Inspect a specific reference.**
+# Transform a raster directly. Transformez reads the bounds and resolution from the file.
+transformez shift my_dem.tif -I vdatum:mllw -O epsg:5703
 
-```bash
+# Inspect a reference or plan a transformation before running it.
 transformez info reference vdatum:mllw
+transformez plan -I vdatum:mllw -O epsg:5703 -R -166/-164/63/64
 ```
 
----
+From Python:
+
+```python
+import transformez
+
+shift_array = transformez.generate_grid(
+    region=[80, 85, 10, 15],   # [West, East, South, North]
+    increment="3s",
+    datum_in="vdatum:mllw",
+    datum_out="epsg:4979",
+)
+```
+
+> ⚠️ Shift grids are always added to your elevation data — the sign conventions are handled internally. See the methodology guide for the physical intuition.
 
 ## 📚 Documentation
-Would you like to know more? Check out our [Official Documentation](https://transformez.readthedocs.io) to learn about:
+
+Would you like to know more? Check out the [Official Documentation](https://transformez.readthedocs.io) to learn about:
 
 * **The Python API:** Build custom, memory-safe transformations directly into your applications.
-* **Offline Field Ops:** Pre-fetch global FES models, VDatum grids, and NASA coastlines for offline execution (`transformez prefetch`).
-* **Live CO-OPS Data:** Dynamically interpolate geodetic surfaces using live tide station offsets (`--use-stations`).
+* **Offline Field Ops:** Pre-fetch global FES models, VDatum grids, and NASA coastlines for offline execution (transformez prefetch).
 * **Data Provenance:** Learn how Transformez embeds automated metadata tags into output GeoTIFFs for strict scientific traceability.
-
----
-
+* **Validation & Accuracy:** Measured agreement against NOAA CO-OPS, NOAA VDatum, FES/DTU, and NGS HTDP.
+ g
 ## ⚖ License
 
 This project is licensed under the MIT License - see the [LICENSE](https://github.com/ciresdem/transformez/blob/main/LICENSE) file for details.
