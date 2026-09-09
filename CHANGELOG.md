@@ -45,12 +45,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Moved `GridWriter` into new `/grid/io` module
 - Moved `generation.py` to `/grid/shift` module
 - Moved `grid_engine.py` to `/grid/engine` module
+- Update vdatum cli group
 
 ### Fixed
 - Refactor dist2coast usage to fix a bug that would burn the dist2coast edges onto the raster result. This was due to performing an edt distance transform from the low-res dist2coast raster, treating it as a mask instead of a distance field. Update allows setting the distance by km instead of number of pixels and smooths the 'zero' field to get proper transitions.
 - Since dist2coast sets it's nodata value to zero, we were incorrectly masking the dist2coast raster by ignoring the zero values (coastline), we now have an option to ignore the nodata value in grid_engine.
 - Improved validation of datum/reference inputs by resolving standard EPSG identifiers through PROJ before adapting them to the legacy transformation engine.
 - Improved support of legacy reference sytax in parser.py by parsing non-standard epsg+ syntax.
+- Fix htdp lat directions.
 
 ### Deprecated
 - The legacy SRSParser interface remains available for compatibility but now delegates to the new API.

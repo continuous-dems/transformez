@@ -50,7 +50,7 @@ def test_htdp_frame_bindings():
 
     assert nad83_2011 is not None
     assert nad83_2011.htdp_id == 1
-    assert nad83_2011.reference_epoch == 1997.0
+    assert nad83_2011.reference_epoch == 2010.0
 
 
 def test_binding_ids():

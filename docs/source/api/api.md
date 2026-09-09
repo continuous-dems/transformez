@@ -14,4 +14,5 @@ The high-level Python API for generating and using transformation shift grids.
 .. autoclass:: transformez.reference.types.VerticalReference
 .. autoclass:: transformez.reference.types.VerticalKind
 .. autoclass:: transformez.reference.types.AxisDirection
+.. autoclass:: transformez.progress.ProgressEvent
 ```

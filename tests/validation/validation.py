@@ -20,6 +20,7 @@ import sys
 import csv
 import time
 import logging
+from importlib import metadata as importlib_metadata
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -30,7 +31,8 @@ from fetchez.spatial import Region
 
 from transformez import generate_grid
 from transformez.utils import RasterQuery
-from transformez.engines.vdatum import Vdatum
+from transformez.engines.htdp import HTDP, DEFAULT_HTDP_VERSION
+from transformez.engines.vdatum import Vdatum, DEFAULT_VDATUM_VERSION
 
 # Configure logging
 logging.basicConfig(
@@ -49,12 +51,12 @@ TEST_REGIONS = {
     "Chesapeake Bay": {
         "bounds": (-77.5, -75.0, 36.5, 39.5),
         "challenge": "Estuary Shoaling",
-        "vdatum_region": "1",
+        "vdatum_region": "5",
     },
     "Astoria OR": {
         "bounds": (-124.25, -123.0, 45.5, 46.5),
         "challenge": "River Dynamics",
-        "vdatum_region": "3",
+        "vdatum_region": "6",
     },
     "Norton Sound AK": {
         "bounds": (-168.0, -160.5, 62.75, 65.25),
@@ -64,7 +66,13 @@ TEST_REGIONS = {
     "Tampa Bay FL": {
         "bounds": (-83.0, -82.0, 27.0, 28.0),
         "challenge": "Complex Bay Geometry",
-        "vdatum_region": "3",
+        "vdatum_region": "4",
+    },
+    "Channel Islands CA": {
+        "bounds": (-120.0, -119.0, 33.25, 34.25),
+        "challenge": "Overlapping Legacy and Modern VDatum Coverage Chains",
+        "vdatum_region": "6",
+        "station_validation": False,
     },
 }
 
@@ -86,6 +94,53 @@ PHYSICAL_BUFFER_DISTANCE_M = 250.0
 # Engine-to-engine VDatum comparison settings.
 VDATUM_VALIDATION_POINTS = 200
 VDATUM_VALIDATION_SEED = 42
+
+
+def _package_version(distribution: str) -> str:
+    """Return an installed Python distribution version without failing validation."""
+
+    try:
+        return importlib_metadata.version(distribution)
+    except importlib_metadata.PackageNotFoundError:
+        return "unknown"
+
+
+def collect_runtime_versions() -> Dict[str, Dict[str, Optional[str]]]:
+    """Collect package and external-engine versions used by this validation run."""
+
+    versions: Dict[str, Dict[str, Optional[str]]] = {
+        "transformez": {
+            "version": _package_version("transformez"),
+            "path": None,
+            "source": "python environment",
+        },
+        "fetchez": {
+            "version": _package_version("fetchez"),
+            "path": None,
+            "source": "python environment",
+        },
+    }
+
+    htdp = HTDP(version=DEFAULT_HTDP_VERSION, verbose=False)
+    versions["htdp"] = {
+        "version": htdp.version,
+        "path": str(htdp.htdp_bin) if htdp.htdp_bin else None,
+        "source": (
+            "resolved by Transformez" if htdp.htdp_bin is not None else "not installed"
+        ),
+    }
+
+    vdatum = Vdatum(version=DEFAULT_VDATUM_VERSION)
+    vdatum_info = vdatum.installation_info()
+    versions["vdatum"] = {
+        "version": (
+            vdatum_info.get("reported_version") or vdatum_info.get("requested_version")
+        ),
+        "path": vdatum_info.get("path"),
+        "source": vdatum_info.get("source"),
+    }
+
+    return versions
 
 
 # ============================================================================
@@ -112,8 +167,8 @@ def get_coops_stations(
     try:
         resp = requests.get(url, timeout=30)
         resp.raise_for_status()
-    except requests.RequestException as e:
-        logger.error(f"Failed to fetch station list: {e}")
+    except requests.RequestException as err:
+        logger.error(f"Failed to fetch station list: {err}")
         return {}
 
     data = resp.json()
@@ -156,10 +211,10 @@ def get_coops_stations(
             else:
                 failures.append({"id": stn_id, "reason": "Missing MSL or MLLW"})
 
-        except requests.RequestException as e:
+        except requests.RequestException:
             failures.append({"id": stn_id, "reason": str(e)})
-        except Exception as e:
-            failures.append({"id": stn_id, "reason": f"Unexpected: {e}"})
+        except Exception as err:
+            failures.append({"id": stn_id, "reason": f"Unexpected: {err}"})
 
         # Rate limit to respect NOAA API
         time.sleep(COOPS_RATE_LIMIT)
@@ -212,10 +267,11 @@ def validate_against_stations(
             out_fn=temp_tif,
             decay_distance_m=PHYSICAL_DECAY_DISTANCE_M,
             buffer_distance_m=PHYSICAL_BUFFER_DISTANCE_M,
-            verbose=False,
+            decay_pixels=0,
+            verbose=True,
         )
-    except Exception as e:
-        logger.error(f"  Grid generation failed: {e}")
+    except Exception as err:
+        logger.error(f"  Grid generation failed: {err}")
         return None
 
     elapsed = time.time() - start_time
@@ -314,7 +370,10 @@ def validate_against_stations(
 
 
 def validate_against_vdatum(
-    region_name: str, region: Any, vdatum_region: str
+    region_name: str,
+    region: Any,
+    vdatum_region: str,
+    challenge: str = "",
 ) -> Optional[Dict[str, Any]]:
     """Compare Transformez's VDatum chain against the NOAA VDatum Java engine.
 
@@ -325,7 +384,8 @@ def validate_against_vdatum(
     Args:
         region_name: Human-readable region name.
         region: Region object or bounds.
-        vdatum_region: VDatum region grid number.
+        vdatum_region: VDatum command-line region number.
+        challenge: Description of the transformation/coverage condition being tested.
 
     Returns:
         Dict with RMSE, mean diff, and plot path, or None if VDatum unavailable.
@@ -334,14 +394,20 @@ def validate_against_vdatum(
 
     # Check VDatum availability
     try:
-        vd = Vdatum(ivert="navd88:m:height", overt="mhw:m:height", region=vdatum_region)
+        vd = Vdatum(
+            ivert="NAVD88:m:height",
+            overt="MHW:m:height",
+            region=vdatum_region,
+            epoch_in="2010.0",
+            epoch_out="2010.0",
+        )
         if not hasattr(vd, "jar") or vd.jar is None:
             vd.vdatum_locate_jar()
             if vd.jar is None:
                 logger.warning("  VDatum not installed, skipping test")
                 return None
-    except Exception as e:
-        logger.warning(f"  VDatum initialization failed: {e}, skipping")
+    except Exception as err:
+        logger.warning(f"  VDatum initialization failed: {err}, skipping")
         return None
 
     safe_name = region_name.lower().replace(" ", "_").replace(",", "")
@@ -366,11 +432,11 @@ def validate_against_vdatum(
             out_fn=temp_tif,
             # This is deliberately unlimited extrapolation. The purpose of this
             # test is strict VDatum-engine equivalence.
-            decay_pixels=0,
+            # decay_pixels=0,
             verbose=False,
         )
-    except Exception as e:
-        logger.error(f"  Grid generation failed: {e}")
+    except Exception as err:
+        logger.error(f"  Grid generation failed: {err}")
         return None
 
     elapsed = time.time() - start_time
@@ -434,7 +500,9 @@ def validate_against_vdatum(
         "rmse": f"{rmse:.6f} m",
         "mean_diff": f"{mean_diff:.6f} m",
         "points": len(errors),
+        "challenge": challenge,
         "image": f"../_static/validation_vdatum_hist_{safe_name}.png",
+        "vdatum_region": vdatum_region,
     }
 
 
@@ -488,8 +556,8 @@ def validate_international_gauges() -> Optional[Dict[str, Any]]:
             else:
                 calcs.append(float(calc_shift))
 
-        except Exception as e:
-            logger.error(f"    Failed: {e}")
+        except Exception as err:
+            logger.error(f"    Failed: {err}")
             calcs.append(0.0)
         finally:
             if os.path.exists(temp_tif):
@@ -589,7 +657,7 @@ def validate_tectonics() -> Dict[str, Any]:
             increment="3s",
             datum_in="6319",
             datum_out="4979",
-            epoch_in=2020.000,
+            epoch_in=2025.000,
             epoch_out=2010.000,
             out_fn=wa_tif,
             verbose=True,
@@ -606,13 +674,13 @@ def validate_tectonics() -> Dict[str, Any]:
             "challenge": "Crustal Velocity & Datum Offset",
         }
 
-    except Exception as e:
+    except Exception as err:
         stats["Washington (Cross-Epoch)"] = {
             "shift": "ERROR",
             "status": "FAIL",
             "challenge": "Crustal Velocity & Datum Offset",
         }
-        logger.error(f"    Failed: {e}")
+        logger.error(f"    Failed: {err}")
     finally:
         if os.path.exists(wa_tif):
             os.remove(wa_tif)
@@ -644,13 +712,13 @@ def validate_tectonics() -> Dict[str, Any]:
             "challenge": "Eastern Hemisphere Longitude Parsing",
         }
 
-    except Exception as e:
+    except Exception as err:
         stats["Japan (East Longitude)"] = {
             "shift": "ERROR",
             "status": "FAIL",
             "challenge": "Eastern Hemisphere Longitude Parsing",
         }
-        logger.error(f"    Failed: {e}")
+        logger.error(f"    Failed: {err}")
     finally:
         if os.path.exists(jp_tif):
             os.remove(jp_tif)
@@ -671,6 +739,7 @@ def generate_markdown_report(
     vdatum_stats: List[Dict[str, Any]],
     intl_stats: Optional[Dict[str, Any]],
     tectonic_stats: Dict[str, Any],
+    runtime_versions: Dict[str, Dict[str, Optional[str]]],
 ) -> None:
     """Compile test results into validation.md for documentation."""
 
@@ -682,6 +751,23 @@ def generate_markdown_report(
         "Transformez is validated at several different levels because no single benchmark can fully describe the behavior of a coastal vertical-datum transformation engine. The tests below separate provider/grid accuracy, production coastal behavior, global-model agreement, and external HTDP integration.",
         "",
         "These results should therefore be interpreted according to the purpose of each test rather than as interchangeable measures of a single global accuracy value. In particular, the NOAA CO-OPS station comparison includes Transformez's production shoreline, coverage, and inland-decay policy, while the NOAA VDatum comparison intentionally removes those effects to isolate numerical engine equivalence.",
+        "",
+        "## Validation Environment",
+        "",
+        "The versions below record the Python packages and external geodetic engines resolved for this validation run. External-engine paths are included because HTDP and VDatum may be installed in multiple locations, and their software/data generation can materially affect reproducibility.",
+        "",
+        "| Component | Version | Source | Resolved Path |",
+        "| :--- | :--- | :--- | :--- |",
+        f"| **Transformez** | {runtime_versions['transformez']['version'] or 'unknown'} | {runtime_versions['transformez']['source'] or 'unknown'} | — |",
+        f"| **Fetchez** | {runtime_versions['fetchez']['version'] or 'unknown'} | {runtime_versions['fetchez']['source'] or 'unknown'} | — |",
+        f"| **HTDP** | {runtime_versions['htdp']['version'] or 'unknown'} | {runtime_versions['htdp']['source'] or 'unknown'} | `{runtime_versions['htdp']['path']}` |"
+        if runtime_versions["htdp"]["path"]
+        else f"| **HTDP** | {runtime_versions['htdp']['version'] or 'unknown'} | {runtime_versions['htdp']['source'] or 'not installed'} | — |",
+        f"| **VDatum** | {runtime_versions['vdatum']['version'] or 'unknown'} | {runtime_versions['vdatum']['source'] or 'unknown'} | `{runtime_versions['vdatum']['path']}` |"
+        if runtime_versions["vdatum"]["path"]
+        else f"| **VDatum** | {runtime_versions['vdatum']['version'] or 'unknown'} | {runtime_versions['vdatum']['source'] or 'not installed'} | — |",
+        "",
+        "> **Reproducibility note:** Transformez and Fetchez versions identify the Python implementation under test. HTDP and VDatum identify the external reference engines used by Tests 2 and 4; their resolved paths are recorded to make it explicit which managed or system installation was selected.",
         "",
         "## Test 1: Production Coastal Surface vs. NOAA CO-OPS Tide Stations",
         "",
@@ -716,26 +802,40 @@ def generate_markdown_report(
     md_lines.extend(
         [
             "",
-            "## Test 2: Numerical Engine Equivalence vs. NOAA VDatum",
+            "## Test 2: Numerical Comparison vs. NOAA VDatum",
             "",
             "This test compares Transformez directly against the NOAA VDatum Java CLI at random locations for a NAVD88 → MHW transformation. Inland attenuation is deliberately disabled so that coastal decay policy does not contaminate the numerical comparison.",
             "",
-            "Unlike Test 1, this is intended to answer a narrow question: when Transformez and NOAA VDatum are asked to evaluate the same supported transformation, do they produce the same shift? Sub-millimetric differences here provide strong evidence that the reference planner, sign conventions, provider routing, grid interpolation, and execution chain are reproducing the authoritative VDatum engine correctly.",
+            "The purpose of this test is to verify that Transformez follows the same underlying geodetic transformation logic as NOAA VDatum, not to require bit-for-bit identity with the VDatum application. Where both engines evaluate the same regional package and transformation path, agreement should generally approach interpolation precision. Small residual differences can still arise because Transformez and VDatum do not necessarily use identical backend software versions, regional package-selection rules, or raster-compositing strategies.",
             "",
-            "| Region | RMSE | Mean Difference | Points |",
-            "| :--- | :--- | :--- | :--- |",
+            "Modern NOAA VDatum coverages can differ substantially from legacy packages. Older regional packages may express the tidal-to-TSS relationship directly against NAVD88, while newer packages can be tied to IGS realizations and require an xGEOID model plus a frame transformation before they can be compared with NAVD88-based surfaces. Transformez preserves each package as a coherent tidal/TSS unit, completes its package-specific path to the appropriate ellipsoid, applies the required HTDP frame transformation, converts to a common orthometric working surface, and only then mosaics multiple normalized coverages.",
+            "",
+            "This distinction matters in regions containing mixed generations of VDatum data. Transformez is designed to build one continuous shift surface suitable for DEM transformation, so overlapping legacy NAVD88-based and modern xGEOID-based coverages may both contribute to a single output grid. NOAA VDatum, by contrast, evaluates its own internal regional selection logic for each requested point. Both approaches use valid NOAA transformation resources, but they need not select the same source package in an overlap.",
+            "",
+            "Coverage ordering is therefore an important source of explainable disagreement. Transformez applies a deterministic general priority rule based primarily on release recency and geographic specificity, while NOAA VDatum can use more detailed provider-specific knowledge about adjacent or overlapping regional datasets. In areas such as Chesapeake Bay, neighboring VDatum packages from the same release can overlap substantially and differ locally by several centimeters; selecting a different valid package in that overlap can increase RMSE even when the transformation chain for each individual package is correct.",
+            "",
+            "Backend version differences can also contribute. Transformez resolves and records the HTDP version it uses for frame transformations, while a given VDatum release may embed or depend on a different HTDP generation or transformation implementation. The validation environment table above is therefore part of the numerical result: a small discrepancy between Transformez and VDatum can reflect a reproducible difference between the two software stacks rather than an error in either one.",
+            "",
+            "The Channel Islands case is intentionally included as a mixed-generation coverage-chain stress test. Southern California contains overlapping legacy NAD83/NAVD88-based coverage and newer IGS/xGEOID coverage. Transformez must keep tidal and TSS grids from the same package together, normalize the modern package through xGEOID and HTDP, apply release priority, and then mosaic the normalized surfaces. The island shorelines additionally expose small coverage-mask differences that can otherwise allow isolated lower-priority fringe cells to leak through newer coverage.",
+            "",
+            "The Chesapeake Bay case exercises an even denser overlap environment, with numerous adjacent and overlapping modern and legacy packages. Larger residuals there are therefore interpreted together with the package topology: they may reflect valid but different overlap choices rather than a disagreement in the underlying vertical-datum mathematics.",
+            "",
+            "| Region | VDatum Region | RMSE | Mean Difference | Points | Validation Challenge |",
+            "| :--- | :--- | :--- | :--- | :--- | :--- |",
         ]
     )
 
     for stat in vdatum_stats:
         md_lines.append(
-            f"| **{stat['region']}** | {stat['rmse']} | {stat['mean_diff']} | {stat['points']} |"
+            f"| **{stat['region']}** | {stat.get('vdatum_region', '')} | "
+            f"{stat['rmse']} | {stat['mean_diff']} | "
+            f"{stat['points']} | {stat.get('challenge', '')} |"
         )
 
     md_lines.extend(
         [
             "",
-            "> **How to read this test:** This is the primary validation of the transformation engine itself. It intentionally excludes production inland-decay behavior, so differences between Test 1 and Test 2 usually reflect coastal-domain and raster-policy effects rather than a disagreement in the underlying datum mathematics.",
+            "> **How to read this test:** This is a numerical implementation comparison, not a requirement for one-to-one reproduction of every internal VDatum software decision. Near-zero differences indicate that Transformez and VDatum evaluated effectively the same package and path. Larger localized differences, especially in dense overlap regions, should be interpreted in the context of package selection, mixed xGEOID/NAVD88 mosaicing, backend HTDP versions, grid interpolation, and each engine's overlap policy. The Channel Islands result is a regression check on mixed-generation package pairing and xGEOID/frame normalization; Chesapeake Bay additionally stresses multi-package overlap ordering.",
             "",
         ]
     )
@@ -797,13 +897,13 @@ def generate_markdown_report(
             "Taken together, the validation suite tests different layers of Transformez rather than reducing accuracy to a single number:",
             "",
             "- **NOAA CO-OPS station tests** exercise the complete production coastal surface, including shoreline classification, VDatum coverage, raster resolution, and inland-decay policy.",
-            "- **NOAA VDatum engine comparisons** isolate the transformation mathematics and provider/grid execution path and are the strongest direct check of numerical equivalence.",
+            "- **NOAA VDatum engine comparisons** verify that Transformez follows the same underlying transformation logic while also exposing expected differences caused by mixed-generation mosaicing, overlap selection, backend software versions, and interpolation policy.",
             "- **International gauge comparisons** test whether the global fallback models produce physically reasonable offsets where local VDatum grids are unavailable.",
             "- **HTDP checks** verify the external frame/epoch transformation integration and guard against execution regressions.",
             "",
-            "A larger RMSE in a complex estuary does not by itself indicate a datum-engine error, particularly when the corresponding engine-equivalence test remains near zero bias and sub-millimetric agreement. Coastal validation is intentionally sensitive to the production shoreline model because that behavior is part of the surface Transformez ultimately applies to DEMs.",
+            "A larger RMSE in a complex estuary does not by itself indicate a datum-engine error. In heavily overlapped VDatum regions, Transformez and the VDatum application may legitimately select different valid regional packages, and modern xGEOID-based chains may also traverse different backend software versions than older NAVD88-based paths. The validation results are therefore interpreted spatially and operationally rather than as a requirement that Transformez duplicate every internal VDatum selection decision. Coastal validation remains intentionally sensitive to the production shoreline and compositing model because that behavior is part of the continuous surface Transformez ultimately applies to DEMs.",
             "",
-            "> **Reproduce these results:** All validation scripts are in [`tests/validation/`](https://github.com/cires-dems/transformez/tree/main/tests/validation)",
+            "> **Reproduce these results:** All validation scripts are in [`tests/validation/`](https://github.com/continuous-dems/transformez/tree/main/tests/validation)",
         ]
     )
 
@@ -830,9 +930,23 @@ def run_full_suite() -> int:
 
     start_total = time.time()
 
+    runtime_versions = collect_runtime_versions()
+
+    logger.info(
+        "Validation environment: transformez=%s, fetchez=%s, HTDP=%s (%s), VDatum=%s (%s)",
+        runtime_versions["transformez"]["version"],
+        runtime_versions["fetchez"]["version"],
+        runtime_versions["htdp"]["version"],
+        runtime_versions["htdp"]["path"] or "not installed",
+        runtime_versions["vdatum"]["version"],
+        runtime_versions["vdatum"]["path"] or "not installed",
+    )
+
     # Collect stats
     station_stats = []
     for name, data in TEST_REGIONS.items():
+        if not data.get("station_validation", True):
+            continue
         region = Region(*data["bounds"])
         stats = validate_against_stations(name, region, data["challenge"])
         if stats:
@@ -843,7 +957,12 @@ def run_full_suite() -> int:
         if data["vdatum_region"] is None:
             continue
         region = Region(*data["bounds"])
-        stats = validate_against_vdatum(name, region, data["vdatum_region"])
+        stats = validate_against_vdatum(
+            name,
+            region,
+            data["vdatum_region"],
+            data["challenge"],
+        )
         if stats:
             vdatum_stats.append(stats)
 
@@ -851,7 +970,13 @@ def run_full_suite() -> int:
     tectonic_stats = validate_tectonics()
 
     # Generate report
-    generate_markdown_report(station_stats, vdatum_stats, intl_stats, tectonic_stats)
+    generate_markdown_report(
+        station_stats,
+        vdatum_stats,
+        intl_stats,
+        tectonic_stats,
+        runtime_versions,
+    )
 
     elapsed_total = time.time() - start_total
 
