@@ -1,12 +1,14 @@
 # 🧰 Models and Providers
 
-Transformez automatically fetches model and reference data from a number of provders.
+Transformez automatically fetches model and reference data from a number of providers, and routes each transformation through whichever provider realizes the requested reference.
 
-| Provider/model  | Role                                       |
-| --------------- | ------------------------------------------ |
-| NOAA VDatum     | Regional tidal/orthometric transformations |
-| NGS geoid grids | Orthometric ↔ ellipsoidal realization      |
-| FES             | Global tidal surfaces                      |
-| DTU             | Global mean sea surface                    |
-| Dist2Coast      | Coastal-domain / inland-distance context   |
-| HTDP            | Frame and epoch transformations            |
+| Provider/model  | Role                       | Typical references         |
+| --------------- | -------------------------- | -------------------------- |
+| NOAA VDatum     | Regional tidal/orthometric | `vdatum:*`                 |
+| NGS geoid grids | Orthometric ↔ ellipsoidal  | `EPSG:5703`, etc.          |
+| FES             | Global tidal               | `global:lat`, `global:hat` |
+| DTU             | Global MSS                 | `global:mss`               |
+| Dist2Coast      | Coastal context            | internal                   |
+| HTDP            | Frame/epoch                | ellipsoidal frame changes  |
+
+Data fetching, retry, and caching are handled by Fetchez, Transformez's companion fetching library, so providers can be swapped or extended without touching the transformation engine itself. See [Methodology](methodology.md) for how these models are composed into a single transformation pathway.

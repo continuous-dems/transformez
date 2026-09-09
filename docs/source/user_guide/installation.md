@@ -32,25 +32,23 @@ cd transformez
 pip install -e ./
 ```
 
-## Prerequisites: HTDP
-Transformez relies on the NGS Horizontal Time-Dependent Positioning (HTDP) software to perform highly accurate plate tectonic and frame transformations. **You must install this separately.**
+## Prerequisites and Extras:
 
-**For Windows:**
-1. Download the pre-compiled executable (`htdp.exe`) directly from the [NOAA HTDP page](https://geodesy.noaa.gov/TOOLS/Htdp/Htdp.shtml).
-2. Place `htdp.exe` in a directory that is in your system's `PATH` (e.g., `C:\Windows\System32` or a custom scripts folder).
+### HTDP
+Transformez relies on the NGS Horizontal Time-Dependent Positioning (HTDP) software to perform highly accurate plate tectonic and frame transformations.
+HTDP is required for transformations that involve supported dynamic reference-frame or coordinate-epoch changes.
 
-**For Linux / macOS:**
-
-You will need a Fortran compiler (like `gfortran`) to compile the source code.
+You can install HTDP directly from the [transformez cli](cli_usage.md):
 
 ```bash
-# 1. Download the Fortran source code
-wget https://geodesy.noaa.gov/TOOLS/Htdp/HTDP-download.zip
-unzip HTDP-download.zip
-
-# 2. Compile it
-gfortran -o htdp htdp.f
-
-# 3. Move it to your PATH
-sudo mv htdp /usr/local/bin/
+transformez htdp install
 ```
+
+### NOAA VDatum Java
+The NOAA VDatum Java engine is only needed for direct VDatum comparison/validation and can be installed and run directly from the [Transforemz cli](cli_usage.md)
+
+```bash
+transformez vdatum install
+```
+
+> Next up: once installed, head to [Usage](usage.md) to generate your first transformation.

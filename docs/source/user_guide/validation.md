@@ -10,8 +10,8 @@ The versions below record the Python packages and external geodetic engines reso
 
 | Component | Version | Source |
 | :--- | :--- | :--- |
-| **Transformez** | 0.6.1.dev36+g16c193763.d20260907 | python environment |
-| **Fetchez** | 0.8.7.dev14+g5f4a0dc96 | python environment |
+| **Transformez** | 1.0.0 | python environment |
+| **Fetchez** | 0.8.7 | python environment |
 | **HTDP** | 3.6.0 | resolved by Transformez |
 | **VDatum** | 4.8 | user |
 

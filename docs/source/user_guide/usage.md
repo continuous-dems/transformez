@@ -1,12 +1,15 @@
-# 🐄 Usage
+# 🛠️ Usage
 
-## Command Line Interface:
+Transformez gives you two ways to work: a command-line tool for scripts and shells, and a high-level Python API for scripts, notebooks, and pipelines. Both accept the same [references](references.md) and behave identically.
 
-**Generate a vertical shift grid for anywhere on Earth.**
+> **🧮 Sign conventions:** vertical datum shifts are not intuitive — shifting to a *higher* surface does not simply mean positive values. Transformez handles all sign conventions internally. The one thing to remember: **always ADD the shift grid** to your elevation data. See the [sign conventions](methodology.md#the-datum-shift-sign-conventions) section of the methodology guide for the physical intuition.
+
+## Command Line Interface
+
+**Generate a vertical shift grid anywhere on Earth.**
 
 ```bash
-# Transform MLLW to WGS84 Ellipsoid in Norton Sound, AK
-
+# Transform MLLW to WGS84 ellipsoidal height in Norton Sound, AK
 transformez build -R -166/-164/63/64 -E 1s -I vdatum:mllw -O epsg:4979
 ```
 
@@ -19,54 +22,7 @@ transformez shift my_dem.tif \
     --buffer-distance 250
 ```
 
-> ⚠️ `--decay-pixels` is retained for backward compatibility. New workflows should use `--decay-distance`, which defines the inland transition in physical meters and is independent of raster resolution.
-
-
-## Reference Inputs
-
-Transformez accepts standard EPSG coordinate reference identifiers as well as namespaced references for tidal and model-based vertical surfaces.
-
-Common examples include:
-
-```text
-EPSG:5703        # NAVD88 height
-EPSG:4979        # WGS 84 ellipsoidal height
-vdatum:mllw      # NOAA VDatum Mean Lower Low Water
-vdatum:mhw       # NOAA VDatum Mean High Water
-global:lat       # Global Lowest Astronomical Tide proxy
-global:mss       # Global Mean Sea Surface
-```
-
-For backward compatibility, common shorthand names remain supported:
-
-```text
-mllw
-mlw
-mhw
-mhhw
-msl
-lat
-hat
-mss
-```
-
-These shorthand forms are normalized internally to their corresponding namespaced references.
-
-Compound horizontal and vertical references may also be supplied where supported, for example:
-
-```text
-EPSG:4326+5703
-```
-
-Legacy Transformez/CUDEM geoid-qualified strings remain supported during the reference-system transition:
-
-```text
-EPSG:4326+5703+geoid:g2012b
-```
-
-> ⚠️ For new workflows, use explicit namespaced or authority-qualified references.
->Legacy shorthand remains accepted for compatibility but may emit deprecation warnings.
->For new code, prefer explicit EPSG and namespaced reference identifiers where practical.
+> See [Command Line Interface](cli_usage.md) for the full command reference.
 
 
 ## Python API:
@@ -80,7 +36,7 @@ import transformez
 # Generate a Shift Grid
 # ---------------------------------------------------------
 # Returns a 2D numpy array. Optionally saves to a file.
-# Requesting "mllw" in India triggers the Global Fallback (FES2014) automatically.
+# Outside VDatum coverage, vdatum:mllw is realized through the configured global tidal fallback.
 
 shift_array = transformez.generate_grid(
     region=[80, 85, 10, 15],  # [West, East, South, North]
@@ -99,25 +55,18 @@ out_file = transformez.transform_raster(
     input_raster="my_dem_lat.tif",
     datum_in="global:lat",
     datum_out="5703:g2012b",            # NAVD88 using specific GEOID12B
-    extrapolate_inland=False,           # For infinite inland extrapolation (Modeling)
+	extrapolate_inland=False,           # Use normal coastal decay behavior
     output_raster="my_dem_navd88.tif"
 )
 ```
 
-### Building a `ShiftGrid` or an shift array
 
-`transformez.generate_grid(...)`
+(which-interface-do-i-want)=
+## Which interface do I want?
 
-is a convenient array-oriented API, whereas:
+For most users, `transformez.generate_grid(...)` is all you need — it returns a 2D NumPy array of shift values, optionally saved to disk.
 
-`build_shift_grid(...)`
-
-is a richer object-oriented API.
-
-`ShiftGrid` carries the array, region, CRS, affine transform, source and target references, epochs, provenance, generation key, uncertainty, and cache information, and can write/reproject itself.
-
-> Use `generate_grid()` when you only need shift values.
-> Use `build_shift_grid()` when you need a georeferenced, inspectable transformation product.
+When you need a fully georeferenced, inspectable transformation product, use `build_shift_grid(...)` to obtain a `ShiftGrid` object. It carries the array, region, CRS, affine transform, source and target references, epochs, provenance, generation key, uncertainty, and cache identity, and can write or reproject itself.
 
 ```python
 grid = build_shift_grid(...)
@@ -129,12 +78,14 @@ grid.source_reference
 grid.target_reference
 grid.provenance
 
-grid.write(...)
-grid.reproject(...)
+grid.write(...)        # Write to disk
+grid.reproject(...)    # Return a reprojected ShiftGrid
 ```
 
-### Building Transformation Components
-`build_components()` parses complete source/destination references and returns a horizontal transformer plus a vertical `ShiftGrid`.
+> Use `generate_grid()` when you only need shift values.
+> Use `build_shift_grid()` when you need a georeferenced, inspectable transformation product.
+
+For full DEM-to-DEM transformation (horizontal reprojection and vertical transformation), `build_components()` parses complete compound references and returns a horizontal transformer plus a vertical `ShiftGrid`:
 
 ```python
 components = transformez.build_components(
@@ -147,11 +98,13 @@ components.horizontal
 components.vertical
 ```
 
-## Hydrodynamic & Tsunami Modeling
+Full signatures for these functions are in the [Developer API](/api/api.md).
 
-By default, Transformez decays tidal transformations inland using physical distance from the coastline. New workflows should use `--decay-distance` and `--buffer-distance`, which produce consistent behavior regardless of raster resolution.
+## Inland Decay vs. Unrestricted Extrapolation
 
-Some tsunami, storm-surge, and inundation workflows instead require the coastal transformation to continue across all terrain that may become wetted during the simulation. For those cases, disable inland decay with:
+By default, Transformez decays tidal transformations to zero inland using a physical distance from the coastline (defaults: a 250 m full-strength buffer followed by a 5.0 km decay). This suits typical coastal DEM work, where tidal datums physically do not exist on dry land.
+
+Some hydrodynamic, tsunami, storm-surge, and inundation workflows instead require the coastal transformation to continue across all terrain that may become wetted during the simulation. For those cases, disable inland decay:
 
 ```bash
 transformez shift my_coastal_dem.tif \
@@ -159,4 +112,4 @@ transformez shift my_coastal_dem.tif \
     --extrapolate-inland
 ```
 
-`--decay-pixels` remains available for backward compatibility but is deprecated for new workflows.
+> The sign conventions of the applied shift and the physical intuition behind coastal blending and inland decay are covered in depth in [Methodology](methodology.md); the models being fetched are listed in [Models and Providers](providers.md).
