@@ -6,57 +6,46 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
-## [ UNRELEASED ]
+## [1.0.0] - 2026-09-09
+
+### Breaking
+
+* Reworked Transformez around a typed reference → resolution → planning → execution architecture. Standard EPSG CRSs and explicit namespaced references are now the canonical reference model, while legacy datum names (e.g. `mllw`, `msl`, `hat`) remain supported as aliases.
+* Reorganized the package into explicit `reference`, `engine`, `grid`, `integration`, and CLI boundaries, with external engines and Fetchez integrations behind dedicated package interfaces.
+* Renamed the primary CLI commands to `transformez build` for shift-grid generation and `transformez shift` for raster transformation. Legacy `grid` and `raster` commands remain available as deprecated aliases.
 
 ### Added
-- Coastal Context dataclass to hold context values
-- test script to validate refactor
-- grid_engine.build_coastal_context function to build the coastal context dataclass.
-- Added the new transformez.reference foundation for typed coordinate-reference handling, including VerticalReference, ParsedReference, and ResolvedReference models.
-- Added reference.parser for centralized parsing and decomposition of EPSG, compound, horizontal, vertical, and custom namespaced references.
-- Added custom reference bindings for NOAA VDatum tidal surfaces and global tidal/model surfaces.
-- Added reference.adapter as a temporary compatibility bridge between the new typed reference system and the existing definitions-driven transformation engine.
-- Added compatibility handling for legacy Transformez/CUDEM geoid syntax such as EPSG:4326+5703+geoid:g2012b.
-- Added a new typed reference parsing and binding layer for horizontal and vertical reference systems, including namespaced custom references and legacy aliases.
-- Added build_shift_grid() as the canonical vertical grid generation interface and introduced the ShiftGrid object for working with generated transformations.
-- Added planner.py as the canonical transformation planner. This maps out the transformation plan based on the resolved references.
-- Added resolver.py which resolves a parsed reference to obtain the full context of the transformation.
-- Added fetcher.py, ported from transform.py, to allow the use of existing fethcing/compositing for use in transformations.
-- Added CLI commands the help track the progress of porting references from definitions.
-- Added `engine` module.
-- Added `grid` module.
+
+* **Typed reference system (`transformez.reference`):** centralized parsing and metadata for EPSG, compound, and namespaced references (`vdatum:*`, `global:*`), including compatibility with legacy Transformez/CUDEM reference syntax.
+* **Transformation planning:** source and target references are resolved into explicit grid, model, and reference-frame operations that can be inspected before data are fetched or transformations are executed.
+* **`ShiftGrid`:** a canonical representation of generated transformations carrying spatial metadata, references, epochs, provenance, cache identity, reprojection support, and direct raster output. `build_shift_grid()` is the canonical grid-generation interface.
+* **Reworked NOAA VDatum processing:** each regional coverage package is completed through its native geodetic chain, including modern IGS/xGEOID paths, before normalized coverages are mosaiced according to coverage priority.
+* **Physical coastal context:** resolution-independent inland decay based on Dist2Coast distances, with VDatum-aware estuary/river coverage, inland buffers, configurable shoreline extension, and optional unrestricted extrapolation for hydrodynamic modeling.
+* **Reference and system inspection:** expanded CLI commands for inspecting references, providers, transformation plans, external engines, and runtime configuration.
 
 ### Changed
-- Updated CLI options to use new dist2coast km decay and blend options
-- Process blends and decays using the km field from dist2coast instead of edt.
-- Updated srs.py to use the new coastal context and expose their options.
-- Updated api.py to resolve datum inputs through the new reference parser and legacy adapter rather than parsing datum identifiers directly through definitions.py.
-- Updated generate_grid(), transform_raster(), and prefetch_region() operations to consume normalized reference metadata from the adapter.
-- Vertical CRS units are now derived from typed reference metadata when automatic unit detection is requested.
-- Moved generic vertical unit conversion definitions out of definitions.py and into utils.py, separating unit conversion from datum-registry metadata.
-- Legacy tidal datum names such as mllw, mlw, mhw, mhhw, msl, lat, hat, and mss now resolve through explicit namespaced reference aliases.
-- ShiftGrid now carries its CRS, extent, transform, references, epochs, provenance, uncertainty, and cache identity, and can be reprojected or written directly.
-- Simplified the high-level Python API so everything uses generation.py
-- Improved generated-grid cache identity to account for transformation references, epochs, region, resolution, decay settings, and other generation options.
-- Moved vertical unit metadata out of the legacy datum registry and into the typed reference model.
-- Refactored to adhere to ruff PTH rules.
-- Moved htdp and vdatum to `/engines`
-- Moved fetchez modules and hooks to `/fetchez/...`
-- Moved `GridWriter` into new `/grid/io` module
-- Moved `generation.py` to `/grid/shift` module
-- Moved `grid_engine.py` to `/grid/engine` module
-- Update vdatum cli group
+
+* Unified the high-level Python API around the same reference-resolution and grid-generation path used by raster, point, component, and standalone-grid transformations.
+* Generated-grid cache identity now accounts for references, epochs, region, resolution, coastal behavior, and other generation options.
+* Vertical units and other coordinate-reference metadata are now derived from the typed reference model rather than the legacy datum registry.
+* Coastal blending and inland decay now use physical Dist2Coast distances rather than pixel-derived distance transforms.
 
 ### Fixed
-- Refactor dist2coast usage to fix a bug that would burn the dist2coast edges onto the raster result. This was due to performing an edt distance transform from the low-res dist2coast raster, treating it as a mask instead of a distance field. Update allows setting the distance by km instead of number of pixels and smooths the 'zero' field to get proper transitions.
-- Since dist2coast sets it's nodata value to zero, we were incorrectly masking the dist2coast raster by ignoring the zero values (coastline), we now have an option to ignore the nodata value in grid_engine.
-- Improved validation of datum/reference inputs by resolving standard EPSG identifiers through PROJ before adapting them to the legacy transformation engine.
-- Improved support of legacy reference sytax in parser.py by parsing non-standard epsg+ syntax.
-- Fix htdp lat directions.
+
+* Fixed VDatum overlap and xGEOID/TSS handling so coverage from different VDatum generations is normalized through its native geodetic path before mosaicing.
+* Fixed coastal/global compositing so global proxy surfaces fill missing coastal coverage without redefining the valid tidal-water domain.
+* Fixed Dist2Coast processing that could introduce edge artifacts or incorrectly discard zero-valued coastline cells as nodata.
+* Fixed HTDP latitude/longitude handling and validated frame transformations against the configured HTDP engine version.
 
 ### Deprecated
-- The legacy SRSParser interface remains available for compatibility but now delegates to the new API.
-- Legacy datum/reference aliases remain supported, but explicit EPSG and namespaced reference identifiers are preferred for new code.
+
+* Legacy `SRSParser`, `grid`/`raster` CLI aliases, datum aliases, and legacy reference syntax remain supported for compatibility. Explicit EPSG and namespaced references are preferred for new code.
+
+### Validation
+
+* Revalidated tidal, orthometric, global-model, and tectonic transformation paths against NOAA VDatum, NOAA CO-OPS, FES/DTU-derived references, and NGS HTDP.
+* Documented expected differences from NOAA VDatum arising from coverage overlap priorities, continuous xGEOID/NAVD88 mosaicing, coastal/global fallback behavior, and differences between external HTDP software versions.
+* Expanded regression coverage for reference parsing and planning, VDatum package normalization, coastal compositing, projected rasters, and physical-distance inland decay.
 
 ## [0.6.0] - 2026-08-27
 
