@@ -87,8 +87,12 @@ def infer_vertical_kind(crs: CRS) -> VerticalKind:
 
         return VerticalKind.GRAVITY_RELATED_HEIGHT
 
-    if crs.is_geographic and len(crs.axis_info) == 3:
-        return VerticalKind.ELLIPSOIDAL_HEIGHT
+    if len(crs.axis_info) == 3:
+        if "ellipsoidal height" in axis_name:
+            return VerticalKind.ELLIPSOIDAL_HEIGHT
+
+        if crs.is_geographic:
+            return VerticalKind.ELLIPSOIDAL_HEIGHT
 
     return VerticalKind.LOCAL_HEIGHT
 
@@ -152,6 +156,21 @@ def decompose_standard_crs(crs: CRS) -> ParsedReference:
             source_text=crs.to_string(),
         )
 
+    if crs.is_projected and len(crs.axis_info) == 3:
+        geodetic = crs.geodetic_crs
+
+        if geodetic is not None and len(geodetic.axis_info) == 3:
+            return ParsedReference(
+                horizontal=crs.to_2d(),
+                vertical=vertical_reference_from_crs(
+                    geodetic,
+                    kind=VerticalKind.ELLIPSOIDAL_HEIGHT,
+                ),
+                horizontal_specified=True,
+                vertical_specified=True,
+                source_text=crs.to_string(),
+            )
+
     if crs.is_vertical:
         vert_ref = vertical_reference_from_crs(crs)
         return vertical_only(vert_ref, crs.to_string())
@@ -182,6 +201,16 @@ def parse_reference_mapping(mapping: Mapping[str, Any]) -> ParsedReference:
 
     horz_ref = parse_reference(horz_val) if horz_val else None
     vert_ref = parse_reference(vert_val) if vert_val else None
+
+    if vert_ref and vert_ref.horizontal_specified:
+        if (
+            vert_ref.vertical is None
+            or vert_ref.vertical.kind != VerticalKind.ELLIPSOIDAL_HEIGHT
+        ):
+            raise UnsupportedReferenceError(
+                f"Explicit vertical component ({vert_val}) "
+                "cannot contain a horizontal definition."
+            )
 
     # Strict Dimensional Guardrails
     if horz_ref and horz_ref.vertical_specified:
