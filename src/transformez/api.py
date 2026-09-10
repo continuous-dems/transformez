@@ -223,22 +223,24 @@ def build_components(
     vertical = None
     if source.vertical or target.vertical:
         if source.vertical is None or target.vertical is None:
-            raise ValueError("Both source and target vertical references are required.")
-
-        vertical = build_shift_grid(
-            region=region_obj,
-            increment=increment,
-            datum_in=src_srs,
-            datum_out=dst_srs,
-            cache_dir=cache_dir,
-            **vertical_options,
-        )
-
-        if source.horizontal is not None:
-            vertical = vertical.reproject(
-                source.horizontal,
-                dst_region=region_obj,
+            logger.debug(
+                f"Both source and target vertical references are required. {source.vertical} -> {target.vertical}"
             )
+        else:
+            vertical = build_shift_grid(
+                region=region_obj,
+                increment=increment,
+                datum_in=src_srs,
+                datum_out=dst_srs,
+                cache_dir=cache_dir,
+                **vertical_options,
+            )
+
+            if source.horizontal is not None:
+                vertical = vertical.reproject(
+                    source.horizontal,
+                    dst_region=region_obj,
+                )
 
     return TransformationComponents(
         horizontal=horizontal,
