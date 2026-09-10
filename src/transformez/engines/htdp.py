@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
 
 
 InstallScope = Literal["user", "project"]
-DEFAULT_HTDP_VERSION = "3.6.0"
+DEFAULT_HTDP_VERSION = "3.5.0"
 
 
 class HTDPInstallError(RuntimeError):
