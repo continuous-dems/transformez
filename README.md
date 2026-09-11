@@ -17,7 +17,7 @@
 
 **Transformez** builds and applies vertical transformations across geodetic, tidal, and model-based height references, from local datums to global surfaces.
 
-Transformez resolves your input and output references, computes the optimal geodetic pathway on the fly, and generates **spatially varying shift grids** — where regional models end, the transformation continues across open ocean and inland using global proxies, coastal blending, and meter-based inland decay.
+Transformez resolves your input and output references, computes the optimal geodetic pathway on the fly, and generates **spatially varying shift grids**. Where regional models end, Transformez continues across open ocean and inland using global proxies, coastal blending, and meter-based inland decay.
 
 Transformez is part of the [Continuous DEMs Project](https://continuous-dems.readthedocs.io/), an ecosystem of tools for modern, continuous digital elevation model generation. Originally incubated within CUDEM, the engine has evolved into a standalone datum transformation suite.
 
@@ -64,7 +64,7 @@ shift_array = transformez.generate_grid(
 )
 ```
 
-> ⚠️ Shift grids are always added to your elevation data — the sign conventions are handled internally. See the [methodology guide](https://transformez.readthedocs.io/en/latest/user_guide/methodology.html#the-datum-shift-sign-conventions) for the physical intuition.
+> ⚠️ Shift grids are always added to your elevation data; the sign conventions are handled internally. See the [methodology guide](https://transformez.readthedocs.io/en/latest/user_guide/methodology.html#the-datum-shift-sign-conventions) for the physical intuition.
 
 ## 📚 Documentation
 
