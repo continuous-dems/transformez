@@ -8,14 +8,14 @@ These results should therefore be interpreted according to the purpose of each t
 
 The versions below record the Python packages and external geodetic engines resolved for this validation run. External-engine paths are included because HTDP and VDatum may be installed in multiple locations, and their software/data generation can materially affect reproducibility.
 
-| Component | Version | Source | Resolved Path |
-| :--- | :--- | :--- | :--- |
-| **Transformez** | 0.6.1.dev45+gb1ba6a427.d20260910 | python environment | — |
-| **Fetchez** | 0.8.8.dev2+gcb3338f60.d20260910 | python environment | — |
-| **HTDP** | 3.5.0 | resolved by Transformez | `/home/ncei/.local/share/transformez/bin/htdp_3.5.0` |
-| **VDatum** | 4.8 | user | `/home/ncei/.local/share/transformez/vdatum/4.8/vdatum.jar` |
+| Component | Version | Source |
+| :--- | :--- | :--- |
+| **Transformez** | 1.0.0 | python environment |
+| **Fetchez** | 0.8.8 | python environment |
+| **HTDP** | 3.5.0 | resolved by Transformez |
+| **VDatum** | 4.8 | user |
 
-> **Reproducibility note:** Transformez and Fetchez versions identify the Python implementation under test. HTDP and VDatum identify the external reference engines used by Tests 2 and 4; their resolved paths are recorded to make it explicit which managed or system installation was selected.
+> **Reproducibility note:** Transformez and Fetchez versions identify the Python implementation under test. HTDP and VDatum identify the external reference engines used by Tests 2 and 4.
 
 ## Test 1: Production Coastal Surface vs. NOAA CO-OPS Tide Stations
 
