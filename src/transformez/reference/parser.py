@@ -217,10 +217,6 @@ def parse_reference_mapping(mapping: Mapping[str, Any]) -> ParsedReference:
         raise UnsupportedReferenceError(
             f"Explicit horizontal component ({horz_val}) cannot contain a vertical definition."
         )
-    if vert_ref and vert_ref.horizontal_specified:
-        raise UnsupportedReferenceError(
-            f"Explicit vertical component ({vert_val}) cannot contain a horizontal definition."
-        )
 
     # Stitch and Return
     return ParsedReference(
