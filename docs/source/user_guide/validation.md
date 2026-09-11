@@ -8,12 +8,12 @@ These results should therefore be interpreted according to the purpose of each t
 
 The versions below record the Python packages and external geodetic engines resolved for this validation run. External-engine paths are included because HTDP and VDatum may be installed in multiple locations, and their software/data generation can materially affect reproducibility.
 
-| Component | Version | Source |
-| :--- | :--- | :--- |
-| **Transformez** | 1.0.0 | python environment |
-| **Fetchez** | 0.8.7 | python environment |
-| **HTDP** | 3.6.0 | resolved by Transformez |
-| **VDatum** | 4.8 | user |
+| Component | Version | Source | Resolved Path |
+| :--- | :--- | :--- | :--- |
+| **Transformez** | 0.6.1.dev45+gb1ba6a427.d20260910 | python environment | — |
+| **Fetchez** | 0.8.8.dev2+gcb3338f60.d20260910 | python environment | — |
+| **HTDP** | 3.5.0 | resolved by Transformez | `/home/ncei/.local/share/transformez/bin/htdp_3.5.0` |
+| **VDatum** | 4.8 | user | `/home/ncei/.local/share/transformez/vdatum/4.8/vdatum.jar` |
 
 > **Reproducibility note:** Transformez and Fetchez versions identify the Python implementation under test. HTDP and VDatum identify the external reference engines used by Tests 2 and 4; their resolved paths are recorded to make it explicit which managed or system installation was selected.
 
@@ -59,10 +59,10 @@ The Chesapeake Bay case exercises an even denser overlap environment, with numer
 
 | Region | VDatum Region | RMSE | Mean Difference | Points | Validation Challenge |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Chesapeake Bay** | 5 | 0.023705 m | 0.008765 m | 84 | Estuary Shoaling |
-| **Astoria OR** | 6 | 0.002611 m | 0.002592 m | 56 | River Dynamics |
+| **Chesapeake Bay** | 5 | 0.022522 m | 0.004625 m | 84 | Estuary Shoaling |
+| **Astoria OR** | 6 | 0.000385 m | -0.000062 m | 56 | River Dynamics |
 | **Tampa Bay FL** | 4 | 0.000365 m | -0.000049 m | 94 | Complex Bay Geometry |
-| **Channel Islands CA** | 6 | 0.002810 m | 0.002795 m | 191 | Overlapping Legacy and Modern VDatum Coverage Chains |
+| **Channel Islands CA** | 6 | 0.000326 m | -0.000002 m | 191 | Overlapping Legacy and Modern VDatum Coverage Chains |
 
 > **How to read this test:** This is a numerical implementation comparison, not a requirement for one-to-one reproduction of every internal VDatum software decision. Near-zero differences indicate that Transformez and VDatum evaluated effectively the same package and path. Larger localized differences, especially in dense overlap regions, should be interpreted in the context of package selection, mixed xGEOID/NAVD88 mosaicing, backend HTDP versions, grid interpolation, and each engine's overlap policy. The Channel Islands result is a regression check on mixed-generation package pairing and xGEOID/frame normalization; Chesapeake Bay additionally stresses multi-package overlap ordering.
 
@@ -80,7 +80,7 @@ This is not an engine-equivalence test: the reference station values and the gri
 | Station | Published Offset | Transformez | Delta |
 | :--- | :--- | :--- | :--- |
 
-![International Gauges](../_static/validation_international_bars.png)
+![International Gauges](../_static/validation_international_bars.png))
 
 > **How to read this test:** Agreement at the decimeter scale is meaningful here because the comparison is between a gridded global ocean model and local station realizations, not two implementations of the same transformation grid. The test is primarily a validation of global fallback selection and physical plausibility.
 
@@ -93,7 +93,7 @@ These tests are best understood as integration or regression checks rather than 
 | Test Region | Calculated Shift | Challenge | Status |
 | :--- | :--- | :--- | :--- |
 | **Washington (Cross-Epoch)** | -0.2610 m | Crustal Velocity & Datum Offset | PASS |
-| **Japan (East Longitude)** | 1.9530 m | Eastern Hemisphere Longitude Parsing | PASS |
+| **Japan (East Longitude)** | 1.9518 m | Eastern Hemisphere Longitude Parsing | PASS |
 
 > **How to read this test:** PASS indicates that the HTDP integration produced a plausible, finite result through the expected execution path. Detailed verification of HTDP's geophysical model belongs to NGS; these cases primarily protect Transformez against wrapper, frame-ID, epoch, and longitude-regression errors.
 
