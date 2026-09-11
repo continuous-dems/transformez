@@ -28,7 +28,7 @@ pip install git+https://github.com/continuous-dems/transformez.git#egg=transform
 
 ## External Engines
 
-Transformez manages its external geodetic engines through the CLI, downloading and configuring them automatically. Neither engine is required for every transformation — Transformez will tell you when a requested pathway needs one.
+Transformez manages its external geodetic engines through the CLI, downloading and configuring them automatically. Neither engine is required for every transformation: Transformez will tell you when a requested pathway needs one.
 
 ### HTDP
 
@@ -44,7 +44,7 @@ By default HTDP installs into your user configuration. To install into the curre
 transformez htdp install --project
 ```
 
-If your workflows stay within static tidal/geoid transformations, HTDP may not be needed at all — Transformez will surface a clear message if a requested transformation requires it.
+If your workflows stay within static tidal/geoid transformations, HTDP may not be needed at all. Transformez will surface a clear message if a requested transformation requires it.
 
 ### NOAA VDatum Java
 

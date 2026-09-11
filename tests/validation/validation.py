@@ -746,7 +746,7 @@ def generate_markdown_report(
     logger.info("Generating validation.md report...")
 
     md_lines = [
-        "# Validation & Accuracy",
+        "# 🏹 Validation & Accuracy",
         "",
         "Transformez is validated at several different levels because no single benchmark can fully describe the behavior of a coastal vertical-datum transformation engine. The tests below separate provider/grid accuracy, production coastal behavior, global-model agreement, and external HTDP integration.",
         "",
@@ -867,7 +867,9 @@ def generate_markdown_report(
     md_lines.extend(
         [
             "",
-            "![International Gauges]({intl_stats['image']})" if intl_stats else "",
+            "![International Gauges](../_static/validation_international_bars.png))"
+            if intl_stats
+            else "",
             "",
             "> **How to read this test:** Agreement at the decimeter scale is meaningful here because the comparison is between a gridded global ocean model and local station realizations, not two implementations of the same transformation grid. The test is primarily a validation of global fallback selection and physical plausibility.",
             "",

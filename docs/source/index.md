@@ -4,6 +4,8 @@
 
 **Transformez** builds and applies vertical transformations across geodetic, tidal, and model-based height references, from local datums to global surfaces.
 
+Transformez resolves your input and output references, computes the optimal geodetic pathway on the fly, and generates **spatially varying shift grids**. Where regional models end, Transformez continues across open ocean and inland using global proxies, coastal blending, and meter-based inland decay.
+
 Transformez is part of the [Continuous DEMs Project](https://continuous-dems.readthedocs.io/), an ecosystem of tools for modern, continuous digital elevation model generation.
 
 ## Key Features
@@ -99,7 +101,7 @@ out_file = transformez.transform_raster(
 
 ## Learn More
 
-Read the [User Guide](user_guide/index.md) to install Transformez, generate your first shift grid, and understand how it works — from reference inputs and the CLI/Python API through the [geodetic methodology](user_guide/methodology.md) behind the dynamic hub-and-spoke routing, sign conventions, and coastal blending.
+Read the [User Guide](user_guide/index.md) to install Transformez, generate your first shift grid, and understand how it works; from reference inputs and the CLI/Python API through the [geodetic methodology](user_guide/methodology.md) behind the dynamic hub-and-spoke routing, sign conventions, and coastal blending.
 
 ```{toctree}
 :maxdepth: 2
