@@ -118,6 +118,7 @@ class RasterQuery:
 
         with rasterio.open(filename) as src:
             self.data = src.read(1)
+            self.crs = src.crs
             self.transform = src.transform
             self.inv_transform = ~src.transform
             self.bounds = src.bounds
@@ -142,10 +143,11 @@ class RasterQuery:
         q_x = np.asarray(x).copy()
         q_y = np.asarray(y)
 
-        if self.bounds.left < 0 and np.any(q_x > 180):
-            q_x = np.where(q_x > 180, q_x - 360, q_x)
-        elif self.bounds.left >= 0 and np.any(q_x < 0):
-            q_x = np.where(q_x < 0, q_x + 360, q_x)
+        if self.crs is not None and self.crs.is_geographic:
+            if self.bounds.left < 0 and np.any(q_x > 180):
+                q_x = np.where(q_x > 180, q_x - 360, q_x)
+            elif self.bounds.left >= 0 and np.any(q_x < 0):
+                q_x = np.where(q_x < 0, q_x + 360, q_x)
 
         cols_f, rows_f = self.inv_transform * (q_x, q_y)
 

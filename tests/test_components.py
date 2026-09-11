@@ -100,7 +100,7 @@ def test_build_components_vertical_is_aligned_to_source_crs(monkeypatch):
 
     args, kwargs = generated.reproject.call_args
     assert CRS.from_user_input(args[0]) == CRS.from_epsg(32610)
-    assert kwargs["dst_region"] is region
+    # assert kwargs["dst_region"] is region  # we removed dst_region from build_components
 
 
 # Removing this test for now; i don't think we should crash here when

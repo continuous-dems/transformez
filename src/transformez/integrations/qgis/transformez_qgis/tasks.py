@@ -232,7 +232,7 @@ class InstallTransformezTask(TransformezTask):
 class UninstallTransformezTask(TransformezTask):
     """Uninstall Transformez from the managed isolated runtime."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__("Uninstall Transformez from isolated runtime")
         self.result: subprocess.CompletedProcess[str] | None = None
 

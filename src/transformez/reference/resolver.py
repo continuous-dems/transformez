@@ -52,6 +52,13 @@ def resolve_reference(
                 )
 
             native_frame = parsed.vertical.crs
+            if native_frame.is_projected:
+                if native_frame.geodetic_crs is not None:
+                    native_frame = native_frame.geodetic_crs
+
+            if native_frame is not None and len(native_frame.axis_info) != 3:
+                native_frame = native_frame.to_3d()
+
             effective_model = None
 
         elif binding is not None:
