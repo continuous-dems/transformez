@@ -1,5 +1,5 @@
 # 📐 Geodetic Methodology & Architecture
-To provide vertical transformations across varied geographic extents, Transformez relies on a dynamic, rigorous architecture. The engine computes optimal geodetic pathways on the fly — here's a look under the hood.
+To provide vertical transformations across varied geographic extents, Transformez relies on a dynamic, rigorous architecture. The engine computes optimal geodetic pathways on the fly. Here's a look under the hood.
 
 ```mermaid
 flowchart LR
@@ -18,9 +18,9 @@ The engine follows a typed reference → resolution → planning → execution p
 
 
 ## Reference Resolution
-Before a transformation path is constructed, Transformez resolves user-supplied reference inputs into separate horizontal and vertical components. Standard CRS definitions are resolved through PROJ, while Transformez-specific tidal and model surfaces use explicit namespaced identifiers such as vdatum:mllw and global:lat. Legacy shorthand names are normalized to these references for backward compatibility.
+Before a transformation path is constructed, Transformez resolves user-supplied reference inputs into separate horizontal and vertical components. Standard CRS definitions are resolved through PROJ, while Transformez-specific tidal and model surfaces use explicit namespaced identifiers such as `vdatum:mllw` and `global:lat`. Legacy shorthand names are normalized to these references for backward compatibility.
 
-Reference resolution is separate from transformation execution: parsing determines what a reference represents, and the transformation engine determines how to connect the resolved source and destination through the appropriate geodetic models and hubs. This separation lets you inspect the full plan — providers, models, hubs, and frame transformations — before any data are fetched.
+Reference resolution is separate from transformation execution: parsing determines what a reference represents, and the transformation engine determines how to connect the resolved source and destination through the appropriate geodetic models and hubs. This separation lets you inspect the full plan (providers, models, hubs, and frame transformations) before any data are fetched.
 
 
 ## The Dynamic Hub-and-Spoke Model
@@ -61,7 +61,7 @@ flowchart TD
 | WGS84      | MLLW     | WGS84    | Negative (↑ to ↓)       |
 | LAT        | MHHW     | WGS84    | Depends on location     |
 
-* **Native Ellipsoid Hubs:** Every transformation is mathematically routed through a central geodetic frame (the "Hub").
+* **Native Ellipsoid Hubs:** Every transformation is routed through a central geodetic frame (the "Hub").
 
 * **Intelligent Routing:** The engine evaluates the requested input and output datums and automatically selects the safest hub.
 For example, if both datums belong to the North American Datum family, the engine routes strictly through the NAD83 ellipsoid hub to avoid introducing unnecessary global transformation errors. If the request crosses international or global boundaries, it scales up to the WGS84 hub.
@@ -72,7 +72,7 @@ A common point of confusion in vertical geodesy is the sign convention of shift 
 
 * **The Stick in the Bay:** Imagine standing in the water of a bay holding a measuring stick with a "zero" line marked as Mean Low Water. If you move your "zero" mark to a higher datum (e.g., moving from Mean Low Water up to Mean Higher High Water), the water level on your stick will read as a lower number.
 
-* **The Rule of Addition:** Because of this, shifting to a higher reference surface can require positive *or* negative shift values depending on location. Transformez automatically handles these complex sign inversions internally so you don't have to overthink it. You always simply **ADD** the generated shift grid to your raster (i.e., `New_DEM = Old_DEM + Shift_Grid`). The grid's native positive and negative values automatically ensure the math reflects physical reality.
+* **The Rule of Addition:** Because of this, shifting to a higher reference surface can require positive *or* negative shift values depending on location. Transformez automatically handles these sign inversions internally so you don't have to overthink it. You always simply **ADD** the generated shift grid to your raster (i.e., `New_DEM = Old_DEM + Shift_Grid`). The grid's native positive and negative values automatically ensure the math reflects physical reality.
 
 * **Example:**
 
@@ -100,7 +100,7 @@ Since water piles up and moves around and tides push into shallow bays and narro
 
 
 ## Continuous Coastal Blending
-Official tidal models (like NOAA's VDatum) only provide data close to the coast. However, modern hydrodynamic modeling requires continuous grids that extend far into the deep ocean or miles inland.
+Official tidal models (like NOAA's VDatum) provide data close to the coast. However, modern hydrodynamic modeling requires continuous grids that extend far into the deep ocean or miles inland.
 
 * **Offshore Extrapolation:** When a requested bounding box extends beyond native VDatum coverage, Transformez automatically fetches global satellite altimetry (like DTU25 or FES2014) as a proxy.
 

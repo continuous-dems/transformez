@@ -1,8 +1,8 @@
 # 🛠️ Usage
 
-Transformez can be used directly from the command line or Python API, or through integrations such as Fetchez and QGIS. All interfaces — CLI, Python API, and integrations such as Fetchez and QGIS — accept the same [references](references.md) and behave identically.
+Transformez can be used directly from the command line or Python API, or through integrations such as Fetchez and QGIS. All interfaces (CLI, Python API, and integrations such as Fetchez and QGIS) accept the same [references](references.md) and behave identically.
 
-> **🧮 Sign conventions:** vertical datum shifts are not intuitive — shifting to a *higher* surface does not simply mean positive values. Transformez handles all sign conventions internally. The one thing to remember: **always ADD the shift grid** to your elevation data. See the [sign conventions](methodology.md#the-datum-shift-sign-conventions) section of the methodology guide for the physical intuition.
+> **🧮 Sign conventions:** vertical datum shifts are not always intuitive (shifting to a *higher* surface does not simply mean positive values). Transformez handles all sign conventions internally. The one thing to remember: **always ADD the shift grid** to your elevation data. See the [sign conventions](methodology.md#the-datum-shift-sign-conventions) section of the methodology guide for the physical intuition.
 
 ## Command Line Interface
 
@@ -64,7 +64,7 @@ out_file = transformez.transform_raster(
 (which-interface-do-i-want)=
 ## Which interface do I want?
 
-For most users, `transformez.generate_grid(...)` is all you need — it returns a 2D NumPy array of shift values, optionally saved to disk.
+For most users, `transformez.generate_grid(...)` is all you need. This will return a 2D NumPy array of shift values, optionally saved to disk as a GIS-compatible raster.
 
 When you need a fully georeferenced, inspectable transformation product, use `build_shift_grid(...)` to obtain a `ShiftGrid` object. It carries the array, region, CRS, affine transform, source and target references, epochs, provenance, generation key, uncertainty, and cache identity, and can write or reproject itself.
 

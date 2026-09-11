@@ -1,4 +1,4 @@
-# 🌊 VDatum Coverage Chains (Appendix)
+# 🌊 VDatum Coverage Chains
 
 NOAA VDatum regional packages are treated by Transformez as coherent transformation units rather than as collections of interchangeable grids.
 
