@@ -1,6 +1,6 @@
 # 🗺️ Vertical References
 
-A reference describes the surface that elevations are expressed relative to. Transformez accepts two kinds of vertical input:
+A reference describes the surface that elevations are expressed relative to. Transformez accepts multiple kinds of vertical input:
 
 | Form                  | Example          | Meaning                            |
 | --------------------- | ---------------- | ---------------------------------- |
@@ -32,7 +32,7 @@ Transformez conceptually separates vertical **references** from vertical **bindi
 - The **reference** describes *what* the surface is (e.g., NOAA's realization of MLLW).
 - The **binding** describes *how* Transformez realizes and operates on that surface.
 
-Bindings encode the realization details — `provider`, `engine`, `provider-specific datum`, `native frame`, and `default model` — independently of the reference metadata. This separation lets the same reference evolve to new models or providers without changing user-facing input syntax.
+Bindings encode the realization details, such as `provider`, `engine`, `provider-specific datum`, `native frame`, and `default model`, independently of the reference metadata. This separation lets the same reference evolve to new models or providers without changing user-facing input syntax.
 
 Not all references have a supported binding; see [Models and Providers](providers.md) for the current bindings.
 
