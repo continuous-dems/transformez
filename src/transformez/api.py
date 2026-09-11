@@ -237,10 +237,7 @@ def build_components(
             )
 
             if source.horizontal is not None:
-                vertical = vertical.reproject(
-                    source.horizontal,
-                    dst_region=region_obj,
-                )
+                vertical = vertical.reproject(source.horizontal)
 
     return TransformationComponents(
         horizontal=horizontal,
