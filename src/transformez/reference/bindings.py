@@ -83,6 +83,14 @@ CUSTOM_VERTICAL_REFERENCES = {
         unit_name="metre",
         unit_to_metre=1.0,
     ),
+    "vdatum:xgeoid17b": VerticalReference(
+        id="vdatum:xgeoid17b",
+        name="NGS X-GEOID 17b",
+        kind=VerticalKind.GRAVITY_RELATED_HEIGHT,
+        axis_direction=AxisDirection.UP,
+        unit_name="metre",
+        unit_to_metre=1.0,
+    ),
     "vdatum:xgeoid19b": VerticalReference(
         id="vdatum:xgeoid19b",
         name="NGS X-GEOID 19b",
@@ -204,6 +212,14 @@ OPERATION_BINDINGS = {
         native_frame="EPSG:6319",
         default_model="geoid:g2018",
         global_proxy="global:hat",
+    ),
+    "vdatum:xgeoid17b": OperationBinding(
+        reference_id="vdatum:xgeoid17b",
+        engine="vdatum_grid",
+        provider="vdatum",
+        provider_datum="xgeoid17b",
+        native_frame="EPSG:7912",
+        default_model=None,
     ),
     "vdatum:xgeoid19b": OperationBinding(
         reference_id="vdatum:xgeoid19b",
