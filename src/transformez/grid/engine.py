@@ -640,6 +640,7 @@ class GridEngine:
 
                 nodata = src.nodata if src.nodata is not None else -9999.0
                 profile.update(nodata=nodata)
+                profile.update(crs=src_horz)
 
                 with rasterio.open(dst_dem, "w", **profile) as dst:
                     dst.update_tags(**shift_grid.provenance)
