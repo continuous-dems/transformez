@@ -623,7 +623,7 @@ class GridEngine:
                     )
 
                 shift_horz = horizontal_crs(shift_grid.crs)
-                src_horz = horizontal_crs(src.srs)
+                src_horz = horizontal_crs(src.crs)
                 if shift_horz != src_horz:
                     raise ValueError(
                         f"ShiftGrid CRS: {shift_horz} does not match source DEM: {src_horz}."
