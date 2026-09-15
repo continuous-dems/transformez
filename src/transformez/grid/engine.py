@@ -37,6 +37,7 @@ from fetchez.spatial import Region, parse_region
 
 from transformez.utils import UNITS
 from transformez.grid.shift import ShiftGrid
+from transformez.reference.parser import horizontal_crs
 
 os.environ["HDF5_USE_FILE_LOCKING"] = "FALSE"
 
@@ -617,10 +618,16 @@ class GridEngine:
         try:
             with rasterio.open(src_dem) as src:
                 if shift_grid.shape != (src.height, src.width):
-                    raise ValueError("ShiftGrid shape does not match source DEM.")
+                    raise ValueError(
+                        f"ShiftGrid shape: {shift_grid.shape} does not match source DEM: ({src.height}, {src.width})."
+                    )
 
-                if CRS.from_user_input(shift_grid.crs) != CRS.from_user_input(src.crs):
-                    raise ValueError("ShiftGrid CRS does not match source DEM.")
+                shift_horz = horizontal_crs(shift_grid.crs)
+                src_horz = horizontal_crs(src.srs)
+                if shift_horz != src_horz:
+                    raise ValueError(
+                        f"ShiftGrid CRS: {shift_horz} does not match source DEM: {src_horz}."
+                    )
 
                 if not shift_grid.transform.almost_equals(src.transform):
                     raise ValueError("ShiftGrid transform does not match source DEM.")

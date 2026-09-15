@@ -59,6 +59,15 @@ def warn_legacy_alias(old: str, new: str):
     logger.warning(f"Legacy alias '{old}' is deprecated. Please use '{new}'.")
 
 
+def horizontal_crs(value: CRS | str) -> CRS:
+    parsed = parse_reference(value)
+
+    if parsed.horizontal is None:
+        raise ValueError(f"Reference has no horizontal CRS: {value}")
+
+    return parsed.horizontal
+
+
 def vertical_only(vert_ref: VerticalReference, text: str) -> ParsedReference:
     """Helper to cleanly construct a vertical-only ParsedReference."""
     return ParsedReference(
