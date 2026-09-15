@@ -109,16 +109,18 @@ def geoids() -> None:
                 binding.default_model,
                 {"provider": set(), "notes": []},
             )
-            providers[binding.provider]["engines"].add(binding.provider)
-            providers[binding.provider]["references"].append(str(ref_id))
+
+            geoids[binding.default_model]["provider"].add(binding.provider)
+            geoids[binding.default_model]["notes"].append(str(ref_id))
 
     header = "  MODEL           PROVIDER     DEFAULT FOR"
     click.secho(f"\n {header}", fg="cyan", bold=True)
     click.echo("-" * len(header))
 
     for key in geoids:
+        providers = list(set(geoids[key].get("provider", [])))
         click.echo(
-            f"  {key:<16} {geoids[key]['provider']:<12} {','.join(geoids[key]['notes'])}"
+            f"  {key:<16} {','.join(providers):<16} {','.join(geoids[key]['notes'])}"
         )
 
 
