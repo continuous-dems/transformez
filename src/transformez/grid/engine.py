@@ -45,9 +45,15 @@ logger = logging.getLogger(__name__)
 
 
 class GridCorruptionError(Exception):
-    """Raised when a fetched grid is corrupted and needs re-downloading."""
+    """Raised when a fetched grid cannot be read successfully."""
 
-    pass
+    def __init__(
+        self,
+        source_path: str | Path,
+        message: str | None = None,
+    ) -> None:
+        self.source_path = Path(source_path)
+        super().__init__(message or f"Unable to read grid: {self.source_path}")
 
 
 def plot_grid(
@@ -212,8 +218,8 @@ class GridEngine:
                     valid_mask = ~np.isnan(temp_buffer)
                     mosaic[valid_mask] = temp_buffer[valid_mask]
 
-            except Exception as e:
-                error_msg = str(e)
+            except Exception as exc:
+                error_msg = str(exc)
 
                 if any(
                     err in error_msg
@@ -225,28 +231,19 @@ class GridEngine:
                     ]
                 ):
                     logger.error(
-                        f" CRITICAL: Corrupted grid chunk detected in {source}!"
+                        " CRITICAL: Failed to read grid due to a possible "
+                        "corruption: %s!",
+                        source,
                     )
 
                     if is_gdal_dataset:
-                        real_path = Path(source_str.split(":")[1])
+                        real_path = Path(source_str.split(":", 2)[1])
                     else:
                         real_path = source_path or Path(source)
 
-                    if real_path.exists():
-                        logger.warning(
-                            f"Auto-deleting corrupted cache file to force re-fetch: {real_path}"
-                        )
-                        try:
-                            real_path.unlink()
-                        except OSError:
-                            pass
+                    raise GridCorruptionError(real_path) from exc
 
-                    raise GridCorruptionError(
-                        f"Corrupted file deleted: {real_path}"
-                    ) from e
-
-                logger.exception(f"Failed to reproject {source}: {e}")
+                logger.exception("Failed to reproject %s: %s", source, exc)
                 raise
 
         return mosaic
