@@ -153,7 +153,7 @@ class ShiftGrid:
         from transformez.grid.io import GridWriter
 
         path = Path(filename) if filename is not None else self.storage_path()
-        logger.info(f"Saving shift grid to {path}...")
+        logger.debug(f"Saving shift grid to {path}...")
         GridWriter.write(
             path,
             self.array,
@@ -404,6 +404,7 @@ def build_shift_grid(
             logger.info("-" * 60)
 
     except Exception as exc:
+        logger.exception("fail: {exc}")
         raise RuntimeError("Transformation failed to generate a shift grid.") from exc
 
     report_progress(progress_callback, 90, "finalize", "Transformation complete.")

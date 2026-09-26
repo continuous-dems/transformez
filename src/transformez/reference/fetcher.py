@@ -254,7 +254,7 @@ class GridFetcher:
                 grid = self._get_grid("proj", geoid)
                 if np.isfinite(grid).any():
                     if geoid != target_geoid and self.verbose:
-                        logger.info(
+                        logger.debug(
                             "    [Geoid Fallback] '%s' lacks coverage here. "
                             "Falling back to '%s'.",
                             target_geoid,
@@ -269,7 +269,7 @@ class GridFetcher:
         )
 
     def _fetch_dist2coast_m(self) -> Optional[np.ndarray]:
-        logger.info("    [Coastline] Fetching Dist2Coast signed distance field...")
+        logger.debug("    [Coastline] Fetching Dist2Coast signed distance field...")
 
         try:
             d2c_files = self.fetch_grid("dist2coast", variant="base")
@@ -349,7 +349,7 @@ class GridFetcher:
             extension_count = np.count_nonzero(
                 context.water_mask & valid_vdatum & ~native_water
             )
-            logger.info(
+            logger.debug(
                 "    [Coastline] Effective water mask includes %d VDatum cells "
                 "beyond native water.",
                 extension_count,
