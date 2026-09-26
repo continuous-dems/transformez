@@ -516,7 +516,7 @@ class GridEngine:
             data: Input grid with NaN gaps to fill.
             decay_pixels: Distance over which values decay to zero (0 for infinite).
             buffer_pixels: Zone near coast where raw data is preserved.
-            ocean_mask: Boolean mask where True = ocean (excluded from inland decay).
+            ocean_mask: Optional legacy water mask. Ignored when coastal_context is supplied.
             coastal_context: The context of the coastal domain.
             buffer_distance_m: The buffer distance in meters to apply the tidal
                 transformation from the coastal zone.
