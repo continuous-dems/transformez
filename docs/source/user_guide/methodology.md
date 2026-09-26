@@ -102,7 +102,7 @@ Since water piles up and moves around and tides push into shallow bays and narro
 ## Continuous Coastal Blending
 Official tidal models (like NOAA's VDatum) provide data close to the coast. However, modern hydrodynamic modeling requires continuous grids that extend far into the deep ocean or miles inland.
 
-* **Offshore Extrapolation:** When a requested bounding box extends beyond native VDatum coverage, Transformez automatically fetches global satellite altimetry (like DTU25 or FES2014) as a proxy.
+* **Offshore Extrapolation:** When a requested bounding box extends beyond native VDatum coverage, Transformez automatically fetches lobal ocean models, including the DTU25 altimetry-derived mean sea surface and FES2014 tide model as a proxy.
 
 * **Smart Blending:** To prevent harsh steps between the two models, the engine applies a dynamic spatial crossfade. Where NOAA VDatum coverage ends offshore, Transformez uses global DTU/FES-derived surfaces as a fallback and blends between valid regional and global coverage to avoid abrupt model seams. Global proxy coverage never expands the water domain; coastline geometry comes from Dist2Coast, with valid VDatum coverage permitted to extend the effective tidal domain in modeled estuaries and rivers.
 
