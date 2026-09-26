@@ -36,6 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed coastal/global compositing so global proxy surfaces fill missing coastal coverage without redefining the valid tidal-water domain.
 * Fixed Dist2Coast processing that could introduce edge artifacts or incorrectly discard zero-valued coastline cells as nodata.
 * Fixed HTDP latitude/longitude handling and validated frame transformations against the configured HTDP engine version.
+* Fixed Dist2Coast fetch failure. Now raises MissingGridException rather than returning None.
 
 ### Deprecated
 

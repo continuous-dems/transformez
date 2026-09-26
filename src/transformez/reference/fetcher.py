@@ -268,16 +268,16 @@ class GridFetcher:
             f"Geoid '{target_geoid}' and fallbacks lack coverage or failed to download."
         )
 
-    def _fetch_dist2coast_m(self) -> Optional[np.ndarray]:
+    def _fetch_dist2coast_m(self) -> np.ndarray:
         logger.debug("    [Coastline] Fetching Dist2Coast signed distance field...")
 
         try:
             d2c_files = self.fetch_grid("dist2coast", variant="base")
             if not d2c_files:
-                logger.warning(
-                    "    [Coastline] Dist2Coast fetch failed. No coastal context applied."
+                raise MissingGridError(
+                    "[Coastline] Dist2Coast is unavailable; required coastal context "
+                    "could not be fetched."
                 )
-                return None
 
             nc_path = f"netcdf:{d2c_files[0]}:dist"
             d2c_grid = GridEngine.load_and_interpolate(
@@ -321,20 +321,20 @@ class GridFetcher:
 
             return d2c_grid.astype(np.float32) * scale
 
+        except MissingGridError:
+            raise
         except Exception as exc:
             logger.error(
                 "    [Coastline] Failed to generate Dist2Coast distance field: %s",
                 exc,
             )
-            return None
+            raise MissingGridError("[Coastline] Dist2Coast is unavailable.") from exc
 
     def _fetch_coastal_context(
         self,
         vdatum_grid: Optional[np.ndarray] = None,
-    ) -> Optional[CoastalContext]:
+    ) -> CoastalContext:
         d2c_m = self._fetch_dist2coast_m()
-        if d2c_m is None:
-            return None
 
         valid_vdatum = np.isfinite(vdatum_grid) if vdatum_grid is not None else None
         context = GridEngine.build_coastal_context(
