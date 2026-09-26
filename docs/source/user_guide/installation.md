@@ -6,7 +6,11 @@ Transformez is available on `conda-forge`:
 
 ```bash
 conda install -c conda-forge transformez
-From Pip/PyPI
+```
+
+## From Pip/PyPI
+
+```bash
 pip install transformez
 ```
 

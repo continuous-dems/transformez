@@ -109,7 +109,7 @@ Some hydrodynamic, tsunami, storm-surge, and inundation workflows instead requir
 ```bash
 transformez shift my_coastal_dem.tif \
     -I epsg:5703 -O vdatum:mhw \
-    --extrapolate-inland
+    --no-inland-decay
 ```
 
 > The sign conventions of the applied shift and the physical intuition behind coastal blending and inland decay are covered in depth in [Methodology](methodology.md); the models being fetched are listed in [Models and Providers](providers.md).
