@@ -69,6 +69,8 @@ For most users, `transformez.generate_grid(...)` is all you need. This will retu
 When you need a fully georeferenced, inspectable transformation product, use `build_shift_grid(...)` to obtain a `ShiftGrid` object. It carries the array, region, CRS, affine transform, source and target references, epochs, provenance, generation key, uncertainty, and cache identity, and can write or reproject itself.
 
 ```python
+from transformez.grid.shift import build_shift_grid
+
 grid = build_shift_grid(...)
 
 grid.array

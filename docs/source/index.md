@@ -13,7 +13,7 @@ Transformez is part of the [Continuous DEMs Project](https://continuous-dems.rea
 - **Dynamic Hub-and-Spoke routing** — Automatically selects the optimal geodetic pathway (NAD83 or WGS84) for your transformation
 - **Continuous coastal blending** — Seamlessly merges NOAA VDatum with global satellite altimetry (FES2014/DTU25)
 - **Inland tidal decay** — Smart extrapolation with Hermite S-curve smoothing for flood modeling
-- **Global coverage** — Works anywhere on Earth via dynamic proxy chaining when regional models are unavailable
+- **Global coverage** — Provides global fallback coverage where regional models are unavailable.
 - **CLI + Python API** — Use as a command-line tool or embed in your pipeline
 - **Offline field use** — Pre-download grids with `transformez prefetch` for air-gapped environments
 
