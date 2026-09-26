@@ -268,7 +268,7 @@ class GridFetcher:
             f"Geoid '{target_geoid}' and fallbacks lack coverage or failed to download."
         )
 
-    def _fetch_dist2coast_m(self) -> Optional[np.ndarray]:
+    def _fetch_dist2coast_m(self) -> np.ndarray:
         logger.debug("    [Coastline] Fetching Dist2Coast signed distance field...")
 
         try:
