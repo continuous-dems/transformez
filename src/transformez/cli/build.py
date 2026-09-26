@@ -25,13 +25,16 @@ from transformez.progress import ProgressEvent
 @click.option("-R", "--region", required=True, help="Bounding box or location string.")
 @click.option("-E", "--increment", required=True, help="Resolution (e.g., 1s, 30m).")
 @click.option(
-    "-I", "--input-datum", required=True, help="Source Datum (e.g., 'mllw', '5703')."
+    "-I",
+    "--input-datum",
+    required=True,
+    help="Source Datum (e.g., 'vdatum:mllw', 'epsg:5703').",
 )
 @click.option(
     "-O",
     "--output-datum",
     required=True,
-    help="Target Datum (e.g., '4979', '5703:g2012b').",
+    help="Target Datum (e.g., 'epsg:4979', 'epsg:5703').",
 )
 @click.option("--out", "-o", help="Output filename (default: auto-named).")
 @click.option(

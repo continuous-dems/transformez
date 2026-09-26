@@ -69,6 +69,8 @@ For most users, `transformez.generate_grid(...)` is all you need. This will retu
 When you need a fully georeferenced, inspectable transformation product, use `build_shift_grid(...)` to obtain a `ShiftGrid` object. It carries the array, region, CRS, affine transform, source and target references, epochs, provenance, generation key, uncertainty, and cache identity, and can write or reproject itself.
 
 ```python
+from transformez.grid.shift import build_shift_grid
+
 grid = build_shift_grid(...)
 
 grid.array
@@ -109,7 +111,7 @@ Some hydrodynamic, tsunami, storm-surge, and inundation workflows instead requir
 ```bash
 transformez shift my_coastal_dem.tif \
     -I epsg:5703 -O vdatum:mhw \
-    --extrapolate-inland
+    --no-inland-decay
 ```
 
 > The sign conventions of the applied shift and the physical intuition behind coastal blending and inland decay are covered in depth in [Methodology](methodology.md); the models being fetched are listed in [Models and Providers](providers.md).

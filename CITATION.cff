@@ -10,8 +10,8 @@ abstract: >
   Transformez is a standalone Python engine for converting geospatial
   data between vertical datums.
 
-version: 0.6.0
-date-released: 2026-08-27
+version: 1.0.0
+date-released: 2026-09-26
 
 type: "software"
 license: MIT
