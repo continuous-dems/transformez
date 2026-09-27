@@ -20,11 +20,10 @@ import subprocess
 import sys
 import tempfile
 import urllib.request
-import zipfile
 from pathlib import Path
 from typing import Literal
 
-from fetchez.utils import remove_glob
+from fetchez.utils import remove_glob, p_f_extract
 
 logger = logging.getLogger(__name__)
 
@@ -527,8 +526,7 @@ def install_vdatum_package(
         urllib.request.urlretrieve(url, zip_path)
 
         logger.info("Extracting VDatum %s...", clean_version)
-        with zipfile.ZipFile(zip_path, "r") as archive:
-            archive.extractall(extract_dir)
+        _extracted = p_f_extract(zip_path, outdir=extract_dir)
 
         jar = _find_vdatum_jar(extract_dir)
         if jar is None:

@@ -20,9 +20,10 @@ import tempfile
 import shutil
 import logging
 import urllib.request
-import zipfile
 import numpy as np
 from typing import Tuple, Optional, Any, Literal
+
+from fetchez.utils import p_f_extract
 
 from transformez.reference.bindings import HTDP_FRAME_BINDINGS
 
@@ -378,19 +379,13 @@ def install_htdp_binary(
         logger.info("Downloading HTDP %s from %s", clean_version, url)
         urllib.request.urlretrieve(url, zip_path)
 
-        with zipfile.ZipFile(zip_path, "r") as archive:
-            roots = {
-                Path(name).parts[0] for name in archive.namelist() if Path(name).parts
-            }
+        _extracted = p_f_extract(zip_path, outdir=extract_dir)
+        roots = {Path(name).parts[0] for name in _extracted if Path(name).parts}
 
-            if len(roots) != 1:
-                raise HTDPInstallError(
-                    f"Unexpected HTDP archive layout: {sorted(roots)}"
-                )
+        if len(roots) != 1:
+            raise HTDPInstallError(f"Unexpected HTDP archive layout: {sorted(roots)}")
 
-            source_root = next(iter(roots))
-            archive.extractall(extract_dir)
-
+        source_root = next(iter(roots))
         source_dir = extract_dir / source_root
 
         if sys.platform == "win32":
