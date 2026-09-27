@@ -178,8 +178,31 @@ class GridFetcher:
         except Exception:
             return float("inf")
 
-    def _get_grid(self, provider: str, name: str, max_retries: int = 3) -> np.ndarray:
-        """Fetch and load a generic grid with corruption recovery."""
+    @staticmethod
+    def _invalidate_grid(path: Path) -> None:
+        if not path.exists():
+            return
+
+        logger.warning(
+            "Removing invalid cached grid to force a fresh fetch: %s",
+            path,
+        )
+        try:
+            path.unlink()
+        except OSError as exc:
+            logger.warning(
+                "Could not remove invalid cached grid %s: %s",
+                path,
+                exc,
+            )
+
+    def _get_grid(
+        self,
+        provider: str,
+        name: str,
+        max_retries: int = 3,
+    ) -> np.ndarray:
+        """Fetch and load a grid with cache invalidation and corruption recovery."""
         if not name:
             raise MissingGridError("A valid grid name must be provided to the fetcher.")
         if not provider:
@@ -190,9 +213,21 @@ class GridFetcher:
 
         for attempt in range(max_retries):
             if provider == "vdatum" and name.startswith("xgeoid"):
-                return self._fetch_vdatum_model_grid(name)
+                try:
+                    return self._fetch_vdatum_model_grid(name)
+                except GridCorruptionError as exc:
+                    self._invalidate_grid(exc.source_path)
+                    if attempt == max_retries - 1:
+                        raise MissingGridError(
+                            f"Grid '{name}' is persistently corrupted."
+                        ) from None
+                    continue
 
-            files = self.fetch_grid(provider, datatype=name, query=name)
+            files = self.fetch_grid(
+                provider,
+                datatype=name,
+                query=name,
+            )
 
             if not files:
                 if attempt < max_retries - 1:
@@ -207,7 +242,10 @@ class GridFetcher:
                     var_name = "lat_elevation" if "lat" in name else "msl_elevation"
                     nc_path = f"netcdf:{files[0]}:{var_name}"
                     return GridEngine.load_and_interpolate(
-                        [nc_path], self.region, self.nx, self.ny
+                        [nc_path],
+                        self.region,
+                        self.nx,
+                        self.ny,
                     )
 
                 return GridEngine.load_and_interpolate(
@@ -217,12 +255,18 @@ class GridFetcher:
                     self.ny,
                 )
 
-            except GridCorruptionError:
-                if attempt < max_retries - 1:
-                    continue
-                raise MissingGridError(
-                    f"Grid '{name}' is persistently corrupted."
-                ) from None
+            except GridCorruptionError as exc:
+                logger.warning(
+                    "Grid '%s' could not be read; invalidating cached "
+                    "resource and retrying.",
+                    name,
+                )
+                self._invalidate_grid(exc.source_path)
+
+                if attempt == max_retries - 1:
+                    raise MissingGridError(
+                        f"Grid '{name}' is persistently corrupted."
+                    ) from None
 
         raise MissingGridError(
             f"Failed to fetch grid '{name}' due to an unknown error."
