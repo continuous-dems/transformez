@@ -31,6 +31,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Coastal blending and inland decay now use physical Dist2Coast distances rather than pixel-derived distance transforms.
 * Refactored corrupt-grid recovery so grid readers no longer modify cached resources directly; cache invalidation and clean re-fetch recovery are now handled by the reference fetcher.
 * Improved corrupt-grid errors to retain the affected source path and distinguish possible read corruption from confirmed persistent corruption.
+* VDatum grid members are extracted through fetchez.utils.p_f_extract().
+* GZIP resources fetched by ReferenceFetcher use p_f_extract().
+* VDatum package installation uses p_f_extract() for archive extraction.
+* HTDP package installation uses p_f_extract() for archive extraction.
 
 ### Fixed
 
