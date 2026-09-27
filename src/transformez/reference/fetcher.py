@@ -13,11 +13,7 @@ of geodetic grids.
 :license: MIT, see LICENSE for more details.
 """
 
-import gzip
 import logging
-import os
-import shutil
-import zipfile
 from pathlib import Path
 from typing import Any, List, Optional, Tuple
 
@@ -25,7 +21,7 @@ import numpy as np
 import rasterio
 
 import fetchez.api
-import fetchez.utils
+from fetchez.utils import p_f_extract
 from fetchez.core import run_fetchez
 from fetchez.modules.vdatum import VDatum
 
@@ -120,7 +116,7 @@ class GridFetcher:
             if not fn.exists():
                 continue
 
-            if fn.suffix == ".zip":
+            if fn.suffix.casefold() == ".zip":
                 datatype = kwargs.get("datatype")
                 fns_to_extract: list[str] | None = None
                 if extract_names is not None:
@@ -128,22 +124,11 @@ class GridFetcher:
                 else:
                     fns_to_extract = [datatype, ".met", ".inf"] if datatype else None
                 try:
-                    extracted = fetchez.utils.p_f_unzip(
-                        str(fn), fns=fns_to_extract, outdir=str(self.cache_dir)
+                    extracted = p_f_extract(
+                        fn, outdir=self.cache_dir, members=fns_to_extract
                     )
-                except OSError as exc:
-                    if exc.errno == 30 or "Read-only" in str(exc):
-                        logger.debug(
-                            "Read-only cache detected. Assuming %s is already unzipped.",
-                            fn,
-                        )
-                        extracted = [
-                            str(Path(root) / filename)
-                            for root, _, filenames in os.walk(self.cache_dir)
-                            for filename in filenames
-                        ]
-                    else:
-                        raise
+                except Exception:
+                    raise
 
                 for extracted_file in extracted:
                     path = Path(extracted_file)
@@ -154,15 +139,9 @@ class GridFetcher:
                         valid.append(path)
 
             elif fn.suffix == ".gz":
-                try:
-                    out_fn = fn.parent / fn.stem
-                    if not out_fn.exists():
-                        logger.debug("Decompressing %s...", fn)
-                        with gzip.open(fn, "rb") as f_in, out_fn.open("wb") as f_out:
-                            shutil.copyfileobj(f_in, f_out)
-                    valid.append(out_fn)
-                except Exception as exc:
-                    logger.error("Failed to decompress %s: %s", fn, exc)
+                for out_fn in p_f_extract(fn, fn.parent):
+                    if out_fn.exists():
+                        valid.append(out_fn)
 
             elif fn.suffix.casefold() in {".gtx", ".tif", ".grd", ".nc", ".mss"}:
                 valid.append(fn)
@@ -523,65 +502,9 @@ class GridFetcher:
                     )
                     continue
 
-                try:
-                    with zipfile.ZipFile(archive_path, "r") as archive:
-                        members = archive.namelist()
-
-                        # Normalize separators because NOAA metadata may use
-                        # Windows-style paths while ZIP members use '/'.
-                        wanted = archive_member.replace("\\", "/").casefold()
-
-                        matched_member = next(
-                            (
-                                member
-                                for member in members
-                                if member.replace("\\", "/").casefold() == wanted
-                            ),
-                            None,
-                        )
-
-                        # Be tolerant if Fetchez stores the path relative to an
-                        # internal VDatum root instead of the ZIP root.
-                        if matched_member is None:
-                            matched_member = next(
-                                (
-                                    member
-                                    for member in members
-                                    if member.replace("\\", "/")
-                                    .casefold()
-                                    .endswith(wanted)
-                                ),
-                                None,
-                            )
-
-                        if matched_member is None:
-                            logger.warning(
-                                "VDatum model %s archive member not found: %s",
-                                model_name,
-                                archive_member,
-                            )
-                            continue
-
-                        archive.extract(
-                            matched_member,
-                            path=self.cache_dir,
-                        )
-
-                        grid_path = self.cache_dir / matched_member
-
-                        if grid_path.exists() and grid_path.suffix.casefold() == ".gtx":
-                            grid_paths.append(grid_path)
-
-                            logger.debug(
-                                "Extracted VDatum model %s component: %s",
-                                model_name,
-                                grid_path,
-                            )
-
-                except zipfile.BadZipFile as exc:
-                    raise MissingGridError(
-                        f"VDatum model archive is corrupt: {archive_path}"
-                    ) from exc
+                for grid_path in p_f_extract(archive_path, members=[archive_member]):
+                    if grid_path.exists() and grid_path.suffix.casefold() == ".gtx":
+                        grid_paths.append(grid_path)
 
             elif archive_path.suffix.casefold() == ".gtx":
                 grid_paths.append(archive_path)
