@@ -144,6 +144,6 @@ def test_fetch_vdatum_model_grid_uses_safe_extraction(
     assert calls == [
         (
             archive,
-            {"members": ["CONUSPAC.gtx"]},
+            {"outdir": tmp_path, "members": ["CONUSPAC.gtx"]},
         )
     ]

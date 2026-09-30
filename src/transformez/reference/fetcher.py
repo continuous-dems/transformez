@@ -502,7 +502,9 @@ class GridFetcher:
                     )
                     continue
 
-                for grid_path in p_f_extract(archive_path, members=[archive_member]):
+                for grid_path in p_f_extract(
+                    archive_path, outdir=self.cache_dir, members=[archive_member]
+                ):
                     if grid_path.exists() and grid_path.suffix.casefold() == ".gtx":
                         grid_paths.append(grid_path)
 
