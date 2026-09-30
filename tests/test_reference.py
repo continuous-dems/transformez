@@ -5,6 +5,7 @@ from pyproj.crs import CompoundCRS
 from transformez.reference.parser import (
     parse_reference,
     InvalidReferenceError,
+    ReferenceInputError,
     UnsupportedReferenceError,
 )
 from transformez.reference.types import ParsedReference, VerticalKind, AxisDirection
@@ -131,3 +132,66 @@ def test_parse_vertical_crs():
     assert ref.horizontal is None
     assert ref.vertical is not None
     assert ref.vertical.kind is VerticalKind.GRAVITY_RELATED_HEIGHT
+
+
+@pytest.mark.parametrize(
+    "name, epsg",
+    [
+        ("navd88", 5703),
+        ("NAVD 88", 5703),
+        ("egm2008", 3855),
+        ("EGM96", 5773),
+        ("prvd02", 6641),
+        ("vivd09", 6642),
+        ("asvd02", 6643),
+        ("cgvd2013", 6647),
+        ("North American Vertical Datum 1988", 5703),
+    ],
+)
+def test_common_names(name, epsg):
+    """Ensure common short names resolve to their EPSG vertical references."""
+
+    ref = parse_reference(name)
+    assert ref.horizontal is None
+    assert ref.vertical.id == f"epsg:{epsg}"
+
+
+@pytest.mark.parametrize(
+    "name, ref_id",
+    [
+        ("mean lower low water", "vdatum:mllw"),
+        ("Mean Low Water", "vdatum:mlw"),
+        ("mean high water", "vdatum:mhw"),
+        ("mean  sea level", "vdatum:msl"),
+    ],
+)
+def test_common_tidal_names(name, ref_id):
+    """Ensure spelled-out tidal datum names resolve to VDatum references."""
+
+    assert parse_reference(name).vertical.id == ref_id
+
+
+def test_common_names_leave_proj_names_alone():
+    """Names PROJ already knows must keep resolving through PROJ."""
+
+    assert parse_reference("wgs84").horizontal.to_epsg() == 4326
+    assert parse_reference("NAVD88 height").vertical.id == "epsg:5703"
+
+
+@pytest.mark.parametrize("name", ["vdatum:mtl", "vdatum:dtl"])
+def test_mtl_dtl_references(name):
+    ref = parse_reference(name)
+    assert ref.vertical.id == name
+    assert ref.vertical.kind == VerticalKind.TIDAL_HEIGHT
+
+
+def test_reference_errors_share_a_value_error_base():
+    """All reference errors can be caught together, including as ValueError."""
+
+    for exc in (InvalidReferenceError, UnsupportedReferenceError):
+        assert issubclass(exc, ReferenceInputError)
+        assert issubclass(exc, ValueError)
+        assert not issubclass(exc, ReferenceError)
+
+    with pytest.raises(ValueError):
+        parse_reference("not_a_datum:12345")

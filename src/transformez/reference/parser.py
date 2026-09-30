@@ -43,16 +43,46 @@ LEGACY_ALIASES = {
 }
 
 
+# Common short names for vertical references that PROJ does not recognise on its
+# own. Keys are casefolded with internal whitespace collapsed. Names PROJ already
+# resolves (e.g. "NAVD88 height", "WGS84") are deliberately left to PROJ.
+COMMON_NAMES = {
+    # NAVD88
+    "navd88": "epsg:5703",
+    "navd 88": "epsg:5703",
+    "navd-88": "epsg:5703",
+    "north american vertical datum 1988": "epsg:5703",
+    # Tidal datums spelled out
+    "mean lower low water": "vdatum:mllw",
+    "mean low water": "vdatum:mlw",
+    "mean high water": "vdatum:mhw",
+    "mean sea level": "vdatum:msl",
+    # US territories
+    "prvd02": "epsg:6641",
+    "vivd09": "epsg:6642",
+    "asvd02": "epsg:6643",
+    # Canada
+    "cgvd2013": "epsg:6647",
+    "cgvd2013(cgg2013)": "epsg:6647",
+    # Global geoid models
+    "egm2008": "epsg:3855",
+    "egm 2008": "epsg:3855",
+    "egm08": "epsg:3855",
+    "egm96": "epsg:5773",
+    "egm 96": "epsg:5773",
+}
+
+
 class ReferenceInputError(ValueError):
     """Base error for invalid or unsupported reference input."""
 
 
-class InvalidReferenceError(ReferenceError):
-    pass
+class InvalidReferenceError(ReferenceInputError):
+    """The reference could not be parsed or is not recognised."""
 
 
-class UnsupportedReferenceError(ReferenceError):
-    pass
+class UnsupportedReferenceError(ReferenceInputError):
+    """The reference is valid but cannot be used by transformez."""
 
 
 def warn_legacy_alias(old: str, new: str):
@@ -266,6 +296,11 @@ def parse_reference(value: ReferenceInput) -> ParsedReference:
     if alias is not None:
         warn_legacy_alias(text, alias)
         return parse_reference(alias)
+
+    # Common short names (navd88, egm2008, ...)
+    common = COMMON_NAMES.get(" ".join(text.casefold().split()))
+    if common is not None:
+        return parse_reference(common)
 
     # Transformez custom namespaces
     prefix = text.partition(":")[0].casefold()

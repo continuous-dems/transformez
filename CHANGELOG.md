@@ -22,6 +22,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * **Reworked NOAA VDatum processing:** each regional coverage package is completed through its native geodetic chain, including modern IGS/xGEOID paths, before normalized coverages are mosaiced according to coverage priority.
 * **Physical coastal context:** resolution-independent inland decay based on Dist2Coast distances, with VDatum-aware estuary/river coverage, inland buffers, configurable shoreline extension, and optional unrestricted extrapolation for hydrodynamic modeling.
 * **Reference and system inspection:** expanded CLI commands for inspecting references, providers, transformation plans, external engines, and runtime configuration.
+* `vdatum:mtl` (mean tide level) and `vdatum:dtl` (diurnal tide level) references.
+* Common vertical datum names (e.g. `navd88`, `egm2008`, `egm96`, `prvd02`, `vivd09`, `cgvd2013`, `mean lower low water`) are accepted by `parse_reference()`.
 
 ### Changed
 
@@ -43,6 +45,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed Dist2Coast processing that could introduce edge artifacts or incorrectly discard zero-valued coastline cells as nodata.
 * Fixed HTDP latitude/longitude handling and validated frame transformations against the configured HTDP engine version.
 * Fixed Dist2Coast fetch failure. Now raises MissingGridException rather than returning None.
+* Fixed VDatum model grids (e.g. xGEOID20B) being extracted into the current working directory instead of the cache directory.
+* `InvalidReferenceError` and `UnsupportedReferenceError` now derive from `ReferenceInputError` (a `ValueError`) instead of Python's built-in `ReferenceError`.
 
 ### Deprecated
 
