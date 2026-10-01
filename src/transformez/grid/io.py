@@ -12,6 +12,8 @@ Grid Writing.
 """
 
 import logging
+import os
+import tempfile
 from pathlib import Path
 from typing import Optional, Dict, Any, Mapping
 
@@ -49,6 +51,11 @@ class GridWriter:
 
         Returns:
             Path to the written GeoTIFF.
+
+        The grid is written to a temporary file in the same directory and moved
+        into place with an atomic rename, so a reader never sees a partly written
+        grid: grids in a shared cache are rewritten while other threads or
+        processes may be reading them.
         """
         filename = Path(filename).with_suffix(".tif")
         filename.parent.mkdir(parents=True, exist_ok=True)
@@ -69,21 +76,30 @@ class GridWriter:
             transform = from_origin(xmin, ymax, res_x, res_y)
 
         raster_crs = crs.to_wkt() if hasattr(crs, "to_wkt") else crs
-        with rasterio.open(
-            filename,
-            "w",
-            driver="GTiff",
-            height=rows,
-            width=cols,
-            count=1,
-            dtype="float32",
-            crs=raster_crs,
-            transform=transform,
-            nodata=nodata,
-            compress="deflate",
-            tiled=True,
-        ) as dst:
-            dst.write(data.astype("float32"), 1)
-            if tags:
-                dst.update_tags(**tags)
+        fd, tmp_name = tempfile.mkstemp(
+            dir=filename.parent, prefix=f".{filename.name}.", suffix=".tmp.tif"
+        )
+        os.close(fd)
+        try:
+            with rasterio.open(
+                tmp_name,
+                "w",
+                driver="GTiff",
+                height=rows,
+                width=cols,
+                count=1,
+                dtype="float32",
+                crs=raster_crs,
+                transform=transform,
+                nodata=nodata,
+                compress="deflate",
+                tiled=True,
+            ) as dst:
+                dst.write(data.astype("float32"), 1)
+                if tags:
+                    dst.update_tags(**tags)
+            Path(tmp_name).replace(filename)
+        except BaseException:
+            Path(tmp_name).unlink(missing_ok=True)
+            raise
         return filename
