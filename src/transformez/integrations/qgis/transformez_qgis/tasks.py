@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 """
 transformez.integrations.qgis.tasks
@@ -84,9 +83,12 @@ class TransformezTask(QgsTask):
             line = clean_line
 
         upper = line.upper()
-        if "CRITICAL" in upper or "FATAL" in upper:
-            level = Qgis.MessageLevel.Critical
-        elif "ERROR" in upper or "TRACEBACK" in upper:
+        if (
+            "CRITICAL" in upper
+            or "FATAL" in upper
+            or "ERROR" in upper
+            or "TRACEBACK" in upper
+        ):
             level = Qgis.MessageLevel.Critical
         elif "WARNING" in upper or "WARN" in upper:
             level = Qgis.MessageLevel.Warning

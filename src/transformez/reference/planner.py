@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 """
 transformez.reference.planner
@@ -11,12 +10,12 @@ transformez.reference.planner
 
 import logging
 from dataclasses import dataclass
-from typing import List, Literal
+from typing import Literal
 
-from pyproj import Transformer, CRS
+from pyproj import CRS, Transformer
 
-from .types import ResolvedReference, ResolvedVerticalReference
 from .bindings import OperationBinding
+from .types import ResolvedReference, ResolvedVerticalReference
 
 logger = logging.getLogger(__name__)
 
@@ -60,7 +59,7 @@ class TransformationPlanner:
         cls, source: ResolvedReference, target: ResolvedReference
     ) -> TransformationPlan:
 
-        steps: List[PlanOperation] = []
+        steps: list[PlanOperation] = []
 
         horizontal_transform = None
 

@@ -2,11 +2,10 @@
 
 import numpy as np
 import pytest
+from fetchez.spatial import Region
 from pyproj import CRS
 
-from fetchez.spatial import Region
-
-from transformez.grid.shift import build_shift_grid, ShiftGrid
+from transformez.grid.shift import ShiftGrid, build_shift_grid
 from transformez.reference.executor import ExecutionResult
 
 

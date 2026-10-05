@@ -7,6 +7,7 @@ Most users only need three functions — [`generate_grid`](#transformez.api.gene
 
 ```python
 import transformez
+
 transformez.generate_grid(...)
 transformez.build_shift_grid(...)
 ```

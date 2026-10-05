@@ -1,12 +1,14 @@
-import numpy as np
 from pathlib import Path
-from transformez.reference.executor import TransformationExecutor, ExecutionContext
+
+import numpy as np
 from fetchez.spatial import Region
+
+from transformez.reference.executor import ExecutionContext, TransformationExecutor
 
 # import pytest
 from transformez.reference.parser import parse_reference
-from transformez.reference.resolver import resolve_reference
 from transformez.reference.planner import TransformationPlanner
+from transformez.reference.resolver import resolve_reference
 
 
 def make_plan(source, target, **kwargs):

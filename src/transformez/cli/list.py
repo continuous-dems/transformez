@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 """
 transformez.cli.list
@@ -9,18 +8,17 @@ transformez.cli.list
 :license: MIT, see LICENSE for more details.
 """
 
-import click
-
 from typing import Any
 
-from fetchez.utils import FetchezMainGroup, FetchezMainCommand
+import click
+from fetchez.utils import FetchezMainCommand, FetchezMainGroup
 
-from transformez.reference.parser import parse_reference
 from transformez.reference.bindings import (
     CUSTOM_VERTICAL_REFERENCES,
-    OPERATION_BINDINGS,
     HTDP_FRAME_BINDINGS,
+    OPERATION_BINDINGS,
 )
+from transformez.reference.parser import parse_reference
 from transformez.reference.types import VerticalKind
 
 
@@ -31,8 +29,6 @@ from transformez.reference.types import VerticalKind
 )
 def list_group() -> None:
     """List supported references and transformation resources."""
-
-    pass
 
 
 @list_group.command("references", cls=FetchezMainCommand)

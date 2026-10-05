@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 """
 transformez.engines.htdp
@@ -12,17 +11,17 @@ Transforms coordinates between reference frames (e.g. NAD83 <-> WGS84).
 :license: MIT, see LICENSE for more details.
 """
 
-import os
-import sys
-from pathlib import Path
-import subprocess
-import tempfile
-import shutil
 import logging
+import os
+import shutil
+import subprocess
+import sys
+import tempfile
 import urllib.request
-import numpy as np
-from typing import Tuple, Optional, Any, Literal
+from pathlib import Path
+from typing import Any, Literal
 
+import numpy as np
 from fetchez.utils import p_f_extract
 
 from transformez.reference.bindings import HTDP_FRAME_BINDINGS
@@ -89,7 +88,7 @@ class HTDP:
 
     def __init__(
         self,
-        htdp_bin: Optional[str] = None,
+        htdp_bin: str | None = None,
         version: str = DEFAULT_HTDP_VERSION,
         verbose: bool = True,
     ):
@@ -220,7 +219,7 @@ class HTDP:
 
             return coarse_grid
 
-    def _read_grid(self, filename: Path, shape: Tuple[int, int]) -> np.ndarray:
+    def _read_grid(self, filename: Path, shape: tuple[int, int]) -> np.ndarray:
         """Parse HTDP output, mapping PNT_x_y tags to grid indices.
 
         Args:

@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 """
 transformez.integrations.fetchez.hooks.hooks
@@ -11,11 +10,11 @@ Some hooks for `fetchez`
 :license: MIT, see LICENSE for more details.
 """
 
-from pathlib import Path
 import logging
+from pathlib import Path
 
-from fetchez.hooks import FetchHook
 from fetchez import utils
+from fetchez.hooks import FetchHook
 
 from transformez.grid.shift import build_shift_grid
 

@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 """
 transformez.integrations.qgis.dependencies
@@ -17,7 +16,6 @@ import sys
 from pathlib import Path
 
 from qgis.core import QgsApplication
-
 
 PLUGIN_DIR = Path(__file__).resolve().parent
 PROFILE_DIR = Path(QgsApplication.qgisSettingsDirPath()).resolve()

@@ -1,11 +1,11 @@
-import pytest
 import zipfile
-import numpy as np
-
 from unittest.mock import MagicMock
 
 import fetchez
+import numpy as np
+import pytest
 from fetchez.spatial import Region
+
 from transformez.grid.engine import GridEngine
 from transformez.reference.fetcher import GridFetcher, MissingGridError
 

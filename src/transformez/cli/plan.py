@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 """
 transformez.cli.plan
@@ -10,17 +9,17 @@ transformez.cli.plan
 """
 
 import sys
-import click
 
+import click
 from fetchez.utils import FetchezMainCommand
 
 from transformez.reference.parser import parse_reference
-from transformez.reference.resolver import resolve_reference
 from transformez.reference.planner import (
-    TransformationPlanner,
-    GridOperation,
     FrameOperation,
+    GridOperation,
+    TransformationPlanner,
 )
+from transformez.reference.resolver import resolve_reference
 
 
 @click.command("plan", cls=FetchezMainCommand)

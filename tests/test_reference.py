@@ -3,12 +3,12 @@ from pyproj import CRS
 from pyproj.crs import CompoundCRS
 
 from transformez.reference.parser import (
-    parse_reference,
     InvalidReferenceError,
     ReferenceInputError,
     UnsupportedReferenceError,
+    parse_reference,
 )
-from transformez.reference.types import ParsedReference, VerticalKind, AxisDirection
+from transformez.reference.types import AxisDirection, ParsedReference, VerticalKind
 
 
 def test_parse_polymorphic_inputs():

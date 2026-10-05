@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 """
 transformez.integrations.fetchez.modules.modules
@@ -11,11 +10,12 @@ Some modules for `fetchez`
 :license: MIT, see LICENSE for more details.
 """
 
-from pathlib import Path
 import logging
+from pathlib import Path
 
 from fetchez import cli
 from fetchez.modules import FetchModule
+
 from transformez.grid.shift import build_shift_grid
 
 logger = logging.getLogger(__name__)

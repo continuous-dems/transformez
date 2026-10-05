@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 """
 transformez.grid.engine
@@ -13,31 +12,29 @@ floating-point nodata leaks and spline ringing at data boundaries.
 :license: MIT, see LICENSE for more details.
 """
 
-import os
 import logging
-from pathlib import Path
-from dataclasses import dataclass
+import os
 from collections.abc import Sequence
-from typing import Optional, List, Any, Tuple
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any
 
 import numpy as np
 import rasterio
+from fetchez.spatial import Region, parse_region
+from pyproj import CRS
+from rasterio.transform import Affine, from_bounds
 from rasterio.warp import (
+    Resampling,
     calculate_default_transform,
     reproject,
-    Resampling,
 )
-from rasterio.transform import from_bounds, Affine
-from scipy.ndimage import distance_transform_edt, gaussian_filter
 from scipy.interpolate import Rbf
+from scipy.ndimage import distance_transform_edt, gaussian_filter
 
-from pyproj import CRS
-
-from fetchez.spatial import Region, parse_region
-
-from transformez.utils import UNITS
 from transformez.grid.shift import ShiftGrid
 from transformez.reference.parser import horizontal_crs
+from transformez.utils import UNITS
 
 os.environ["HDF5_USE_FILE_LOCKING"] = "FALSE"
 
@@ -129,7 +126,7 @@ class CoastalContext:
 
     water_mask: np.ndarray
     inland_distance_m: np.ndarray
-    sampling_m: Tuple[float, float]
+    sampling_m: tuple[float, float]
 
 
 class GridEngine:
@@ -253,7 +250,7 @@ class GridEngine:
         target_region: Region | str,
         nx: int,
         ny: int,
-    ) -> Tuple[float, float]:
+    ) -> tuple[float, float]:
         """Approximate north/south and east/west pixel spacing in meters.
 
         Transformez coastal models are generated in EPSG:4326.  A single EDT can
@@ -285,8 +282,8 @@ class GridEngine:
     def build_coastal_context(
         signed_distance_m: np.ndarray,
         target_region: Region | str,
-        vdatum_valid: Optional[np.ndarray] = None,
-        max_vdatum_extension_m: Optional[float] = None,
+        vdatum_valid: np.ndarray | None = None,
+        max_vdatum_extension_m: float | None = None,
     ) -> CoastalContext:
         """Build the effective tidal-water domain and physical inland distances.
 
@@ -421,12 +418,12 @@ class GridEngine:
         global_grid: np.ndarray,
         nx: int,
         ny: int,
-        ocean_mask: Optional[np.ndarray] = None,
+        ocean_mask: np.ndarray | None = None,
         decay_pixels: int = 100,
         buffer_pixels: int = 10,
         blend_pixels: int = 50,
-        coastal_context: Optional[CoastalContext] = None,
-        decay_distance_m: Optional[float] = None,
+        coastal_context: CoastalContext | None = None,
+        decay_distance_m: float | None = None,
         buffer_distance_m: float = 0.0,
     ) -> np.ndarray:
         """Blend VDatum with a global proxy and decay landward.
@@ -498,9 +495,9 @@ class GridEngine:
         data: np.ndarray,
         decay_pixels: int = 100,
         buffer_pixels: int = 10,
-        ocean_mask: Optional[np.ndarray] = None,
-        coastal_context: Optional[CoastalContext] = None,
-        decay_distance_m: Optional[float] = None,
+        ocean_mask: np.ndarray | None = None,
+        coastal_context: CoastalContext | None = None,
+        decay_distance_m: float | None = None,
         buffer_distance_m: float = 0.0,
         extrapolate_inland: bool = False,
     ) -> np.ndarray:
@@ -696,10 +693,10 @@ class GridEngine:
         src_region: Region,
         src_crs: CRS | str,
         dst_crs: CRS | str,
-        dst_region: Optional[Region] = None,
-        dst_shape: Optional[tuple[int, int]] = None,
+        dst_region: Region | None = None,
+        dst_shape: tuple[int, int] | None = None,
         resampling: Resampling = Resampling.bilinear,
-    ) -> Tuple[np.ndarray, Affine, Region]:
+    ) -> tuple[np.ndarray, Affine, Region]:
         """Reproject a generated shift grid into another horizontal CRS.
 
         Args:
@@ -856,9 +853,9 @@ class GridGen:
         ny: int,
         datum_in: str,
         datum_out: str,
-        shapefiles: Optional[List[str]] = None,
-        baseline_grid: Optional[np.ndarray] = None,
-    ) -> Optional[np.ndarray]:
+        shapefiles: list[str] | None = None,
+        baseline_grid: np.ndarray | None = None,
+    ) -> np.ndarray | None:
         """Dynamically generates a tidal shift grid using live tide stations.
 
         If a station lacks the target datum, it falls back to MSL and uses the
@@ -878,8 +875,9 @@ class GridGen:
         """
 
         import json
-        from fetchez.modules.tides import Tides
+
         from fetchez.core import run_fetchez
+        from fetchez.modules.tides import Tides
 
         if isinstance(region, str):
             regions = parse_region(region)
@@ -912,9 +910,9 @@ class GridGen:
             logger.error("No valid tide stations found in this region.")
             return None
 
-        x: List[float] = []
-        y: List[float] = []
-        z: List[float] = []
+        x: list[float] = []
+        y: list[float] = []
+        z: list[float] = []
 
         d_in = datum_in.lower()
         d_out = datum_out.lower()
@@ -932,7 +930,7 @@ class GridGen:
                 continue
 
             val_out = props.get(d_out)
-            shift: Optional[float] = None
+            shift: float | None = None
             units = props.get("units", "meters").lower()
 
             # --- Perfect Data (Station has NAVD88) ---

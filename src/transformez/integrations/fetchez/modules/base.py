@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 """
 transformez.modules.base
@@ -11,16 +10,17 @@ Base FetchezModule for use in transformez for subsetting rasters using vsicurl
 :license: MIT, see LICENSE for more details.
 """
 
-import os
 import logging
-from typing import Any
+import os
 from contextlib import contextmanager
 from pathlib import Path
+from typing import Any
+
 import rasterio
-from rasterio.windows import from_bounds
-from rasterio.transform import Affine
-from fetchez.modules.base import FetchModule
 from fetchez.core import DEFAULT_USER_AGENT
+from fetchez.modules.base import FetchModule
+from rasterio.transform import Affine
+from rasterio.windows import from_bounds
 
 logger = logging.getLogger(__name__)
 

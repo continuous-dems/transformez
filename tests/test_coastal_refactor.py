@@ -2,9 +2,9 @@
 
 import numpy as np
 import rasterio
+from fetchez.spatial import Region
 from rasterio.transform import from_bounds
 
-from fetchez.spatial import Region
 from transformez.grid.engine import GridEngine
 
 

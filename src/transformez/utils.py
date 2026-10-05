@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 """
 transformez.utils
@@ -11,16 +10,16 @@ This holds various utility functions.
 :license: MIT, see LICENSE for more details.
 """
 
-import os
-from pathlib import Path
-import subprocess
 import logging
+import os
 import shlex
-from typing import Tuple, Optional, Union, List, Any
+import shutil
+import subprocess
+from pathlib import Path
+from typing import Any
 
 import numpy as np
 import rasterio
-import shutil
 
 logger = logging.getLogger(__name__)
 
@@ -40,12 +39,12 @@ def cmd_exists(x: str) -> bool:
     """
 
     return any(
-        os.access(os.path.join(path, x), os.X_OK)  # noqa: PTH110, PTH118
+        os.access(os.path.join(path, x), os.X_OK)  # noqa: PTH118
         for path in os.environ["PATH"].split(os.pathsep)
     )
 
 
-def run_cmd(args: Union[str, List[str], Tuple[str, ...]]) -> Tuple[str, int]:
+def run_cmd(args: str | list[str] | tuple[str, ...]) -> tuple[str, int]:
     """Standalone replacement for utils.run_cmd using subprocess.
 
     Securely handles strings, lists, and single-item tuples by
@@ -164,9 +163,9 @@ class RasterQuery:
 
 
 def export_cache(
-    cache_dir: Optional[str | Path] = None,
+    cache_dir: str | Path | None = None,
     output_name: str = "transformez_offline_cache",
-) -> Optional[str]:
+) -> str | None:
     """Pack the local transformez cache into a ZIP file.
 
     Args:

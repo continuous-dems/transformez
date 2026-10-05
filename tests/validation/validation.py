@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 """
 transformez.validation_suite
@@ -15,24 +14,24 @@ Usage:
     pytest tests/validation/ -m "not slow"
 """
 
+import csv
+import logging
 import os
 import sys
-import csv
 import time
-import logging
 from importlib import metadata as importlib_metadata
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
+import matplotlib.pyplot as plt
 import numpy as np
 import requests
-import matplotlib.pyplot as plt
 from fetchez.spatial import Region
 
 from transformez import generate_grid
+from transformez.engines.htdp import DEFAULT_HTDP_VERSION, HTDP
+from transformez.engines.vdatum import DEFAULT_VDATUM_VERSION, Vdatum
 from transformez.utils import RasterQuery
-from transformez.engines.htdp import HTDP, DEFAULT_HTDP_VERSION
-from transformez.engines.vdatum import Vdatum, DEFAULT_VDATUM_VERSION
 
 # Configure logging
 logging.basicConfig(
@@ -105,10 +104,10 @@ def _package_version(distribution: str) -> str:
         return "unknown"
 
 
-def collect_runtime_versions() -> Dict[str, Dict[str, Optional[str]]]:
+def collect_runtime_versions() -> dict[str, dict[str, str | None]]:
     """Collect package and external-engine versions used by this validation run."""
 
-    versions: Dict[str, Dict[str, Optional[str]]] = {
+    versions: dict[str, dict[str, str | None]] = {
         "transformez": {
             "version": _package_version("transformez"),
             "path": None,
@@ -149,8 +148,8 @@ def collect_runtime_versions() -> Dict[str, Dict[str, Optional[str]]]:
 
 
 def get_coops_stations(
-    region_bbox: Tuple[float, float, float, float],
-) -> Dict[str, Dict[str, Any]]:
+    region_bbox: tuple[float, float, float, float],
+) -> dict[str, dict[str, Any]]:
     """Fetch NOAA tide stations in bounding box with MSL/MLLW offsets.
 
     Args:
@@ -225,7 +224,7 @@ def get_coops_stations(
 
 def validate_against_stations(
     region_name: str, region: Any, challenge: str
-) -> Optional[Dict[str, Any]]:
+) -> dict[str, Any] | None:
     """Compare Transformez grid against NOAA CO-OPS tide station ground truth.
 
     Args:
@@ -278,8 +277,8 @@ def validate_against_stations(
     logger.info(f"  Grid generated in {elapsed:.1f}s")
 
     rq = RasterQuery(temp_tif, default_nodata=-9999.0)
-    errors: List[float] = []
-    results_data: List[Dict[str, Any]] = []
+    errors: list[float] = []
+    results_data: list[dict[str, Any]] = []
 
     for sid, stn in stations.items():
         calc_shift = rq.query([stn["lon"]], [stn["lat"]])[0]
@@ -374,7 +373,7 @@ def validate_against_vdatum(
     region: Any,
     vdatum_region: str,
     challenge: str = "",
-) -> Optional[Dict[str, Any]]:
+) -> dict[str, Any] | None:
     """Compare Transformez's VDatum chain against the NOAA VDatum Java engine.
 
     This is intentionally an engine-equivalence test. Inland attenuation is
@@ -448,7 +447,7 @@ def validate_against_vdatum(
     lons = rng.uniform(w, e, n_points)
     lats = rng.uniform(s, n, n_points)
 
-    errors: List[float] = []
+    errors: list[float] = []
     skipped = 0
 
     for _i, (lon, lat) in enumerate(zip(lons, lats, strict=True)):
@@ -511,7 +510,7 @@ def validate_against_vdatum(
 # ============================================================================
 
 
-def validate_international_gauges() -> Optional[Dict[str, Any]]:
+def validate_international_gauges() -> dict[str, Any] | None:
     """Validate global FES2014 fallback against international tide gauge records.
 
     Returns:
@@ -519,11 +518,11 @@ def validate_international_gauges() -> Optional[Dict[str, Any]]:
     """
     logger.info("--- Test 3: International Gauges (FES2014) ---")
 
-    calcs: List[float] = []
-    labels: List[str] = []
-    actuals: List[float] = []
-    results: List[Dict[str, Any]] = []
-    passed: List[bool] = []
+    calcs: list[float] = []
+    labels: list[str] = []
+    actuals: list[float] = []
+    results: list[dict[str, Any]] = []
+    passed: list[bool] = []
 
     for name, stn in INTERNATIONAL_STATIONS.items():
         logger.info(f"  Testing {name}...")
@@ -635,7 +634,7 @@ def validate_international_gauges() -> Optional[Dict[str, Any]]:
 # ============================================================================
 
 
-def validate_tectonics() -> Dict[str, Any]:
+def validate_tectonics() -> dict[str, Any]:
     """Validate HTDP integration for cross-epoch tectonic transformations.
 
     Returns:
@@ -735,11 +734,11 @@ def validate_tectonics() -> Dict[str, Any]:
 
 
 def generate_markdown_report(
-    station_stats: List[Dict[str, Any]],
-    vdatum_stats: List[Dict[str, Any]],
-    intl_stats: Optional[Dict[str, Any]],
-    tectonic_stats: Dict[str, Any],
-    runtime_versions: Dict[str, Dict[str, Optional[str]]],
+    station_stats: list[dict[str, Any]],
+    vdatum_stats: list[dict[str, Any]],
+    intl_stats: dict[str, Any] | None,
+    tectonic_stats: dict[str, Any],
+    runtime_versions: dict[str, dict[str, str | None]],
 ) -> None:
     """Compile test results into validation.md for documentation."""
 

@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 """
 transformez.cli.shift
@@ -10,9 +9,9 @@ transformez.cli.shift
 """
 
 import sys
-import click
 from pathlib import Path
 
+import click
 from fetchez.utils import FetchezMainCommand
 
 from transformez import api

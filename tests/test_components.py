@@ -4,15 +4,13 @@ from unittest.mock import MagicMock
 
 import numpy as np
 import pytest
-
+from fetchez.spatial import Region
 from pyproj import CRS, Transformer
 from rasterio.transform import from_bounds
 
-from fetchez.spatial import Region
-
 from transformez.api import (
-    build_components,
     TransformationComponents,
+    build_components,
 )
 from transformez.grid.shift import ShiftGrid
 from transformez.reference.parser import parse_reference

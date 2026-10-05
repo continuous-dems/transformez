@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 """
 transformez.reference.parser
@@ -12,18 +11,20 @@ transformez.reference.parser
 from __future__ import annotations
 
 import logging
+from collections.abc import Mapping
+from typing import Any
+
 from pyproj import CRS
 from pyproj.exceptions import CRSError
-from typing import Mapping, Any
 
+from .bindings import CUSTOM_REGISTRY
 from .types import (
-    VerticalKind,
     AxisDirection,
-    VerticalReference,
     ParsedReference,
     ReferenceInput,
+    VerticalKind,
+    VerticalReference,
 )
-from .bindings import CUSTOM_REGISTRY
 
 logger = logging.getLogger(__name__)
 

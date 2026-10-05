@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 """
 transformez.cli.prefetch
@@ -10,8 +9,8 @@ transformez.cli.prefetch
 """
 
 import sys
-import click
 
+import click
 from fetchez.utils import FetchezMainCommand
 
 from transformez import api

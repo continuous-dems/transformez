@@ -5,11 +5,9 @@ from unittest.mock import MagicMock
 
 import numpy as np
 import rasterio
-
+from fetchez.spatial import Region
 from pyproj import CRS
 from rasterio.transform import from_bounds
-
-from fetchez.spatial import Region
 
 from transformez.api import transform_raster
 from transformez.grid.shift import ShiftGrid

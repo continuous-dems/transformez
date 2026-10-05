@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 """
 transformez.reference.types
@@ -11,12 +10,12 @@ transformez.reference.types
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
 from enum import StrEnum
-from typing import TYPE_CHECKING, Mapping, Any
+from typing import TYPE_CHECKING, Any
 
 from pyproj import CRS
-
 
 if TYPE_CHECKING:
     from .bindings import HtdpFrameBinding, OperationBinding

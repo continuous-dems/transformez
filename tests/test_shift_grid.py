@@ -5,12 +5,10 @@ from pathlib import Path
 import numpy as np
 import pytest
 import rasterio
-
+from fetchez.spatial import Region
 from pyproj import CRS
 from rasterio.transform import from_bounds
 from rasterio.warp import transform_bounds
-
-from fetchez.spatial import Region
 
 from transformez.grid.shift import ShiftGrid
 from transformez.reference.parser import parse_reference

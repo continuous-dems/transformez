@@ -82,9 +82,9 @@ A common point of confusion in vertical geodesy is the sign convention of shift 
 
 	# Generate shift grid to NAVD88
 	shift_grid = transformez.generate_grid(
-		region=coast_region,
-		datum_in="mllw",
-		datum_out="navd88",
+	    region=coast_region,
+	    datum_in="mllw",
+	    datum_out="navd88",
 	)
 
 	# Apply transformation

@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 """
 transformez.integrations.qgis.plugin
@@ -8,20 +7,20 @@ transformez.integrations.qgis.plugin
 Initial Transformez QGIS plugin implementation.
 """
 
-from qgis.PyQt.QtGui import QAction
-from qgis.PyQt.QtWidgets import QMessageBox
 from qgis.core import (
     Qgis,
     QgsApplication,
     QgsCoordinateReferenceSystem,
     QgsCoordinateTransform,
+    QgsMessageLog,
     QgsProject,
     QgsRasterLayer,
-    QgsMessageLog,
 )
+from qgis.PyQt.QtGui import QAction
+from qgis.PyQt.QtWidgets import QMessageBox
 
-from .dialog import ShiftGridDialog
 from .dependencies import cleanup_legacy_runtime, runtime_probe, runtime_python
+from .dialog import ShiftGridDialog
 from .install_dialog import InstallTransformezDialog
 from .tasks import BuildShiftGridTask, InstallTransformezTask, UninstallTransformezTask
 

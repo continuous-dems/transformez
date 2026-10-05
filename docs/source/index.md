@@ -62,10 +62,10 @@ import transformez
 # Requesting "mllw" in India triggers the Global Fallback automatically.
 shift_array = transformez.generate_grid(
     region=[80, 85, 10, 15],  # [West, East, South, North]
-    increment="3s",           # Grid resolution
-    datum_in="vdatum:mllw",   # Vdatums mllw realization.
-    datum_out="epsg:4979",    # WGS84 Ellipsoid
-    out_fn="india_shift.tif"  # Optional: Save to disk
+    increment="3s",  # Grid resolution
+    datum_in="vdatum:mllw",  # Vdatums mllw realization.
+    datum_out="epsg:4979",  # WGS84 Ellipsoid
+    out_fn="india_shift.tif",  # Optional: Save to disk
 )
 
 
@@ -95,7 +95,7 @@ out_file = transformez.transform_raster(
     input_raster="my_dem_mllw.tif",
     datum_in="vdatum:mllw",
     datum_out="epsg:5703",
-    output_raster="my_dem_navd88.tif"
+    output_raster="my_dem_navd88.tif",
 )
 ```
 

@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 """
 transformez.reference.fetcher
@@ -15,15 +14,14 @@ of geodetic grids.
 
 import logging
 from pathlib import Path
-from typing import Any, List, Optional, Tuple
-
-import numpy as np
-import rasterio
+from typing import Any
 
 import fetchez.api
-from fetchez.utils import p_f_extract
+import numpy as np
+import rasterio
 from fetchez.core import run_fetchez
 from fetchez.modules.vdatum import VDatum
+from fetchez.utils import p_f_extract
 
 from transformez.engines.htdp import HTDP
 from transformez.grid.engine import (
@@ -32,12 +30,13 @@ from transformez.grid.engine import (
     GridEngine,
     GridGen,
 )
+
 from .bindings import HTDP_FRAME_BINDINGS, OPERATION_BINDINGS
 from .vdatum import (
     parse_vdatum_registry,
     tss_reference,
-    vdatum_priority,
     vdatum_grid_datum,
+    vdatum_priority,
 )
 
 logger = logging.getLogger(__name__)
@@ -48,8 +47,6 @@ MIN_VDATUM_FALLBACK_CELLS = 4
 
 class MissingGridError(Exception):
     """Raised when a required shift grid cannot be fetched or is unavailable."""
-
-    pass
 
 
 class GridFetcher:
@@ -62,13 +59,13 @@ class GridFetcher:
         ny: int,
         cache_dir: Path,
         decay_pixels: int = 100,
-        decay_distance_m: Optional[float] = None,
+        decay_distance_m: float | None = None,
         buffer_distance_m: float = 0.0,
-        max_vdatum_extension_m: Optional[float] = None,
+        max_vdatum_extension_m: float | None = None,
         extrapolate_inland: bool = False,
         use_stations: bool = False,
         epoch_in: str = "2010.0",
-        htdp_tool: Optional[HTDP] = None,
+        htdp_tool: HTDP | None = None,
         verbose: bool = True,
     ):
         self.region = region
@@ -90,9 +87,9 @@ class GridFetcher:
         self,
         module_name: str,
         *,
-        extract_names: Optional[List[str]] = None,
+        extract_names: list[str] | None = None,
         **kwargs: Any,
-    ) -> List[Path]:
+    ) -> list[Path]:
         """Generic Fetchez wrapper returning extracted raster resources.
 
         ``extract_names`` controls archive extraction only; it is deliberately
@@ -110,7 +107,7 @@ class GridFetcher:
             **kwargs,
         )
 
-        valid: List[Path] = []
+        valid: list[Path] = []
         for fn in files:
             fn = Path(fn)
             if not fn.exists():
@@ -251,7 +248,7 @@ class GridFetcher:
             f"Failed to fetch grid '{name}' due to an unknown error."
         )
 
-    def fetch_geoid(self, target_geoid: str) -> Tuple[np.ndarray, str]:
+    def fetch_geoid(self, target_geoid: str) -> tuple[np.ndarray, str]:
         """Fetch a conventional NAVD88 geoid or a VDatum xGEOID model."""
         target_geoid = (
             target_geoid.split(":")[-1] if ":" in target_geoid else target_geoid
@@ -355,7 +352,7 @@ class GridFetcher:
 
     def _fetch_coastal_context(
         self,
-        vdatum_grid: Optional[np.ndarray] = None,
+        vdatum_grid: np.ndarray | None = None,
     ) -> CoastalContext:
         d2c_m = self._fetch_dist2coast_m()
 
@@ -384,7 +381,7 @@ class GridFetcher:
         self,
         datum_name: str,
         model: str = "fes2014",
-    ) -> Tuple[np.ndarray, str]:
+    ) -> tuple[np.ndarray, str]:
         """Build shift: global tidal reference -> WGS84-native ellipsoid."""
         datum_name = datum_name.split(":")[-1] if ":" in datum_name else datum_name
         tidal_shift = np.zeros((self.ny, self.nx), dtype=np.float32)
@@ -793,8 +790,8 @@ class GridFetcher:
     def fetch_vdatum_chain(
         self,
         datum_name: str,
-        requested_geoid_name: Optional[str],
-    ) -> Tuple[Optional[np.ndarray], str]:
+        requested_geoid_name: str | None,
+    ) -> tuple[np.ndarray | None, str]:
         """Build a VDatum tidal shift normalized to the binding's native frame."""
         datum_name = datum_name.split(":")[-1] if ":" in datum_name else datum_name
         datum_name = datum_name.casefold()
@@ -840,7 +837,7 @@ class GridFetcher:
 
             proxy_id = tidal_binding.global_proxy
             proxy_datum = proxy_id.split(":", 1)[1] if proxy_id else None
-            global_shift: Optional[np.ndarray] = None
+            global_shift: np.ndarray | None = None
 
             if self.use_stations:
                 rbf_grid = GridGen.from_stations(

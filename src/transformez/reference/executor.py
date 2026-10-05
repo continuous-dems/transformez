@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 """
 transformez.reference.executor
@@ -17,6 +16,8 @@ from pathlib import Path
 import numpy as np
 from fetchez.spatial import Region
 
+from transformez.engines.htdp import HTDP
+
 from .fetcher import GridFetcher
 from .planner import (
     FrameOperation,
@@ -24,7 +25,6 @@ from .planner import (
     PlanOperation,
     TransformationPlan,
 )
-from transformez.engines.htdp import HTDP
 
 logger = logging.getLogger(__name__)
 

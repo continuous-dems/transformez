@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 """
 transformez.engines.vdatum
@@ -23,7 +22,7 @@ import urllib.request
 from pathlib import Path
 from typing import Literal
 
-from fetchez.utils import remove_glob, p_f_extract
+from fetchez.utils import p_f_extract, remove_glob
 
 logger = logging.getLogger(__name__)
 

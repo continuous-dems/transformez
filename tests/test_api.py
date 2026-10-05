@@ -1,8 +1,9 @@
 # tests/test_api.py
 
-import pytest
-import numpy as np
 from unittest.mock import MagicMock
+
+import numpy as np
+import pytest
 from pyproj import Transformer
 
 from transformez.api import (

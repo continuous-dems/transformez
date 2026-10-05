@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 """
 transformez.cli.htdp
@@ -9,16 +8,16 @@ transformez.cli.htdp
 :license: MIT, see LICENSE for more details.
 """
 
-import click
-from typing import Optional, Any, Literal
+from typing import Any, Literal
 
-from fetchez.utils import FetchezMainGroup, FetchezMainCommand
+import click
+from fetchez.utils import FetchezMainCommand, FetchezMainGroup
 
 from transformez.engines.htdp import (
     DEFAULT_HTDP_VERSION,
     HTDP,
-    install_htdp_binary,
     HTDPInstallError,
+    install_htdp_binary,
 )
 
 
@@ -26,8 +25,6 @@ from transformez.engines.htdp import (
 @click.group(cls=FetchezMainGroup, name="htdp", fetchez_commands=["install", "run"])
 def htdp_group() -> None:
     """Manage the NGS HTDP transformation engine."""
-
-    pass
 
 
 @htdp_group.command("install", cls=FetchezMainCommand)
@@ -66,7 +63,7 @@ def install_htdp(
 
 @htdp_group.command("run", cls=FetchezMainCommand)
 @click.option("--control", help="input control file, if omitted, run interactively")
-def run_htdp(control: Optional[Any]) -> None:
+def run_htdp(control: Any | None) -> None:
     """Run the installed NGS HTDP executable."""
 
     HTDP().run_cmd(control)

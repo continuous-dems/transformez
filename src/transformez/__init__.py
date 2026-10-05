@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 """
 transformez
@@ -25,11 +24,12 @@ except ImportError:
     __version__ = "dev"
 
 
-from .api import generate_grid, transform_raster, build_components
-from .grid.shift import build_shift_grid, ShiftGrid
-
-import os
 import glob
+import os
+
+from .api import build_components, generate_grid, transform_raster
+from .grid.shift import ShiftGrid, build_shift_grid
+
 # Expose the module for fetchez
 # from .modules import TransformezMod
 
@@ -74,9 +74,9 @@ if target_proj_lib:
     os.environ["PROJ_LIB"] = target_proj_lib
 
 __all__ = [
-    "generate_grid",
-    "transform_raster",
+    "ShiftGrid",
     "build_components",
     "build_shift_grid",
-    "ShiftGrid",
+    "generate_grid",
+    "transform_raster",
 ]

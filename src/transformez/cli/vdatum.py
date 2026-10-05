@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 """
 transformez.cli.vdatum
@@ -9,11 +8,12 @@ transformez.cli.vdatum
 :license: MIT, see LICENSE for more details.
 """
 
-import click
 from pathlib import Path
-
 from typing import Literal
-from fetchez.utils import FetchezMainGroup, FetchezMainCommand
+
+import click
+from fetchez.utils import FetchezMainCommand, FetchezMainGroup
+
 from transformez.engines.vdatum import (
     DEFAULT_VDATUM_VERSION,
     Vdatum,
@@ -29,8 +29,6 @@ from transformez.engines.vdatum import (
 )
 def vdatum_group() -> None:
     """Manage the NOAA VDatum transformation engine."""
-
-    pass
 
 
 @vdatum_group.command("install")

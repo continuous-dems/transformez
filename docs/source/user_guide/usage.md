@@ -40,10 +40,10 @@ import transformez
 
 shift_array = transformez.generate_grid(
     region=[80, 85, 10, 15],  # [West, East, South, North]
-    increment="3s",           # Grid resolution
-    datum_in="vdatum:mllw",   # VDatums mllw realization
-    datum_out="epsg:4979",    # WGS84 Ellipsoid
-    out_fn="india_shift.tif"  # Optional: Save to disk
+    increment="3s",  # Grid resolution
+    datum_in="vdatum:mllw",  # VDatums mllw realization
+    datum_out="epsg:4979",  # WGS84 Ellipsoid
+    out_fn="india_shift.tif",  # Optional: Save to disk
 )
 
 # ---------------------------------------------------------
@@ -56,7 +56,7 @@ out_file = transformez.transform_raster(
     datum_in="global:lat",
     datum_out="epsg:5703",
     extrapolate_inland=False,
-    output_raster="my_dem_navd88.tif"
+    output_raster="my_dem_navd88.tif",
 )
 ```
 
@@ -80,8 +80,8 @@ grid.source_reference
 grid.target_reference
 grid.provenance
 
-grid.write(...)        # Write to disk
-grid.reproject(...)    # Return a reprojected ShiftGrid
+grid.write(...)  # Write to disk
+grid.reproject(...)  # Return a reprojected ShiftGrid
 ```
 
 > Use `generate_grid()` when you only need shift values.

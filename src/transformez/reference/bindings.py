@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 """
 transformez.reference.types
@@ -10,11 +9,11 @@ transformez.reference.types
 """
 
 from dataclasses import dataclass
-from typing import Literal, Any
+from typing import Any, Literal
 
 from pyproj import CRS
 
-from .types import VerticalReference, VerticalKind, AxisDirection
+from .types import AxisDirection, VerticalKind, VerticalReference
 
 
 @dataclass(frozen=True, slots=True)

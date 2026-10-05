@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 """
 transformez.api
@@ -28,21 +27,20 @@ Usage::
 """
 
 import logging
-from pathlib import Path
-import numpy as np
-from typing import List, Union, Optional, Tuple, Any
 from dataclasses import dataclass
+from pathlib import Path
+from typing import Any
 
-from pyproj import Transformer, CRS
+import numpy as np
+from fetchez.spatial import Region, parse_region
+from pyproj import CRS, Transformer
 
-from transformez.utils import RasterQuery, UNITS
-from transformez.progress import ProgressCallback
 from transformez.grid.engine import GridEngine
-from transformez.reference.types import ReferenceInput
-from transformez.reference.parser import parse_reference
 from transformez.grid.shift import ShiftGrid, build_shift_grid
-
-from fetchez.spatial import parse_region, Region
+from transformez.progress import ProgressCallback
+from transformez.reference.parser import parse_reference
+from transformez.reference.types import ReferenceInput
+from transformez.utils import UNITS, RasterQuery
 
 logger = logging.getLogger(__name__)
 
@@ -70,7 +68,7 @@ def plot_grid(
         import matplotlib.pyplot as plt
     except ImportError:
         logger.warning("Matplotlib is not installed. Cannot generate preview.")
-        return None
+        return
 
     if isinstance(region, Region):
         region_obj = region
@@ -78,7 +76,7 @@ def plot_grid(
         regions = parse_region(region)
         if not regions:
             logger.error(f"Could not parse region: {region}")
-            return None
+            return
         region_obj = regions[0]
 
     masked_data = np.ma.masked_where(
@@ -87,7 +85,7 @@ def plot_grid(
 
     if masked_data.count() == 0:
         logger.warning("Preview skipped: Grid contains no valid data.")
-        return None
+        return
 
     plt.figure(figsize=(10, 6))
     plot_region = [region_obj.xmin, region_obj.xmax, region_obj.ymin, region_obj.ymax]
@@ -117,23 +115,23 @@ def plot_grid(
 
 
 def generate_grid(
-    region: Union[List[float], str, Region],
-    increment: Union[str, float],
+    region: list[float] | str | Region,
+    increment: str | float,
     datum_in: ReferenceInput,
     datum_out: ReferenceInput,
     epoch_in: str = "2010.0",
     epoch_out: str = "2010.0",
     decay_pixels: int = 100,
-    decay_distance_m: Optional[float] = None,
-    buffer_distance_m: Optional[float] = None,
-    max_vdatum_extension_m: Optional[float] = None,
+    decay_distance_m: float | None = None,
+    buffer_distance_m: float | None = None,
+    max_vdatum_extension_m: float | None = None,
     extrapolate_inland: bool = False,
-    out_fn: Optional[str | Path] = None,
-    cache_dir: Optional[str | Path] = None,
+    out_fn: str | Path | None = None,
+    cache_dir: str | Path | None = None,
     use_stations: bool = False,
     verbose: bool = False,
     progress_callback: ProgressCallback | None = None,
-) -> Optional[np.ndarray]:
+) -> np.ndarray | None:
     """Generate a vertical shift grid for a specific region.
 
     Args:
@@ -253,18 +251,18 @@ def transform_raster(
     epoch_in: str = "2010.0",
     epoch_out: str = "2010.0",
     decay_pixels: int = 100,
-    decay_distance_m: Optional[float] = None,
-    buffer_distance_m: Optional[float] = None,
-    max_vdatum_extension_m: Optional[float] = None,
+    decay_distance_m: float | None = None,
+    buffer_distance_m: float | None = None,
+    max_vdatum_extension_m: float | None = None,
     extrapolate_inland: bool = False,
-    output_raster: Optional[str | Path] = None,
-    cache_dir: Optional[str | Path] = None,
+    output_raster: str | Path | None = None,
+    cache_dir: str | Path | None = None,
     z_unit_in: str = "auto",
     z_unit_out: str = "auto",
     use_stations: bool = False,
     save_shift: bool = False,
     verbose: bool = False,
-) -> Optional[str]:
+) -> str | None:
     """Apply a vertical datum transformation directly to an existing raster file.
 
     Args:
@@ -417,7 +415,7 @@ class PointTransformer:
         region: Any,
         z_unit_in: str = "m",
         z_unit_out: str = "m",
-        cache_dir: Optional[str | Path] = None,
+        cache_dir: str | Path | None = None,
     ):
         cache_dir = (
             Path(cache_dir)
@@ -446,12 +444,10 @@ class PointTransformer:
 
     def transform(
         self,
-        x: Union[float, np.ndarray],
-        y: Union[float, np.ndarray],
-        z: Union[float, np.ndarray],
-    ) -> Tuple[
-        Union[float, np.ndarray], Union[float, np.ndarray], Union[float, np.ndarray]
-    ]:
+        x: float | np.ndarray,
+        y: float | np.ndarray,
+        z: float | np.ndarray,
+    ) -> tuple[float | np.ndarray, float | np.ndarray, float | np.ndarray]:
         """Transforms coordinates horizontally and vertically.
         Accepts and returns either single scalar floats or NumPy arrays.
 
@@ -493,11 +489,11 @@ class PointTransformer:
 
 
 def prefetch_region(
-    region: Union[List[float], str, Region],
-    datum_in: Optional[str] = None,
-    datum_out: Optional[str] = None,
+    region: list[float] | str | Region,
+    datum_in: str | None = None,
+    datum_out: str | None = None,
     fetch_all: bool = False,
-    cache_dir: Optional[str | Path] = None,
+    cache_dir: str | Path | None = None,
     verbose: bool = True,
 ) -> bool:
     """Pre-download transformation resources for offline use.

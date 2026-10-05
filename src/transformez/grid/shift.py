@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 """
 transformez.grid.shift
@@ -12,27 +11,23 @@ what you will.
 :license: MIT, see LICENSE for more details.
 """
 
-import logging
+import datetime
 import hashlib
-from pathlib import Path
-from typing import List, Union, Mapping
+import logging
+from collections.abc import Mapping
 from dataclasses import dataclass
+from pathlib import Path
 
 import numpy as np
-import datetime
-
+from fetchez.spatial import Region, parse_region
+from fetchez.utils import str2inc, str_or
 from pyproj import CRS
-
-from rasterio.transform import from_bounds, Affine
-
-from fetchez.spatial import parse_region, Region
-from fetchez.utils import str_or, str2inc
+from rasterio.transform import Affine, from_bounds
 
 from transformez import __version__
 from transformez.progress import ProgressCallback, report_progress
-from transformez.reference.types import ParsedReference, ReferenceInput
 from transformez.reference.parser import parse_reference
-
+from transformez.reference.types import ParsedReference, ReferenceInput
 
 logger = logging.getLogger(__name__)
 
@@ -54,7 +49,7 @@ class ShiftGrid:
 
     generation_key: str
 
-    trace: List[str]
+    trace: list[str]
 
     uncertainty: np.ndarray | None = None
 
@@ -246,8 +241,8 @@ def _generation_key(
 
 
 def build_shift_grid(
-    region: Union[List[float], str, Region],
-    increment: Union[str, float],
+    region: list[float] | str | Region,
+    increment: str | float,
     datum_in: ReferenceInput,
     datum_out: ReferenceInput,
     epoch_in: str = "2010.0",
@@ -290,8 +285,8 @@ def build_shift_grid(
     """
 
     from transformez.reference.executor import ExecutionContext, TransformationExecutor
-    from transformez.reference.resolver import resolve_reference
     from transformez.reference.planner import TransformationPlanner
+    from transformez.reference.resolver import resolve_reference
 
     report_progress(progress_callback, 0, "setup", "Initiating shift.")
 

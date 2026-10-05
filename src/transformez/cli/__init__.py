@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 """
 transformez.cli
@@ -12,19 +11,17 @@ The command-line interface for Transformez.
 """
 
 import click
-
 from fetchez.cli import setup_logging
 from fetchez.utils import FetchezMainGroup
 
 from .build import build
-from .shift import transform_raster
-from .list import list_group
+from .htdp import htdp_group
 from .info import info_group
+from .list import list_group
 from .plan import plan
 from .prefetch import prefetch
-from .htdp import htdp_group
+from .shift import transform_raster
 from .vdatum import vdatum_group
-
 
 TRANSFORMEZ_COMMANDS = {
     "Execution": ["build", "shift", "prefetch"],

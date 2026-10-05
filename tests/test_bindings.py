@@ -3,10 +3,10 @@ import pytest
 from transformez.reference.bindings import (
     CUSTOM_REGISTRY,
     CUSTOM_VERTICAL_REFERENCES,
-    OPERATION_BINDINGS,
     HTDP_FRAME_BINDINGS,
+    OPERATION_BINDINGS,
 )
-from transformez.reference.types import VerticalKind, AxisDirection
+from transformez.reference.types import AxisDirection, VerticalKind
 
 
 def test_registry_resolution_success():

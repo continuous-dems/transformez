@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 """
 transformez.cli.info
@@ -11,20 +10,19 @@ transformez.cli.info
 
 import os
 import sys
-import click
-
+from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
-from importlib.metadata import version, PackageNotFoundError
 
-from fetchez.utils import FetchezMainGroup, FetchezMainCommand
+import click
+from fetchez.utils import FetchezMainCommand, FetchezMainGroup
 
-from transformez.reference.parser import parse_reference, InvalidReferenceError
-from transformez.reference.resolver import resolve_reference
 from transformez.reference.bindings import (
     CUSTOM_VERTICAL_REFERENCES,
-    OPERATION_BINDINGS,
     HTDP_FRAME_BINDINGS,
+    OPERATION_BINDINGS,
 )
+from transformez.reference.parser import InvalidReferenceError, parse_reference
+from transformez.reference.resolver import resolve_reference
 
 
 @click.group(
@@ -34,8 +32,6 @@ from transformez.reference.bindings import (
 )
 def info_group() -> None:
     """Get information related to supported references and transformation resources."""
-
-    pass
 
 
 @info_group.command("reference", cls=FetchezMainCommand)
@@ -306,9 +302,9 @@ def system() -> None:
     click.secho("\n External Engines:", fg="cyan", bold=True)
     click.echo(f" {'-' * 17}")
     click.echo(f"  {'HTDP:':<14} {htdp_version}")
-    click.echo(f"                 {str(htdp_bin)}")
+    click.echo(f"                 {htdp_bin!s}")
     click.echo(f"  {'VDatum:':<14} {vdatum_version}")
-    click.echo(f"                 {str(vdatum_jar)}")
+    click.echo(f"                 {vdatum_jar!s}")
 
     click.secho("\n Cache:", fg="cyan", bold=True)
     click.echo(f" {'-' * 6}")

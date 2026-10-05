@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 """
 transformez.grid.io
@@ -12,15 +11,14 @@ Grid Writing.
 """
 
 import logging
+from collections.abc import Mapping
 from pathlib import Path
-from typing import Optional, Dict, Any, Mapping
+from typing import Any
 
 import numpy as np
 import rasterio
-from rasterio.transform import from_origin
-
 from fetchez.spatial import Region, parse_region
-
+from rasterio.transform import from_origin
 
 logger = logging.getLogger(__name__)
 
@@ -32,9 +30,9 @@ class GridWriter:
         data: np.ndarray,
         region: Region | str,
         crs: Any = "EPSG:4326",
-        tags: Optional[Mapping[str, str] | Dict[str, str]] = None,
-        transform: Optional[Any] = None,
-        nodata: Optional[float] = None,
+        tags: Mapping[str, str] | dict[str, str] | None = None,
+        transform: Any | None = None,
+        nodata: float | None = None,
     ) -> Path:
         """Write a grid to a GeoTIFF.
 

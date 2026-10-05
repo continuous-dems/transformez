@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 """
 transformez.reference.resolver
@@ -11,20 +10,18 @@ transformez.reference.resolver
 
 from pyproj import CRS
 
+from .bindings import get_htdp_frame_binding, get_operation_binding
+from .parser import UnsupportedReferenceError
 from .types import (
     ParsedReference,
     ResolvedReference,
     ResolvedVerticalReference,
     VerticalKind,
 )
-from .bindings import get_operation_binding, get_htdp_frame_binding
-from .parser import UnsupportedReferenceError
 
 
 class UnresolvedReferenceError(UnsupportedReferenceError):
     """A valid reference that lacks an executable realization."""
-
-    pass
 
 
 def resolve_reference(

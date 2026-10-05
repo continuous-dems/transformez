@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 """
 transformez.reference.vdatum
@@ -10,13 +9,12 @@ transformez.reference.vdatum
 """
 
 import logging
+from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from dataclasses import dataclass
-from typing import Optional, Literal
+from typing import Literal
 
 import rasterio
-
 
 logger = logging.getLogger(__name__)
 
@@ -44,8 +42,6 @@ _VDATUM_REGIONAL_SURFACES = {
 
 class UnsupportedVDatumRoadmapError(Exception):
     """Raised when a vdatum metadata file doesn't have the correct values"""
-
-    pass
 
 
 @dataclass(frozen=True)
@@ -184,7 +180,7 @@ def vdatum_priority(
     )
 
 
-def vdatum_grid_datum(path: Path) -> Optional[str]:
+def vdatum_grid_datum(path: Path) -> str | None:
     if path.suffix.casefold() != ".gtx":
         return None
 
