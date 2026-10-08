@@ -25,12 +25,12 @@ classifiers = [
     'Topic :: Scientific/Engineering :: GIS',
 ]
 dependencies = [
-    'numpy>1.24',
+    'numpy>=1.26.0',
     'pyproj>3.6.1',
     'rasterio>1.4.0',
     'fetchez>=0.9.1',
-    'scipy',
-    'click',
+    'scipy>=1.11.2',
+    'click>=8.1.7',
 ]
 
 keywords = ["Geospatial"]
