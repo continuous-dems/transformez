@@ -12,7 +12,7 @@ transformez.cli.htdp
 import click
 from typing import Optional, Any, Literal
 
-from fetchez.utils import FetchezMainGroup, FetchezMainCommand
+from fetchez.cli.utils import FetchezMainGroup, FetchezMainCommand
 
 from transformez.engines.htdp import (
     DEFAULT_HTDP_VERSION,

@@ -13,7 +13,7 @@ import click
 from pathlib import Path
 
 from typing import Literal
-from fetchez.utils import FetchezMainGroup, FetchezMainCommand
+from fetchez.cli.utils import FetchezMainGroup, FetchezMainCommand
 from transformez.engines.vdatum import (
     DEFAULT_VDATUM_VERSION,
     Vdatum,

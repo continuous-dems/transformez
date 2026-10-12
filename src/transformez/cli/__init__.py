@@ -14,7 +14,7 @@ The command-line interface for Transformez.
 import click
 
 from fetchez.cli import setup_logging
-from fetchez.utils import FetchezMainGroup
+from fetchez.cli.utils import FetchezMainGroup
 
 from .build import build
 from .shift import transform_raster

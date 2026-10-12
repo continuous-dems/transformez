@@ -16,7 +16,7 @@ import click
 from pathlib import Path
 from importlib.metadata import version, PackageNotFoundError
 
-from fetchez.utils import FetchezMainGroup, FetchezMainCommand
+from fetchez.cli.utils import FetchezMainGroup, FetchezMainCommand
 
 from transformez.reference.parser import parse_reference, InvalidReferenceError
 from transformez.reference.resolver import resolve_reference
