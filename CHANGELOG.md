@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+* Update cli logging to use `fetchez.logging.configure_logging`
 * Update cli imports from `fetchez.cli.utils`.
 * Every dependency now has a minimum version that installs on Python 3.12, transformez's oldest supported Python: the first release with Python 3.12 wheels for compiled packages, or a release from around Python 3.12's own (fall 2023) for pure-Python ones. `numpy>1.24` becomes `numpy>=1.26.0`, since older numpy releases have no Python 3.12 wheels. CI now also runs the tests with each dependency at its minimum, and on Python 3.14.
 
