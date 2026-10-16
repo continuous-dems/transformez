@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-10-16
 ### Changed
 
 * Update cli logging to use `fetchez.logging.configure_logging`
