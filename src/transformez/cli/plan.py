@@ -12,7 +12,7 @@ transformez.cli.plan
 import sys
 import click
 
-from fetchez.utils import FetchezMainCommand
+from fetchez.cli.utils import FetchezMainCommand
 
 from transformez.reference.parser import parse_reference
 from transformez.reference.resolver import resolve_reference

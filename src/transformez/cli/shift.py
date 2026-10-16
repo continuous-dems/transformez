@@ -13,7 +13,7 @@ import sys
 import click
 from pathlib import Path
 
-from fetchez.utils import FetchezMainCommand
+from fetchez.cli.utils import FetchezMainCommand
 
 from transformez import api
 

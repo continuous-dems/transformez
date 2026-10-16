@@ -12,7 +12,7 @@ transformez.cli.prefetch
 import sys
 import click
 
-from fetchez.utils import FetchezMainCommand
+from fetchez.cli.utils import FetchezMainCommand
 
 from transformez import api
 

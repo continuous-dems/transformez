@@ -13,8 +13,8 @@ The command-line interface for Transformez.
 
 import click
 
-from fetchez.cli import setup_logging
-from fetchez.utils import FetchezMainGroup
+from fetchez.logging import configure_logging
+from fetchez.cli.utils import FetchezMainGroup
 
 from .build import build
 from .shift import transform_raster
@@ -68,7 +68,8 @@ class TransformezMainGroup(FetchezMainGroup):
 def transformez_cli(verbose: bool, quiet: bool) -> None:
     """Build vertical datum shift grids and transform elevation data."""
 
-    setup_logging(name="transformez", quiet=quiet, verbose=verbose)
+    configure_logging(name="fetchez", quiet=quiet, verbose=verbose, propagate=False)
+    configure_logging(name="transformez", quiet=quiet, verbose=verbose, propagate=False)
 
 
 transformez_cli.add_command(build)

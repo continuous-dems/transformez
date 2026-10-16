@@ -13,7 +13,7 @@ import click
 
 from typing import Any
 
-from fetchez.utils import FetchezMainGroup, FetchezMainCommand
+from fetchez.cli.utils import FetchezMainGroup, FetchezMainCommand
 
 from transformez.reference.parser import parse_reference
 from transformez.reference.bindings import (
