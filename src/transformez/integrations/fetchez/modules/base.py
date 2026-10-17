@@ -12,6 +12,7 @@ Base FetchezModule for use in transformez for subsetting rasters using vsicurl
 """
 
 import os
+import tempfile
 import logging
 from typing import Any
 from contextlib import contextmanager
@@ -146,8 +147,21 @@ class TransformezModule(FetchModule):
                             }
                         )
 
-                        with rasterio.open(dst_fn, "w", **profile) as dst:
-                            dst.write(data_chunk, 1)
+                        # Write next to dst_fn, then move it into place, so a
+                        # concurrent reader never sees a partial subset.
+                        fd, tmp_name = tempfile.mkstemp(
+                            dir=Path(dst_fn).parent,
+                            prefix=f".{Path(dst_fn).name}.",
+                            suffix=".tmp.tif",
+                        )
+                        os.close(fd)
+                        try:
+                            with rasterio.open(tmp_name, "w", **profile) as dst:
+                                dst.write(data_chunk, 1)
+                            Path(tmp_name).replace(dst_fn)
+                        except BaseException:
+                            Path(tmp_name).unlink(missing_ok=True)
+                            raise
 
             logger.info(
                 f"[{self.name}] Successfully cached remote subset to {dst_fn.name}"
