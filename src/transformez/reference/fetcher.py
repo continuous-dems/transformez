@@ -111,8 +111,8 @@ class GridFetcher:
         )
 
         valid: List[Path] = []
-        for fn in files:
-            fn = Path(fn)
+        for name in files:
+            fn = Path(name)
             if not fn.exists():
                 continue
 
