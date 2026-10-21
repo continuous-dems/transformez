@@ -54,7 +54,9 @@ class TransformationComponents:
 
 
 def plot_grid(
-    grid_array: np.ndarray, region: Region, title: str = "Vertical Shift Preview"
+    grid_array: np.ndarray,
+    region: Region | str | list[float],
+    title: str = "Vertical Shift Preview",
 ) -> None:
     """Plot the transformation grid using Matplotlib.
 

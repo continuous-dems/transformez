@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+* A `py.typed` marker, so type checkers read transformez's type annotations in code that uses it.
+
 ### Fixed
 
 * Shift grids (`GridWriter.write`) and cached remote grid subsets are written to a temporary file and moved into place atomically, so a thread or process reading a shared cached grid never sees a partly written one.
