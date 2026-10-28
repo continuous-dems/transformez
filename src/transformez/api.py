@@ -226,7 +226,10 @@ def build_components(
     if source.vertical or target.vertical:
         if source.vertical is None or target.vertical is None:
             logger.debug(
-                f"Both source and target vertical references are required. {source.vertical} -> {target.vertical}"
+                "Skipping vertical transformation for %s -> %s: "
+                "one reference has no vertical component.",
+                src_srs,
+                dst_srs,
             )
         else:
             vertical = build_shift_grid(

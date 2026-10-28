@@ -293,6 +293,14 @@ def build_shift_grid(
     from transformez.reference.resolver import resolve_reference
     from transformez.reference.planner import TransformationPlanner
 
+    logger.debug(
+        "build_shift_grid(%s -> %s): verbose=%r, logger_level=%s, enabled_info=%s",
+        datum_in,
+        datum_out,
+        verbose,
+        logger.getEffectiveLevel(),
+        logger.isEnabledFor(logging.INFO),
+    )
     report_progress(progress_callback, 0, "setup", "Initiating shift.")
 
     src_ref = parse_reference(datum_in)
@@ -380,7 +388,7 @@ def build_shift_grid(
         trace = result.trace
         uncertainty_array = None
 
-        if verbose:
+        if verbose or logger.isEnabledFor(logging.DEBUG):
             logger.info("-" * 60)
             logger.info(f"Transformation Execution Trace: {datum_in} -> {datum_out}")
 
